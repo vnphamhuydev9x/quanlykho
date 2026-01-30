@@ -1,0 +1,38 @@
+{
+    "app": {
+        "name": "DUY ANH SOFTWARE",
+        "shortName": "DA"
+    },
+    "menu": {
+        "dashboard": "Bảng điều khiển",
+        "settings": "Cài đặt",
+        "warehouse": "Kho hàng",
+        "profile": "Hồ sơ",
+        "logout": "Đăng xuất"
+    },
+    "header": {
+        "language": "Tiếng Việt"
+    },
+    "login": {
+        "title": "DUY ANH SOFTWARE",
+        "subtitle": "Đăng nhập hệ thống quản lý kho",
+        "username": "Tên đăng nhập",
+        "password": "Mật khẩu",
+        "submit": "Đăng nhập",
+        "requiredUsername": "Vui lòng nhập tên đăng nhập!",
+        "requiredPassword": "Vui lòng nhập mật khẩu!",
+        "success": "Đăng nhập thành công!",
+        "failed": "Sai tài khoản hoặc mật khẩu!"
+    },
+    "dashboard": {
+        "welcome": "Chào mừng bạn đến với hệ thống Quản lý kho."
+    },
+    "error": {
+        "99001": "Vui lòng nhập tên đăng nhập và mật khẩu",
+        "99002": "Sai tài khoản hoặc mật khẩu",
+        "99003": "Không tìm thấy Token",
+        "99004": "Token không hợp lệ hoặc hết hạn",
+        "99500": "Lỗi hệ thống (Server Error)",
+        "UNKNOWN": "Lỗi không xác định"
+    }
+}

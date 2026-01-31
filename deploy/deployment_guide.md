@@ -7,7 +7,7 @@ Project sử dụng Docker để chạy Database. Đảm bảo bạn đã cài D
     ```bash
     docker-compose up -d
     ```
-    *Lệnh này sẽ bật PostgreSQL (Port 5432) và Adminer (nếu có).*
+    *Lệnh này sẽ bật PostgreSQL (Port 5432), Redis (Port 6379) và Adminer.*
 
 ## 2. Start Backend (Express.js)
 Backend chạy tại cổng `3000` (mặc định).

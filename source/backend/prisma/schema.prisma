@@ -12,7 +12,12 @@ model User {
   id        Int      @id @default(autoincrement())
   username  String   @unique
   password  String   // Hashed password
+  fullName  String?
+  email     String?
+  phone     String?
   role      String   @default("USER") // ADMIN, USER, WAREHOUSE_MANAGER
+  mustChangePassword Boolean @default(true)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   

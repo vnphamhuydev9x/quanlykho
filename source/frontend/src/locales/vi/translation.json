@@ -7,6 +7,7 @@
         "dashboard": "Bảng điều khiển",
         "settings": "Cài đặt",
         "warehouse": "Kho hàng",
+        "employees": "Nhân viên",
         "profile": "Hồ sơ",
         "logout": "Đăng xuất"
     },
@@ -24,6 +25,55 @@
         "success": "Đăng nhập thành công!",
         "failed": "Sai tài khoản hoặc mật khẩu!"
     },
+    "common": {
+        "save": "Lưu lại",
+        "cancel": "Hủy"
+    },
+    "validation": {
+        "required": "Trường này là bắt buộc!",
+        "passwordMismatch": "Mật khẩu xác nhận không khớp!"
+    },
+    "profile": {
+        "title": "Hồ sơ cá nhân",
+        "edit": "Cập nhật",
+        "changePassword": "Đổi mật khẩu",
+        "username": "Tên đăng nhập",
+        "fullName": "Họ và tên",
+        "email": "Email",
+        "phone": "Số điện thoại",
+        "role": "Quyền hạn",
+        "status": "Trạng thái",
+        "active": "Hoạt động",
+        "inactive": "Bị khóa",
+        "currentPassword": "Mật khẩu hiện tại",
+        "newPassword": "Mật khẩu mới",
+        "confirmPassword": "Xác nhận mật khẩu mới",
+        "updateSuccess": "Cập nhật thông tin thành công!",
+        "changePasswordSuccess": "Đổi mật khẩu thành công!",
+        "forceChangeTitle": "Yêu cầu đổi mật khẩu",
+        "forceChangeMessage": "Vì lý do bảo mật, bạn vui lòng đổi mật khẩu cho lần đăng nhập đầu tiên."
+    },
+    "employee": {
+        "title": "Quản lý nhân viên",
+        "add": "Thêm nhân viên",
+        "edit": "Sửa nhân viên",
+        "status": "Trạng thái",
+        "active": "Hoạt động",
+        "inactive": "Bị khóa",
+        "createSuccess": "Tạo nhân viên thành công!",
+        "updateSuccess": "Cập nhật nhân viên thành công!",
+        "deleteSuccess": "Xóa nhân viên thành công!"
+    },
+    "roles": {
+        "ADMIN": "Quản trị viên",
+        "USER": "Người dùng",
+        "SALE": "Sale",
+        "KHO_TQ": "Kho Trung Quốc",
+        "KE_TOAN": "Kế toán",
+        "DIEU_VAN": "Điều vận",
+        "KHO_VN": "Kho Việt Nam",
+        "CHUNG_TU": "Chứng từ"
+    },
     "dashboard": {
         "welcome": "Chào mừng bạn đến với hệ thống Quản lý kho."
     },
@@ -32,6 +82,7 @@
         "99002": "Sai tài khoản hoặc mật khẩu",
         "99003": "Không tìm thấy Token",
         "99004": "Token không hợp lệ hoặc hết hạn",
+        "99007": "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
         "99500": "Lỗi hệ thống (Server Error)",
         "UNKNOWN": "Lỗi không xác định"
     }

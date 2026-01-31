@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Button, Dropdown, Avatar, Typography, Space } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, Button, Dropdown, Avatar, Typography, Space, message } from 'antd';
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -21,9 +22,40 @@ const MainLayout = ({ children }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Get user info and check mustChangePassword
+    const token = localStorage.getItem('access_token');
+    let userRole = 'USER';
+    let mustChangePassword = false;
+    let username = 'User';
+
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userRole = payload.role;
+            mustChangePassword = payload.mustChangePassword;
+            username = payload.username || 'User';
+        } catch (e) {
+            console.error("Invalid token");
+        }
+    }
+
+    const [isForcePassModalVisible, setIsForcePassModalVisible] = useState(mustChangePassword);
+
+    useEffect(() => {
+        if (mustChangePassword) {
+            setIsForcePassModalVisible(true);
+        }
+    }, [mustChangePassword]);
+
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         navigate('/login');
+    };
+
+    const handleForceChangeSuccess = () => {
+        setIsForcePassModalVisible(false);
+        handleLogout();
+        message.success(t('profile.changePasswordSuccess') + ' ' + t('common.pleaseLoginAgain'));
     };
 
     const changeLanguage = (lng) => {
@@ -48,6 +80,7 @@ const MainLayout = ({ children }) => {
             key: 'profile',
             label: t('menu.profile'),
             icon: <UserOutlined />,
+            onClick: () => navigate('/profile'),
         },
         {
             key: 'logout',
@@ -58,24 +91,35 @@ const MainLayout = ({ children }) => {
         },
     ];
 
-    const menuItems = [
+    const items = [
         {
             key: '/',
             icon: <DashboardOutlined />,
             label: t('menu.dashboard'),
             onClick: () => navigate('/'),
         },
-        {
-            key: '/settings',
+        // Only Show Settings for ADMIN
+        userRole === 'ADMIN' && {
+            key: 'settings',
             icon: <SettingOutlined />,
             label: t('menu.settings'),
+            children: [
+                {
+                    key: '/settings/employees',
+                    label: t('menu.employees'),
+                    onClick: () => navigate('/settings/employees'),
+                }
+            ],
         },
+        // Warehouse Menu - Hidden for now or RBAC later
+        /*
         {
             key: '/warehouse',
-            icon: <UserOutlined />,
+            icon: <DashboardOutlined />, // Changed icon
             label: t('menu.warehouse'),
         },
-    ];
+        */
+    ].filter(Boolean);
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
@@ -98,7 +142,7 @@ const MainLayout = ({ children }) => {
                     theme="light"
                     mode="inline"
                     selectedKeys={[location.pathname]}
-                    items={menuItems}
+                    items={items}
                 />
             </Sider>
             <Layout>
@@ -127,7 +171,7 @@ const MainLayout = ({ children }) => {
                         <Dropdown menu={{ items: userMenu }} placement="bottomRight">
                             <Space style={{ cursor: 'pointer' }}>
                                 <Avatar icon={<UserOutlined />} />
-                                <Text strong>Admin</Text>
+                                <Text strong>{username}</Text>
                             </Space>
                         </Dropdown>
                     </Space>
@@ -143,6 +187,11 @@ const MainLayout = ({ children }) => {
                 >
                     {children}
                 </Content>
+                <ChangePasswordModal
+                    visible={isForcePassModalVisible}
+                    forceChange={true}
+                    onSuccess={handleForceChangeSuccess}
+                />
             </Layout>
         </Layout>
     );

@@ -1,12 +1,14 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { PrismaClient } = require('@prisma/client');
+const logger = require('../config/logger');
 
 const prisma = new PrismaClient();
 
 const login = async (req, res) => {
     try {
         const { username, password } = req.body;
+        logger.info(`[Login] Request for user: ${username}`);
 
         if (!username || !password) {
             return res.status(400).json({
@@ -27,9 +29,18 @@ const login = async (req, res) => {
             });
         }
 
+        if (!user.isActive) {
+            logger.warn(`Login failed: User ${username} is inactive`);
+            return res.status(403).json({
+                code: 99007, // Account Inactive
+                message: 'Account is inactive'
+            });
+        }
+
         // Check password
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
+            logger.warn(`Login failed: Invalid password for user ${username}`);
             return res.status(401).json({
                 code: 99002, // Invalid Credentials
                 message: 'Sai tài khoản hoặc mật khẩu'
@@ -38,11 +49,12 @@ const login = async (req, res) => {
 
         // Generate Token
         const token = jwt.sign(
-            { userId: user.id, username: user.username, role: user.role },
+            { userId: user.id, username: user.username, role: user.role, mustChangePassword: user.mustChangePassword },
             process.env.JWT_SECRET || 'secret',
             { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
         );
 
+        logger.info(`User logged in: ${username}`);
         res.json({
             code: 200,
             message: 'Đăng nhập thành công',
@@ -51,10 +63,11 @@ const login = async (req, res) => {
                 id: user.id,
                 username: user.username,
                 role: user.role,
+                mustChangePassword: user.mustChangePassword
             },
         });
     } catch (error) {
-        console.error('Login error:', error);
+        logger.error('Login Error:', error);
         res.status(500).json({
             code: 99500, // Server Error
             message: 'Lỗi server'

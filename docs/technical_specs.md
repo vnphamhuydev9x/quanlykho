@@ -18,6 +18,8 @@ Hệ thống chia làm 2 phần riêng biệt, giao tiếp qua RESTful API.
 | **ORM** | **Prisma** | Kết nối DB. Cấu hình schema rành mạch. |
 | **Communication**| **REST API** | Frontend gọi Backend qua HTTP Request (Axios). |
 | **UI Library** | **Ant Design** | Bộ component UI chuyên nghiệp cho Admin Dashboard. |
+| **Caching** | **Redis** | Lưu trữ Cache tạm thời để tăng tốc độ phản hồi. |
+| **Logging** | **Winston & Morgan** | Hệ thống ghi Log tập trung (File & Console). |
 
 ## 4. Authentication & Security (Chi tiết)
 - **Công nghệ**: jsonwebtoken (JWT) + bcryptjs.

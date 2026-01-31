@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+import EmployeeList from './pages/EmployeeList';
 import MainLayout from './layouts/MainLayout';
 
 // Protected Route Component
@@ -24,6 +26,26 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Profile />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/employees"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <EmployeeList />
               </MainLayout>
             </ProtectedRoute>
           }

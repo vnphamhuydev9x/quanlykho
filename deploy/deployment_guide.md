@@ -24,6 +24,9 @@ Backend chạy tại cổng `3000` (mặc định).
     ```bash
     # Tạo bảng trong DB theo schema
     npx prisma db push
+
+    # Tạo dữ liệu mẫu (Admin account...)
+    npx prisma db seed
     ```
 4.  Chạy server:
     ```bash

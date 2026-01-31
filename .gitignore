@@ -11,12 +11,12 @@ source/**/dist/
 source/**/out/
 
 # Environment Variables (Sensitive)
-.env
-.env.local
-.env.*.local
-source/**/.env
-source/**/.env.local
-source/**/.env.*.local
+# .env
+# .env.local
+# .env.*.local
+# source/**/.env
+# source/**/.env.local
+# source/**/.env.*.local
 
 # Logs
 logs

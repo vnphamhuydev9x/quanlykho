@@ -1,7 +1,7 @@
 {
     "app": {
-        "name": "DUY ANH SOFTWARE",
-        "shortName": "DA"
+        "name": "3T-Group",
+        "shortName": "3T"
     },
     "menu": {
         "dashboard": "仪表板",
@@ -15,7 +15,7 @@
         "language": "中文"
     },
     "login": {
-        "title": "DUY ANH SOFTWARE",
+        "title": "3T-Group",
         "subtitle": "仓库管理系统登录",
         "username": "用户名",
         "password": "密码",

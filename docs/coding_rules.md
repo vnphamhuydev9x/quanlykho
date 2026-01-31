@@ -109,3 +109,15 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
     *   **Hướng giải quyết**: Nếu được, hãy gợi ý hành động tiếp theo (Ví dụ: "Vui lòng liên hệ quản trị viên").
     *   *Ví dụ Tốt*: "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên."
     *   *Ví dụ Xấu*: "Lỗi, tài khoản bị khóa rồi."
+
+## 7. Responsive Design (Frontend)
+### Quy tắc Bắt buộc
+*   Tất cả giao diện Frontend **PHẢI** hiển thị tốt trên cả Desktop và Mobile (Điện thoại/Tablet).
+*   **KHÔNG** được sử dụng kích thước cố định (`px`) cho các layout chính (Ví dụ: `width: 1200px` là **CẤM**, phải dùng `width: 100%` hoặc `max-width`).
+
+### Checklist Responsive
+- [ ] **Grid System**: Sử dụng `Col` của Ant Design với các breakpoint `xs`, `sm`, `md`, `lg` (Ví dụ: `xs={24} md={12}` -> Mobile 1 cột, PC 2 cột).
+- [ ] **Table**: Luôn thêm `scroll={{ x: 'max-content' }}` để bảng có thể cuộn ngang trên màn hình nhỏ.
+- [ ] **Modal/Drawer**:
+    *   Modal trên Mobile nên set `width: 90%` hoặc `100%`.
+    *   Menu bên trái (Sidebar) trên PC -> Chuyển thành Drawer (Menu ẩn) trên Mobile.

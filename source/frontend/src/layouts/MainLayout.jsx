@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Button, Dropdown, Avatar, Typography, Space, message } from 'antd';
+import { Layout, Menu, Button, Dropdown, Avatar, Typography, Space, message, Drawer, Grid } from 'antd';
+const { useBreakpoint } = Grid;
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -21,6 +22,22 @@ const MainLayout = ({ children }) => {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
+    const screens = useBreakpoint();
+    const [drawerVisible, setDrawerVisible] = useState(false);
+
+    useEffect(() => {
+        if (screens.md) {
+            setDrawerVisible(false);
+        }
+    }, [screens.md]);
+
+    const showDrawer = () => {
+        setDrawerVisible(true);
+    };
+
+    const onClose = () => {
+        setDrawerVisible(false);
+    };
 
     // Get user info and check mustChangePassword
     const token = localStorage.getItem('access_token');
@@ -123,7 +140,22 @@ const MainLayout = ({ children }) => {
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
-            <Sider trigger={null} collapsible collapsed={collapsed} theme="light" width={250}>
+            {/* Desktop Sider */}
+            <Sider
+                trigger={null}
+                collapsible
+                collapsed={collapsed}
+                theme="light"
+                width={250}
+                breakpoint="md"
+                collapsedWidth="0"
+                onBreakpoint={(broken) => {
+                    // console.log(broken);
+                }}
+                style={{
+                    display: screens.md ? 'block' : 'none'
+                }}
+            >
                 <div style={{
                     height: 64,
                     display: 'flex',
@@ -145,6 +177,33 @@ const MainLayout = ({ children }) => {
                     items={items}
                 />
             </Sider>
+            {/* Mobile Drawer */}
+            <Drawer
+                placement="left"
+                onClose={onClose}
+                open={drawerVisible}
+                styles={{ body: { padding: 0 } }}
+                width={250}
+            >
+                <div style={{
+                    height: 64,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderBottom: '1px solid #f0f0f0',
+                }}>
+                    <div style={{ fontWeight: 'bold', fontSize: 18, color: '#1890ff' }}>
+                        {t('app.name')}
+                    </div>
+                </div>
+                <Menu
+                    theme="light"
+                    mode="inline"
+                    selectedKeys={[location.pathname]}
+                    items={items}
+                    onClick={onClose}
+                />
+            </Drawer>
             <Layout>
                 <Header style={{
                     padding: '0 24px',
@@ -156,8 +215,8 @@ const MainLayout = ({ children }) => {
                 }}>
                     <Button
                         type="text"
-                        icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                        onClick={() => setCollapsed(!collapsed)}
+                        icon={!screens.md ? <MenuUnfoldOutlined /> : collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                        onClick={() => !screens.md ? showDrawer() : setCollapsed(!collapsed)}
                         style={{ fontSize: '16px', width: 64, height: 64, marginLeft: -24 }}
                     />
 

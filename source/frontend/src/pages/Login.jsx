@@ -82,7 +82,7 @@ const Login = () => {
                 </Dropdown>
             </div>
 
-            <Card style={{ width: 400, boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
+            <Card style={{ maxWidth: 400, width: '90%', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 24 }}>
                     <Title level={3}>{t('login.title')}</Title>
                     <Typography.Text type="secondary">{t('login.subtitle')}</Typography.Text>

@@ -150,7 +150,13 @@ const EmployeeList = () => {
                 </Button>
             </div>
 
-            <Table columns={columns} dataSource={employees} rowKey="id" loading={loading} />
+            <Table
+                columns={columns}
+                dataSource={employees}
+                rowKey="id"
+                loading={loading}
+                scroll={{ x: 'max-content' }}
+            />
 
             <Modal
                 title={editingEmployee ? t('employee.edit') : t('employee.add')}

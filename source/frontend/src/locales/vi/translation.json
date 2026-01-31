@@ -1,7 +1,7 @@
 {
     "app": {
-        "name": "DUY ANH SOFTWARE",
-        "shortName": "DA"
+        "name": "3T-Group",
+        "shortName": "3T"
     },
     "menu": {
         "dashboard": "Bảng điều khiển",
@@ -15,7 +15,7 @@
         "language": "Tiếng Việt"
     },
     "login": {
-        "title": "DUY ANH SOFTWARE",
+        "title": "3T-Group",
         "subtitle": "Đăng nhập hệ thống quản lý kho",
         "username": "Tên đăng nhập",
         "password": "Mật khẩu",

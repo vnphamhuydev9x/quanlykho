@@ -89,5 +89,12 @@ Ví dụ: Thêm bảng `Customer` sau khi hệ thống đã chạy được 1 th
     ```bash
     npx prisma migrate deploy
     ```
-    *Lệnh `deploy` này rất an toàn: Nó chỉ chạy những file migration mới chưa từng chạy (dựa vào bảng `_prisma_migrations`), tuyệt đối không reset DB hay mất dữ liệu cũ.*
+92:     *Lệnh `deploy` này rất an toàn: Nó chỉ chạy những file migration mới chưa từng chạy (dựa vào bảng `_prisma_migrations`), tuyệt đối không reset DB hay mất dữ liệu cũ.*
+93: 
+94: ### C. Quy tắc Git (Quan trọng)
+95: *   **CẦN Commit**: Folder `prisma/migrations` (Để đồng bộ lịch sử DB).
+96: *   **KHÔNG Commit**:
+97:     *   File `.env` (Chứa mật khẩu).
+98:     *   Folder `node_modules`.
+99:     *   Folder `dist` hoặc `build`.
 

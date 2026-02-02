@@ -2,9 +2,10 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const logger = require('../config/logger');
 
+const redisClient = require('../config/redisClient');
+const CACHE_KEY = 'customers:list';
+
 const customerController = {
-    // Helper to generate Customer Code (Deprecated - Using Manual Username)
-    // generateCustomerCode: async () => { ... } 
 
     createCustomer: async (req, res) => {
         try {
@@ -42,9 +43,11 @@ const customerController = {
                 }
             });
 
-            // Invalidate Cache? Customer list might not be cached yet, but good practice if we add it.
-            // To be safe, we can trigger cache clearing if we had it.
-            // Currently only employee list is cached in Redis code shown previously.
+            // Invalidate Cache
+            const keys = await redisClient.keys('customers:list:*');
+            if (keys.length > 0) {
+                await redisClient.del(keys);
+            }
 
             logger.info(`[CreateCustomer] Success. ID: ${newCustomer.id}`);
             return res.status(200).json({
@@ -61,25 +64,46 @@ const customerController = {
 
     getCustomers: async (req, res) => {
         try {
-            const { page = 1, limit = 10, search } = req.query;
+            const { page = 1, limit = 20, search = '', status, saleId } = req.query;
             const skip = (parseInt(page) - 1) * parseInt(limit);
 
-            const where = { type: 'CUSTOMER' };
+            const where = {
+                type: 'CUSTOMER',
+            };
+
             if (search) {
                 where.OR = [
-                    { customerCode: { contains: search, mode: 'insensitive' } },
+                    { username: { contains: search, mode: 'insensitive' } },
                     { fullName: { contains: search, mode: 'insensitive' } },
                     { phone: { contains: search, mode: 'insensitive' } }
                 ];
             }
 
+            if (status) {
+                if (status === 'active') where.isActive = true;
+                if (status === 'inactive') where.isActive = false;
+            }
+
+            if (saleId) {
+                where.saleId = parseInt(saleId);
+            }
+
             const [customers, total] = await prisma.$transaction([
                 prisma.user.findMany({
                     where,
-                    skip,
+                    skip: parseInt(skip),
                     take: parseInt(limit),
-                    orderBy: { createdAt: 'desc' },
-                    include: {
+                    orderBy: {
+                        createdAt: 'desc',
+                    },
+                    select: {
+                        id: true,
+                        username: true,
+                        fullName: true,
+                        phone: true,
+                        address: true,
+                        isActive: true,
+                        saleId: true,
                         sale: {
                             select: { fullName: true } // Include Sale name
                         }
@@ -88,15 +112,23 @@ const customerController = {
                 prisma.user.count({ where })
             ]);
 
+            const responseData = {
+                customers,
+                total,
+                page: parseInt(page),
+                totalPages: Math.ceil(total / parseInt(limit))
+            };
+
+            // 2. Set Cache (disabled for dynamic search for now or update logic)
+            // For simple searches we might cache, but for filters it's complex. 
+            // Let's skip cache for search/filter queries for simplicity or add efficient keys.
+            // Current key: const cacheKey = `customers:list:${page}:${limit}:${search || 'all'}`;
+            // We should extend cache key if we want to support caching with filters, or just return directly.
+
             return res.status(200).json({
                 code: 200,
                 message: "Success",
-                data: {
-                    customers,
-                    total,
-                    page: parseInt(page),
-                    totalPages: Math.ceil(total / parseInt(limit))
-                }
+                data: responseData
             });
 
         } catch (error) {
@@ -133,6 +165,14 @@ const customerController = {
                 data: updateData
             });
 
+            // Invalidate Cache
+            const keys = await redisClient.keys('customers:list:*');
+            if (keys.length > 0) {
+                await redisClient.del(keys);
+            }
+            // Invalidate User Status Cache
+            await redisClient.del(`user:status:${id}`);
+
             return res.status(200).json({
                 code: 200,
                 message: "Success",
@@ -149,12 +189,97 @@ const customerController = {
         try {
             const { id } = req.params;
             await prisma.user.delete({ where: { id: parseInt(id) } });
+
+            // Invalidate Cache
+            const keys = await redisClient.keys('customers:list:*');
+            if (keys.length > 0) {
+                await redisClient.del(keys);
+            }
+            // Invalidate User Status Cache
+            await redisClient.del(`user:status:${id}`);
+
             return res.status(200).json({
                 code: 200,
                 message: "Delete Success"
             });
         } catch (error) {
             logger.error(`[DeleteCustomer] Error: ${error.message}`);
+            return res.status(500).json({ code: 99500, message: "Internal Server Error" });
+        }
+    },
+
+    resetPassword: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const customerId = parseInt(id);
+            const { role } = req.user;
+            const bcrypt = require('bcryptjs');
+
+            const customer = await prisma.user.findUnique({
+                where: { id: customerId, type: 'CUSTOMER' }
+            });
+
+            if (!customer) {
+                return res.status(404).json({ code: 99006, message: 'Khách hàng không tồn tại' });
+            }
+
+            if (role !== 'ADMIN') {
+                // ADMIN or SALE (if assigned)
+                if (role === 'SALE' && customer.saleId !== req.user.userId) {
+                    return res.status(403).json({ code: 99008, message: 'Không có quyền' });
+                }
+                if (role !== 'SALE' && role !== 'ADMIN') {
+                    return res.status(403).json({ code: 99008, message: 'Không có quyền' });
+                }
+            }
+
+            const newPassword = '123';
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+            await prisma.user.update({
+                where: { id: customerId },
+                data: { password: hashedPassword }
+            });
+
+            // Invalidate Status Cache
+            await redisClient.del(`user:status:${customerId}`);
+
+            logger.info(`[CustomerResetPassword] By ${req.user.username} for CustomerID: ${id}`);
+
+            res.json({
+                code: 200,
+                message: 'Reset mật khẩu thành công',
+                data: { newPassword }
+            });
+        } catch (error) {
+            logger.error('Customer Reset Password Error:', error);
+            res.status(500).json({ code: 99500, message: 'Lỗi server' });
+        }
+    },
+
+    getAllCustomersForExport: async (req, res) => {
+        try {
+            // No pagination, just simple list for export
+            // Fetch relevant fields only
+            const customers = await prisma.user.findMany({
+                where: { type: 'CUSTOMER' },
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    username: true,
+                    fullName: true,
+                    phone: true,
+                    address: true,
+                    isActive: true
+                }
+            });
+
+            return res.status(200).json({
+                code: 200,
+                message: "Success",
+                data: customers
+            });
+        } catch (error) {
+            logger.error(`[GetAllCustomersForExport] Error: ${error.message}`);
             return res.status(500).json({ code: 99500, message: "Internal Server Error" });
         }
     }

@@ -31,7 +31,16 @@
         "cancel": "取消",
         "confirmDelete": "您确定要删除吗？",
         "action": "操作",
-        "pleaseLoginAgain": "请重新登录"
+        "pleaseLoginAgain": "请重新登录",
+        "items_per_page": "条/页",
+        "pagination_range": "{{range0}}-{{range1}} / {{total}}",
+        "confirmResetPassword": "您确定要将密码重置为默认值吗？",
+        "view": "查看详情",
+        "searchPlaceholder": "搜索用户名，姓名，电话号码",
+        "search": "搜索",
+        "clear": "清除",
+        "delete": "删除",
+        "edit": "编辑"
     },
     "validation": {
         "required": "此项必填！",
@@ -66,7 +75,10 @@
         "inactive": "锁定",
         "createSuccess": "员工创建成功！",
         "updateSuccess": "员工更新成功！",
-        "deleteSuccess": "员工删除成功！"
+        "deleteSuccess": "员工删除成功！",
+        "resetPassword": "重置密码",
+        "resetPasswordSuccess": "重置成功！新密码是：{{password}}",
+        "searchPlaceholder": "搜索用户名，姓名，电子邮箱，电话号码"
     },
     "customer": {
         "title": "客户管理",
@@ -81,6 +93,10 @@
         "createSuccess": "客户创建成功！",
         "updateSuccess": "客户更新成功！",
         "deleteSuccess": "客户删除成功！",
+        "resetPassword": "重置密码",
+        "resetPasswordSuccess": "重置成功！新密码是：{{password}}",
+        "export": "导出 Excel",
+        "exportSuccess": "导出 Excel 成功！",
         "active": "活跃",
         "inactive": "不活跃"
     },
@@ -92,7 +108,8 @@
         "KE_TOAN": "会计",
         "DIEU_VAN": "调度",
         "KHO_VN": "越南仓库",
-        "CHUNG_TU": "单证"
+        "CHUNG_TU": "单证",
+        "CUSTOMER": "客户"
     },
     "dashboard": {
         "welcome": "欢迎使用仓库管理系统。"
@@ -102,8 +119,11 @@
         "99002": "用户名或密码错误",
         "99003": "未找到令牌",
         "99004": "令牌无效或已过期",
+        "99005": "用户名已存在",
+        "99006": "数据不存在",
         "99007": "账户已被禁用。请联系管理员。",
-        "99008": "您没有权限执行此功能",
+        "99008": "您没有权限执行此操作",
+        "99009": "无效的操作",
         "99500": "系统错误 (Server Error)",
         "UNKNOWN": "未知错误"
     }

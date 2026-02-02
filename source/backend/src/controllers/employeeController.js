@@ -9,10 +9,13 @@ const CACHE_KEY = 'employees:list';
 // GET /api/employees
 const getAllEmployees = async (req, res) => {
     try {
-        logger.info(`[GetEmployees] Request by ${req.user.username}`);
+        const { page = 1, limit = 10, search, status, role } = req.query;
+        logger.info(`[GetEmployees] Request by ${req.user.username} - Page: ${page}, Limit: ${limit}, Search: ${search}, Status: ${status}, Role: ${role}`);
+
+        const cacheKey = `employees:list:${page}:${limit}:${search || 'all'}:${status || 'all'}:${role || 'all'}`;
 
         // 1. Check Cache
-        const cachedData = await redisClient.get(CACHE_KEY);
+        const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
             logger.info('[GetEmployees] Cache Hit');
             return res.json({
@@ -24,29 +27,62 @@ const getAllEmployees = async (req, res) => {
 
         logger.info('[GetEmployees] Cache Miss. Querying DB...');
 
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const where = { type: 'EMPLOYEE' };
+
+        if (search) {
+            where.OR = [
+                { username: { contains: search, mode: 'insensitive' } },
+                { fullName: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+                { phone: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        if (req.query.status) {
+            if (req.query.status === 'active') where.isActive = true;
+            if (req.query.status === 'inactive') where.isActive = false;
+        }
+
+        if (req.query.role) {
+            where.role = req.query.role;
+        }
+
         // 2. Query DB
-        const employees = await prisma.user.findMany({
-            where: { type: 'EMPLOYEE' },
-            select: {
-                id: true,
-                username: true,
-                fullName: true,
-                email: true,
-                phone: true,
-                role: true,
-                isActive: true,
-                createdAt: true
-            },
-            orderBy: { createdAt: 'desc' }
-        });
+        const [employees, total] = await prisma.$transaction([
+            prisma.user.findMany({
+                where,
+                skip,
+                take: parseInt(limit),
+                select: {
+                    id: true,
+                    username: true,
+                    fullName: true,
+                    email: true,
+                    phone: true,
+                    role: true,
+                    isActive: true,
+                    createdAt: true
+                },
+                orderBy: { createdAt: 'desc' }
+            }),
+            prisma.user.count({ where })
+        ]);
+
+        const responseData = {
+            employees,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        };
 
         // 3. Set Cache (Expire after 1 hour)
-        await redisClient.setEx(CACHE_KEY, 3600, JSON.stringify(employees));
+        await redisClient.setEx(cacheKey, 3600, JSON.stringify(responseData));
 
         res.json({
             code: 200,
             message: 'Success',
-            data: employees
+            data: responseData
         });
 
     } catch (error) {
@@ -87,7 +123,10 @@ const createEmployee = async (req, res) => {
         });
 
         // Invalidate Cache
-        await redisClient.del(CACHE_KEY);
+        const keys = await redisClient.keys('employees:list:*');
+        if (keys.length > 0) {
+            await redisClient.del(keys);
+        }
 
         logger.info(`[CreateEmployee] Success. New ID: ${newEmployee.id}`);
 
@@ -126,7 +165,12 @@ const updateEmployee = async (req, res) => {
         });
 
         // Invalidate Cache
-        await redisClient.del(CACHE_KEY);
+        const keys = await redisClient.keys('employees:list:*');
+        if (keys.length > 0) {
+            await redisClient.del(keys);
+        }
+        // Invalidate User Status Cache
+        await redisClient.del(`user:status:${empId}`);
 
         logger.info(`[UpdateEmployee] Success for ID: ${id}`);
 
@@ -148,7 +192,7 @@ const deleteEmployee = async (req, res) => {
         logger.info(`[DeleteEmployee] Request by ${req.user.username}. TargetID: ${id}`);
 
         if (empId === req.user.userId) {
-            return res.status(400).json({ code: 99006, message: 'Không thể tự xóa chính mình' });
+            return res.status(400).json({ code: 99009, message: 'Không thể tự xóa chính mình' });
         }
 
         await prisma.user.delete({
@@ -156,7 +200,12 @@ const deleteEmployee = async (req, res) => {
         });
 
         // Invalidate Cache
-        await redisClient.del(CACHE_KEY);
+        const keys = await redisClient.keys('employees:list:*');
+        if (keys.length > 0) {
+            await redisClient.del(keys);
+        }
+        // Invalidate User Status Cache
+        await redisClient.del(`user:status:${empId}`);
 
         logger.info(`[DeleteEmployee] Success. ID: ${id} deleted`);
 
@@ -170,4 +219,35 @@ const deleteEmployee = async (req, res) => {
     }
 };
 
-module.exports = { getAllEmployees, createEmployee, updateEmployee, deleteEmployee };
+// POST /api/employees/:id/reset-password
+const resetPassword = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const empId = parseInt(id);
+        logger.info(`[ResetPassword] Request by ${req.user.username}. TargetID: ${id}`);
+
+        const newPassword = '123';
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await prisma.user.update({
+            where: { id: empId },
+            data: { password: hashedPassword }
+        });
+
+        // Invalidate User Status Cache (Though not strictly needed for password reset, good hygiene)
+        // await redisClient.del(`user:status:${empId}`); 
+
+        logger.info(`[ResetPassword] Success for ID: ${id}`);
+
+        res.json({
+            code: 200,
+            message: 'Reset mật khẩu thành công',
+            data: { newPassword }
+        });
+    } catch (error) {
+        logger.error('Reset Password Error:', error);
+        res.status(500).json({ code: 99500, message: 'Lỗi server' });
+    }
+};
+
+module.exports = { getAllEmployees, createEmployee, updateEmployee, deleteEmployee, resetPassword };

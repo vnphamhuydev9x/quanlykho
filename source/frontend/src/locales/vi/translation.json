@@ -29,7 +29,17 @@
     "common": {
         "save": "Lưu lại",
         "cancel": "Hủy",
-        "action": "Hành động"
+        "confirmDelete": "Bạn có chắc chắn muốn xóa không?",
+        "action": "Hành động",
+        "items_per_page": "bản ghi/ trang",
+        "pagination_range": "{{range0}}-{{range1}} / {{total}}",
+        "confirmResetPassword": "Bạn có chắc muốn reset mật khẩu về mặc định?",
+        "view": "Xem chi tiết",
+        "searchPlaceholder": "Tìm theo Tên đăng nhập, Họ và tên, Số điện thoại",
+        "search": "Tìm kiếm",
+        "clear": "Xóa lọc",
+        "delete": "Xóa",
+        "edit": "Sửa"
     },
     "validation": {
         "required": "Trường này là bắt buộc!",
@@ -64,7 +74,10 @@
         "inactive": "Bị khóa",
         "createSuccess": "Tạo nhân viên thành công!",
         "updateSuccess": "Cập nhật nhân viên thành công!",
-        "deleteSuccess": "Xóa nhân viên thành công!"
+        "deleteSuccess": "Xóa nhân viên thành công!",
+        "resetPassword": "Reset Mật khẩu",
+        "resetPasswordSuccess": "Reset thành công! Mật khẩu mới là: {{password}}",
+        "searchPlaceholder": "Tìm theo Tên đăng nhập, Họ và tên, Email, Số điện thoại"
     },
     "customer": {
         "title": "Quản lý khách hàng",
@@ -79,6 +92,10 @@
         "createSuccess": "Tạo khách hàng thành công!",
         "updateSuccess": "Cập nhật khách hàng thành công!",
         "deleteSuccess": "Xóa khách hàng thành công!",
+        "resetPassword": "Reset Mật khẩu",
+        "resetPasswordSuccess": "Reset thành công! Mật khẩu mới là: {{password}}",
+        "export": "Xuất Excel",
+        "exportSuccess": "Xuất Excel thành công!",
         "active": "Hoạt động",
         "inactive": "Ngừng hoạt động"
     },
@@ -90,7 +107,8 @@
         "KE_TOAN": "Kế toán",
         "DIEU_VAN": "Điều vận",
         "KHO_VN": "Kho Việt Nam",
-        "CHUNG_TU": "Chứng từ"
+        "CHUNG_TU": "Chứng từ",
+        "CUSTOMER": "Khách hàng"
     },
     "dashboard": {
         "welcome": "Chào mừng bạn đến với hệ thống Quản lý kho."
@@ -100,8 +118,11 @@
         "99002": "Sai tài khoản hoặc mật khẩu",
         "99003": "Không tìm thấy Token",
         "99004": "Token không hợp lệ hoặc hết hạn",
+        "99005": "Tên đăng nhập đã tồn tại",
+        "99006": "Dữ liệu không tồn tại",
         "99007": "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
-        "99008": "Bạn không có quyền thực hiện chức năng này",
+        "99008": "Bạn không có quyền thực hiện thao tác này",
+        "99009": "Hành động không hợp lệ",
         "99500": "Lỗi hệ thống (Server Error)",
         "UNKNOWN": "Lỗi không xác định"
     }

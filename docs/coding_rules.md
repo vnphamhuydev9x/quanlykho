@@ -150,3 +150,39 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
 *   **Import/Require**: Giữ style nhất quán trong cùng 1 file.
     *   Ví dụ: Nếu đã dùng `const variable = require(...)` thì áp dụng cho tất cả.
     *   **TRÁNH** việc `require` trực tiếp trong hàm sử dụng (Inline require) trừ khi có lý do đặc biệt (Lazy load).
+
+## 11. API Pagination & Search Standard
+### Backend (Request)
+*   **Method**: GET
+*   **Params**:
+    *   `page`: int (Default: 1)
+    *   `limit`: int (Default: 10 or 20)
+    *   `search`: string (Optional, search multiple fields with OR logic)
+
+### Backend (Response)
+*   Format `data`:
+    ```json
+    {
+      "code": 200,
+      "message": "Success",
+      "data": {
+        "items": [...], // Array (employees, customers...)
+        "total": 100,    // Total records
+        "page": 1,       // Current page
+        "totalPages": 5  // Total pages
+      }
+    }
+    ```
+
+### Frontend (Implementation)
+*   Use Ant Design `Table` with server-side pagination.
+*   **Display Text**: Must be localized (e.g., "1-20 / 25").
+*   **Page Size**: Allow options `[20, 30, 40, 50]`.
+*   **Search**: Auto-reset to `page=1` on new search.
+
+## 12. Localization (Đa ngôn ngữ)
+*   **Missing Key Rule**:
+    *   **TUYỆT ĐỐI** không được để thiếu key giữa các file ngôn ngữ (Ví dụ: `vi` có key `common.delete` thì `zh` và `en` cũng PHẢI có).
+    *   **Checklist**: Trước khi commit code liên quan đến translation, phải rà soát so sánh cả 2 file `translation.json`.
+*   **Placeholder**:
+    *   Nội dung placeholder phải khớp với thứ tự các cột hoặc trường dữ liệu hiển thị trên UI.

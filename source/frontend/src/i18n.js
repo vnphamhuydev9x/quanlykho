@@ -20,7 +20,7 @@ i18n
     .init({
         resources,
         fallbackLng: 'vi',
-        debug: true,
+        debug: false,
         interpolation: {
             escapeValue: false, // React already safe from XSS
         },

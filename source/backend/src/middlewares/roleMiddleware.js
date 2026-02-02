@@ -21,7 +21,7 @@ const authorize = (allowedRoles = []) => {
             logger.warn(`[RBAC] Access Denied. User: ${req.user.username}, Role: ${userRole}. Required: ${allowedRoles.join(', ')}`);
             return res.status(403).json({
                 code: 99008, // Forbidden
-                message: 'Bạn không có quyền thực hiện chức năng này'
+                message: 'Bạn không có quyền thực hiện thao tác này'
             });
         }
     };

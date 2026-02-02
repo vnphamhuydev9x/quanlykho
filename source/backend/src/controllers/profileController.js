@@ -31,6 +31,10 @@ const getProfile = async (req, res) => {
             });
         }
 
+        if (profile.type === 'CUSTOMER') {
+            delete profile.role;
+        }
+
         res.json({
             code: 200,
             message: 'Lấy thông tin thành công',
@@ -47,8 +51,16 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
-        const { userId } = req.user;
+        const { userId, type } = req.user;
         const { fullName, email, phone, address } = req.body; // Allow address update
+
+        // Customers are NOT allowed to update profile info, only password
+        if (type === 'CUSTOMER') {
+            return res.status(403).json({
+                code: 99008,
+                message: 'Bạn không có quyền thực hiện thao tác này.'
+            });
+        }
 
         // Prevent updating sensitive fields like role, type, isActive, username here
 

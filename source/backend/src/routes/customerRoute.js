@@ -11,4 +11,10 @@ router.post('/', authenticateToken, authorize(['ADMIN']), customerController.cre
 router.put('/:id', authenticateToken, authorize(['ADMIN']), customerController.updateCustomer);
 router.delete('/:id', authenticateToken, authorize(['ADMIN']), customerController.deleteCustomer);
 
+// Allow ADMIN and SALE (middleware handles generic role check, controller handles specific ownership)
+router.post('/:id/reset-password', authenticateToken, authorize(['ADMIN', 'SALE']), customerController.resetPassword);
+
+// Export Data (JSON) for Client-side Excel generation (ADMIN only)
+router.get('/export-data', authenticateToken, authorize(['ADMIN']), customerController.getAllCustomersForExport);
+
 module.exports = router;

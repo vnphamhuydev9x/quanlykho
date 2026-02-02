@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Descriptions, Button, Modal, Form, Input, message, Spin, Typography } from 'antd';
+import { Card, Descriptions, Button, Modal, Form, Input, message, Spin, Typography, Space } from 'antd';
 import { UserOutlined, EditOutlined, KeyOutlined, SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -78,35 +78,51 @@ const Profile = () => {
     return (
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
             <Card
-                title={<Title level={4}><UserOutlined /> {t('profile.title')}</Title>}
-                extra={
-                    <>
-                        <Button
-                            type="primary"
-                            icon={<EditOutlined />}
-                            onClick={() => {
-                                form.setFieldsValue(user);
-                                setIsEditModalVisible(true);
-                            }}
-                            style={{ marginRight: 8 }}
-                        >
-                            {t('profile.edit')}
-                        </Button>
-                        <Button
-                            icon={<KeyOutlined />}
-                            onClick={() => setIsPasswordModalVisible(true)}
-                        >
-                            {t('profile.changePassword')}
-                        </Button>
-                    </>
+                title={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                            <UserOutlined /> {t('profile.title')}
+                        </span>
+                        <Space>
+                            {user?.type !== 'CUSTOMER' && (
+                                <Button
+                                    type="primary"
+                                    icon={<EditOutlined />}
+                                    onClick={() => {
+                                        form.setFieldsValue(user);
+                                        setIsEditModalVisible(true);
+                                    }}
+                                >
+                                    {t('profile.edit')}
+                                </Button>
+                            )}
+                            <Button
+                                icon={<KeyOutlined />}
+                                onClick={() => setIsPasswordModalVisible(true)}
+                            >
+                                {t('profile.changePassword')}
+                            </Button>
+                        </Space>
+                    </div>
                 }
+                extra={null}
             >
                 <Descriptions bordered column={1}>
                     <Descriptions.Item label={t('profile.username')}>{user?.username}</Descriptions.Item>
                     <Descriptions.Item label={t('profile.fullName')}>{user?.fullName || '-'}</Descriptions.Item>
-                    <Descriptions.Item label={t('profile.email')}>{user?.email || '-'}</Descriptions.Item>
+
+                    {/* Email is not collected for Customers */}
+                    {user?.type !== 'CUSTOMER' && (
+                        <Descriptions.Item label={t('profile.email')}>{user?.email || '-'}</Descriptions.Item>
+                    )}
+
                     <Descriptions.Item label={t('profile.phone')}>{user?.phone || '-'}</Descriptions.Item>
-                    <Descriptions.Item label={t('profile.role')}>{user?.role}</Descriptions.Item>
+
+                    {/* Address is hidden as requested */}
+
+                    <Descriptions.Item label={t('profile.role')}>
+                        {user?.type === 'CUSTOMER' ? t('roles.CUSTOMER') : user?.role}
+                    </Descriptions.Item>
                 </Descriptions>
             </Card>
 
@@ -123,14 +139,24 @@ const Profile = () => {
                     onFinish={handleUpdateProfile}
                 >
                     <Form.Item name="fullName" label={t('profile.fullName')}>
-                        <Input disabled={user?.role !== 'ADMIN'} />
-                    </Form.Item>
-                    <Form.Item name="email" label={t('profile.email')} rules={[{ type: 'email' }]}>
                         <Input />
                     </Form.Item>
+
+                    {user?.type !== 'CUSTOMER' && (
+                        <Form.Item name="email" label={t('profile.email')} rules={[{ type: 'email' }]}>
+                            <Input />
+                        </Form.Item>
+                    )}
+
                     <Form.Item name="phone" label={t('profile.phone')}>
                         <Input />
                     </Form.Item>
+
+                    {user?.type === 'CUSTOMER' && (
+                        <Form.Item name="address" label={t('profile.address')}>
+                            <Input />
+                        </Form.Item>
+                    )}
                     <Form.Item>
                         <Button type="primary" htmlType="submit" icon={<SaveOutlined />} block>
                             {t('common.save')}

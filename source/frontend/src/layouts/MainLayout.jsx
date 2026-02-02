@@ -124,8 +124,8 @@ const MainLayout = ({ children }) => {
             label: t('menu.customers'),
             onClick: () => navigate('/customers'),
         },
-        // Only Show Settings for ADMIN
-        userRole === 'ADMIN' && {
+        // Show Settings for everyone to test permission
+        {
             key: 'settings',
             icon: <SettingOutlined />,
             label: t('menu.settings'),
@@ -191,8 +191,7 @@ const MainLayout = ({ children }) => {
                 placement="left"
                 onClose={onClose}
                 open={drawerVisible}
-                styles={{ body: { padding: 0 } }}
-                width={250}
+                styles={{ body: { padding: 0 }, content: { width: 250 } }}
             >
                 <div style={{
                     height: 64,

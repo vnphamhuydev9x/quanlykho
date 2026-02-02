@@ -8,53 +8,61 @@ const prisma = new PrismaClient();
 const login = async (req, res) => {
     try {
         const { username, password } = req.body;
-        logger.info(`[Login] Request for user: ${username}`);
+        logger.info(`[Login] Request for: ${username}`);
 
         if (!username || !password) {
             return res.status(400).json({
-                code: 99001, // Missing Input
+                code: 99001,
                 message: 'Vui lòng nhập tên đăng nhập và mật khẩu'
             });
         }
 
-        // Find user
+        // 1. Find User
         const user = await prisma.user.findUnique({
             where: { username },
         });
 
         if (!user) {
             return res.status(401).json({
-                code: 99002, // Invalid Credentials
+                code: 99002,
                 message: 'Sai tài khoản hoặc mật khẩu'
             });
         }
 
+        // 2. Check Active
         if (!user.isActive) {
-            logger.warn(`Login failed: User ${username} is inactive`);
+            logger.warn(`Login failed: Account ${username} is inactive`);
             return res.status(403).json({
-                code: 99007, // Account Inactive
-                message: 'Account is inactive'
+                code: 99007,
+                message: 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.'
             });
         }
 
-        // Check password
+        // 3. Check Password
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            logger.warn(`Login failed: Invalid password for user ${username}`);
             return res.status(401).json({
-                code: 99002, // Invalid Credentials
+                code: 99002,
                 message: 'Sai tài khoản hoặc mật khẩu'
             });
         }
 
-        // Generate Token
+        // 4. Generate Token
+        const payload = {
+            userId: user.id,
+            username: user.username,
+            role: user.role,
+            type: user.type
+        };
+
         const token = jwt.sign(
-            { userId: user.id, username: user.username, role: user.role, mustChangePassword: user.mustChangePassword },
+            payload,
             process.env.JWT_SECRET || 'secret',
             { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
         );
 
-        logger.info(`User logged in: ${username}`);
+        logger.info(`User logged in: ${username} (${user.role})`);
+
         res.json({
             code: 200,
             message: 'Đăng nhập thành công',
@@ -62,19 +70,19 @@ const login = async (req, res) => {
             user: {
                 id: user.id,
                 username: user.username,
+                fullName: user.fullName,
                 role: user.role,
-                mustChangePassword: user.mustChangePassword
+                type: user.type
             },
         });
+
     } catch (error) {
         logger.error('Login Error:', error);
         res.status(500).json({
-            code: 99500, // Server Error
+            code: 99500,
             message: 'Lỗi server'
         });
     }
 };
-
-
 
 module.exports = { login };

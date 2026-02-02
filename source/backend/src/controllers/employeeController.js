@@ -23,8 +23,10 @@ const getAllEmployees = async (req, res) => {
         }
 
         logger.info('[GetEmployees] Cache Miss. Querying DB...');
+
         // 2. Query DB
         const employees = await prisma.user.findMany({
+            where: { type: 'EMPLOYEE' },
             select: {
                 id: true,
                 username: true,
@@ -33,8 +35,7 @@ const getAllEmployees = async (req, res) => {
                 phone: true,
                 role: true,
                 isActive: true,
-                createdAt: true,
-                updatedAt: true
+                createdAt: true
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -58,21 +59,21 @@ const getAllEmployees = async (req, res) => {
 const createEmployee = async (req, res) => {
     try {
         const { username, password, fullName, email, phone, role, isActive } = req.body;
-        logger.info(`[CreateEmployee] Request by ${req.user.username}. Target: ${username}, Role: ${role}`);
+        logger.info(`[CreateEmployee] Request by ${req.user.username}. Target: ${username}`);
 
         if (!username || !password || !role) {
-            logger.warn(`[CreateEmployee] Failed: Missing fields for ${username}`);
             return res.status(400).json({ code: 99001, message: 'Thiếu thông tin bắt buộc' });
         }
 
-        const existingUser = await prisma.user.findUnique({ where: { username } });
-        if (existingUser) {
-            logger.warn(`[CreateEmployee] Failed: Username ${username} already exists`);
+        // Check if username exists
+        const existing = await prisma.user.findUnique({ where: { username } });
+        if (existing) {
             return res.status(400).json({ code: 99005, message: 'Tên đăng nhập đã tồn tại' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await prisma.user.create({
+
+        const newEmployee = await prisma.user.create({
             data: {
                 username,
                 password: hashedPassword,
@@ -80,19 +81,24 @@ const createEmployee = async (req, res) => {
                 email,
                 phone,
                 role,
+                type: 'EMPLOYEE',
                 isActive: isActive !== undefined ? isActive : true
             }
         });
 
-        // 4. Invalidate Cache
+        // Invalidate Cache
         await redisClient.del(CACHE_KEY);
 
-        logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
+        logger.info(`[CreateEmployee] Success. New ID: ${newEmployee.id}`);
 
         res.json({
             code: 200,
             message: 'Tạo nhân viên thành công',
-            data: newUser
+            data: {
+                id: newEmployee.id,
+                username: newEmployee.username,
+                fullName: newEmployee.fullName
+            }
         });
     } catch (error) {
         logger.error('Create Employee Error:', error);
@@ -104,32 +110,29 @@ const createEmployee = async (req, res) => {
 const updateEmployee = async (req, res) => {
     try {
         const { id } = req.params;
+        const empId = parseInt(id);
         const { fullName, email, phone, role, password, isActive } = req.body;
         logger.info(`[UpdateEmployee] Request by ${req.user.username}. TargetID: ${id}`);
 
         const updateData = { fullName, email, phone, role };
-
         if (isActive !== undefined) updateData.isActive = isActive;
-
-        // If password is provided, hash it
         if (password) {
             updateData.password = await bcrypt.hash(password, 10);
         }
 
-        const updatedUser = await prisma.user.update({
-            where: { id: parseInt(id) },
+        await prisma.user.update({
+            where: { id: empId },
             data: updateData
         });
 
-        // 4. Invalidate Cache
+        // Invalidate Cache
         await redisClient.del(CACHE_KEY);
 
         logger.info(`[UpdateEmployee] Success for ID: ${id}`);
 
         res.json({
             code: 200,
-            message: 'Cập nhật thành công',
-            data: updatedUser
+            message: 'Cập nhật thành công'
         });
     } catch (error) {
         logger.error('Update Employee Error:', error);
@@ -141,19 +144,18 @@ const updateEmployee = async (req, res) => {
 const deleteEmployee = async (req, res) => {
     try {
         const { id } = req.params;
+        const empId = parseInt(id);
         logger.info(`[DeleteEmployee] Request by ${req.user.username}. TargetID: ${id}`);
 
-        // Prevent deleting self (Optional check)
-        if (parseInt(id) === req.user.userId) {
-            logger.warn(`[DeleteEmployee] Failed: User ${req.user.username} tried to delete self`);
+        if (empId === req.user.userId) {
             return res.status(400).json({ code: 99006, message: 'Không thể tự xóa chính mình' });
         }
 
         await prisma.user.delete({
-            where: { id: parseInt(id) }
+            where: { id: empId }
         });
 
-        // 4. Invalidate Cache
+        // Invalidate Cache
         await redisClient.del(CACHE_KEY);
 
         logger.info(`[DeleteEmployee] Success. ID: ${id} deleted`);

@@ -1,6 +1,17 @@
 # Coding Rules & Best Practices
 
-## 1. API Error Handling & Multi-language (I18n)
+## 0. QUAN TRỌNG NHẤT (CRITICAL RULES)
+*   **Ngôn ngữ (Language)**:
+    *   **Giao tiếp**: Luôn sử dụng **Tiếng Việt**.
+    *   **Tài liệu**: Các file kế hoạch (`implementation_plan.md`, `task.md`) **BẮT BUỘC** viết bằng **Tiếng Việt**.
+    *   **Code**: Comment và Log có thể dùng Tiếng Việt hoặc Tiếng Anh (Ưu tiên Tiếng Anh cho code, Tiếng Việt cho log nghiệp vụ).
+
+## 1. Environment & Setup
+*   **OS**: Windows.
+*   **Shell**: PowerShell (`pwsh`).
+*   **Browsing**: Ưu tiên sử dụng `browser_subagent` để tra cứu tài liệu mới nhất.
+
+## 2. API Error Handling & Multi-language (I18n)
 
 ### Quy tắc
 Backend **KHÔNG** trả về message string hardcode bằng tiếng Việt hay tiếng Trung. Backend chỉ trả về **Business Error Code**. Frontend sẽ chịu trách nhiệm mapping code này ra ngôn ngữ tương ứng.
@@ -121,3 +132,21 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
 - [ ] **Modal/Drawer**:
     *   Modal trên Mobile nên set `width: 90%` hoặc `100%`.
     *   Menu bên trái (Sidebar) trên PC -> Chuyển thành Drawer (Menu ẩn) trên Mobile.
+
+---
+
+## 8. Communication Rules (Quy tắc giao tiếp)
+*   **Language**: Luôn trả lời và giao tiếp bằng **Tiếng Việt** (Vietnamese) trong mọi tình huống (trừ khi viết code hoặc tên biến tiếng Anh).
+*   **Plan**: Các file kế hoạch (`implementation_plan.md`) phải được viết hoàn toàn bằng **Tiếng Việt**.
+
+
+## 9. Standardized UI Design Rules (Quy chuẩn giao diện)
+*   **Status Fields (Trạng thái)**:
+    *   Sử dụng component `Switch` (Thanh gạt) cho các trường trạng thái 2 giá trị (Active/Inactive, On/Off).
+    *   **KHÔNG** sử dụng Dropdown/Select cho trường hợp này.
+    *   Logic: `checked` = Active/True, `unchecked` = Inactive/False.
+
+## 10. Code Style Consistency (Quy chuẩn Coding Style)
+*   **Import/Require**: Giữ style nhất quán trong cùng 1 file.
+    *   Ví dụ: Nếu đã dùng `const variable = require(...)` thì áp dụng cho tất cả.
+    *   **TRÁNH** việc `require` trực tiếp trong hàm sử dụng (Inline require) trừ khi có lý do đặc biệt (Lazy load).

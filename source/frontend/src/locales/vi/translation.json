@@ -9,7 +9,8 @@
         "warehouse": "Kho hàng",
         "employees": "Nhân viên",
         "profile": "Hồ sơ",
-        "logout": "Đăng xuất"
+        "logout": "Đăng xuất",
+        "customers": "Khách hàng"
     },
     "header": {
         "language": "Tiếng Việt"
@@ -27,7 +28,8 @@
     },
     "common": {
         "save": "Lưu lại",
-        "cancel": "Hủy"
+        "cancel": "Hủy",
+        "action": "Hành động"
     },
     "validation": {
         "required": "Trường này là bắt buộc!",
@@ -64,6 +66,22 @@
         "updateSuccess": "Cập nhật nhân viên thành công!",
         "deleteSuccess": "Xóa nhân viên thành công!"
     },
+    "customer": {
+        "title": "Quản lý khách hàng",
+        "add": "Thêm khách hàng",
+        "edit": "Sửa khách hàng",
+        "customerCode": "Mã khách hàng",
+        "fullName": "Họ và tên",
+        "phone": "Số điện thoại",
+        "address": "Địa chỉ",
+        "sale": "Nhân viên Sale",
+        "status": "Trạng thái",
+        "createSuccess": "Tạo khách hàng thành công!",
+        "updateSuccess": "Cập nhật khách hàng thành công!",
+        "deleteSuccess": "Xóa khách hàng thành công!",
+        "active": "Hoạt động",
+        "inactive": "Ngừng hoạt động"
+    },
     "roles": {
         "ADMIN": "Quản trị viên",
         "USER": "Người dùng",
@@ -83,6 +101,7 @@
         "99003": "Không tìm thấy Token",
         "99004": "Token không hợp lệ hoặc hết hạn",
         "99007": "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
+        "99008": "Bạn không có quyền thực hiện chức năng này",
         "99500": "Lỗi hệ thống (Server Error)",
         "UNKNOWN": "Lỗi không xác định"
     }

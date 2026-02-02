@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import EmployeeList from './pages/EmployeeList';
+import CustomerList from './pages/CustomerList';
 import MainLayout from './layouts/MainLayout';
 
 // Protected Route Component
@@ -46,6 +47,16 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <EmployeeList />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customers"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <CustomerList />
               </MainLayout>
             </ProtectedRoute>
           }

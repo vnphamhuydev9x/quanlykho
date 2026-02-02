@@ -22,12 +22,13 @@ Backend chạy tại cổng `3000` (mặc định).
     ```
 3.  Cấu hình Database (Lần đầu):
     ```bash
-    # Tạo bảng trong DB theo schema
-    npx prisma db push
-
-    # Tạo dữ liệu mẫu (Admin account...)
+    # Cập nhật DB (Sử dụng Migration để đảm bảo an toàn dữ liệu)
+    npx prisma migrate dev
+    
+    # Tạo dữ liệu mẫu (Admin account...) - Chỉ chạy lần đầu
     npx prisma db seed
     ```
+    *Lưu ý: Không sử dụng `db push` nữa.*
 4.  Chạy server:
     ```bash
     npm run dev
@@ -63,3 +64,30 @@ cd source/backend && npm run dev
 ```bash
 cd source/frontend && npm run dev
 ```
+
+---
+
+## 4. Quản lý Database (Go-live Strategy)
+
+Chúng ta sử dụng chiến lược **"Evolutive Database Design"** với Prisma Migrate.
+
+### A. Lần đầu Go-live (Khởi tạo)
+Khi triển khai lên môi trường mới (Production/Staging) lần đầu tiên:
+```bash
+# Lệnh này sẽ chạy toàn bộ lịch sử migration để tạo bảng
+npx prisma migrate deploy
+
+# Seed dữ liệu admin ban đầu
+npx prisma db seed
+```
+
+### B. Cập nhật tính năng mới (Các lần Go-live sau)
+Ví dụ: Thêm bảng `Customer` sau khi hệ thống đã chạy được 1 tháng.
+1.  Tại máy Dev, chạy: `npx prisma migrate dev --name <ten_thay_doi>` (như bạn đã làm).
+2.  Commit folder `prisma/migrations` lên Git.
+3.  Tại máy Server (Production), pull code về và chạy:
+    ```bash
+    npx prisma migrate deploy
+    ```
+    *Lệnh `deploy` này rất an toàn: Nó chỉ chạy những file migration mới chưa từng chạy (dựa vào bảng `_prisma_migrations`), tuyệt đối không reset DB hay mất dữ liệu cũ.*
+

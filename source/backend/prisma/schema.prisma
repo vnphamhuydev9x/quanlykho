@@ -8,18 +8,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserType {
+  EMPLOYEE
+  CUSTOMER
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   username  String   @unique
-  password  String   // Hashed password
-  fullName  String?
+  password  String
+  fullName  String
   email     String?
   phone     String?
-  role      String   @default("USER") // ADMIN, USER, WAREHOUSE_MANAGER
-  mustChangePassword Boolean @default(true)
+  role      String   @default("USER") // ADMIN, SALE, USER...
+  type      UserType @default(EMPLOYEE)
   isActive  Boolean  @default(true)
+
+  // Customer specific fields
+  customerCode String? @unique
+  address      String?
+  
+  // Relations
+  saleId       Int?
+  sale         User?   @relation("SaleCustomers", fields: [saleId], references: [id])
+  customers    User[]  @relation("SaleCustomers")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@map("users")
 }

@@ -2,18 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { getAllEmployees, createEmployee, updateEmployee, deleteEmployee } = require('../controllers/employeeController');
 const authenticateToken = require('../middlewares/authMiddleware');
+const authorize = require('../middlewares/roleMiddleware');
 
-// Middleware check Role Admin (Optional: Add specific middleware if needed)
-const requireAdmin = (req, res, next) => {
-    if (req.user.role !== 'ADMIN') {
-        return res.status(403).json({ code: 403, message: 'Không có quyền truy cập' });
-    }
-    next();
-};
-
-router.get('/', authenticateToken, requireAdmin, getAllEmployees);
-router.post('/', authenticateToken, requireAdmin, createEmployee);
-router.put('/:id', authenticateToken, requireAdmin, updateEmployee);
-router.delete('/:id', authenticateToken, requireAdmin, deleteEmployee);
+// Base path: /api/employees
+// All routes require ADMIN role
+router.get('/', authenticateToken, authorize(['ADMIN']), getAllEmployees);
+router.post('/', authenticateToken, authorize(['ADMIN']), createEmployee);
+router.put('/:id', authenticateToken, authorize(['ADMIN']), updateEmployee);
+router.delete('/:id', authenticateToken, authorize(['ADMIN']), deleteEmployee);
 
 module.exports = router;

@@ -9,7 +9,8 @@
         "warehouse": "仓库",
         "employees": "员工",
         "profile": "个人资料",
-        "logout": "注销"
+        "logout": "注销",
+        "customers": "客户"
     },
     "header": {
         "language": "中文"
@@ -67,6 +68,22 @@
         "updateSuccess": "员工更新成功！",
         "deleteSuccess": "员工删除成功！"
     },
+    "customer": {
+        "title": "客户管理",
+        "add": "添加客户",
+        "edit": "编辑客户",
+        "customerCode": "客户代码",
+        "fullName": "姓名",
+        "phone": "电话",
+        "address": "地址",
+        "sale": "销售员",
+        "status": "状态",
+        "createSuccess": "客户创建成功！",
+        "updateSuccess": "客户更新成功！",
+        "deleteSuccess": "客户删除成功！",
+        "active": "活跃",
+        "inactive": "不活跃"
+    },
     "roles": {
         "ADMIN": "管理员",
         "USER": "用户",
@@ -86,6 +103,7 @@
         "99003": "未找到令牌",
         "99004": "令牌无效或已过期",
         "99007": "账户已被禁用。请联系管理员。",
+        "99008": "您没有权限执行此功能",
         "99500": "系统错误 (Server Error)",
         "UNKNOWN": "未知错误"
     }

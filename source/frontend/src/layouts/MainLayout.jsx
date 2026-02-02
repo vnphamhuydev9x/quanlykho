@@ -9,6 +9,9 @@ import {
     GlobalOutlined,
     SettingOutlined,
     LogoutOutlined,
+    TeamOutlined, // Added TeamOutlined
+    HomeOutlined, // Added HomeOutlined
+    FileTextOutlined, // Added FileTextOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -114,6 +117,12 @@ const MainLayout = ({ children }) => {
             icon: <DashboardOutlined />,
             label: t('menu.dashboard'),
             onClick: () => navigate('/'),
+        },
+        {
+            key: '/customers',
+            icon: <TeamOutlined />,
+            label: t('menu.customers'),
+            onClick: () => navigate('/customers'),
         },
         // Only Show Settings for ADMIN
         userRole === 'ADMIN' && {

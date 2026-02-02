@@ -18,7 +18,7 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await axios.get('http://localhost:3000/api/user/profile', {
+            const response = await axios.get('http://localhost:3000/api/profile', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(response.data.data);
@@ -37,7 +37,7 @@ const Profile = () => {
     const handleUpdateProfile = async (values) => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await axios.put('http://localhost:3000/api/user/profile', values, {
+            const response = await axios.put('http://localhost:3000/api/profile', values, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(response.data.data);
@@ -57,7 +57,7 @@ const Profile = () => {
     const handleChangePassword = async (values) => {
         try {
             const token = localStorage.getItem('access_token');
-            await axios.post('http://localhost:3000/api/user/change-password', values, {
+            await axios.post('http://localhost:3000/api/profile/change-password', values, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setIsPasswordModalVisible(false);

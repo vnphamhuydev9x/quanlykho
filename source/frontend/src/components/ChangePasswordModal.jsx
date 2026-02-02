@@ -13,7 +13,7 @@ const ChangePasswordModal = ({ visible, onCancel, onSuccess, forceChange = false
     const handleChangePassword = async (values) => {
         try {
             const token = localStorage.getItem('access_token');
-            await axios.post('http://localhost:3000/api/user/change-password', values, {
+            await axios.post('http://localhost:3000/api/profile/change-password', values, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             message.success(t('profile.changePasswordSuccess'));

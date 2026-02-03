@@ -112,6 +112,10 @@ const customerController = {
                     saleId: true,
                     sale: {
                         select: { fullName: true } // Include Sale name
+                    },
+                    transactions: {
+                        where: { status: 'SUCCESS' },
+                        select: { amount: true }
                     }
                 }
             };
@@ -121,10 +125,17 @@ const customerController = {
                 queryOptions.take = take;
             }
 
-            const [customers, total] = await prisma.$transaction([
+            const [customersRaw, total] = await prisma.$transaction([
                 prisma.user.findMany(queryOptions),
                 prisma.user.count({ where })
             ]);
+
+            // Calculate totalPaid
+            const customers = customersRaw.map(c => {
+                const totalPaid = c.transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+                const { transactions, ...rest } = c; // Remove transactions from response to keep it clean
+                return { ...rest, totalPaid };
+            });
 
             const responseData = {
                 customers,

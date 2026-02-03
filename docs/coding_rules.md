@@ -294,3 +294,11 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
     *   **Source of Truth**: Test assertions phản ánh Requirements.
     *   **Restricted Modification**: Không được phép sửa đổi Test Case đã viết trừ khi Requirements thay đổi.
     *   **Approval Process**: Nếu cần sửa Test Case (do logic cũ sai hoặc đổi nghiệp vụ), **BẮT BUỘC** phải hỏi ý kiến User và được sự đồng ý mới được sửa. Code phải sửa để theo Test, không được sửa Test để theo Code.
+
+## 15. Performance & Anti-Patterns
+*   **Avoid N+1 Query Problem (CRITICAL)**:
+    *   **Definition**: Vấn đề xảy ra khi code thực hiện 1 query để lấy danh sách cha (N items), sau đó dùng vòng lặp (For/Map) để thực hiện thêm N query con để lấy dữ liệu liên quan.
+    *   **Forbidden**: TUYỆT ĐỐI KHÔNG query database trong vòng lặp (`for`, `map`, `forEach`).
+    *   **Solution**:
+        *   Sử dụng **Eager Loading** (Prisma `include` hoặc nested `select`) để lấy dữ liệu trong 1 query duy nhất.
+        *   Hoặc lấy danh sách ID, query 1 lần bảng con (`where: { id: { in: ids } }`) rồi map lại trên Application Layer.

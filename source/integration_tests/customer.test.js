@@ -148,6 +148,69 @@ describe('Integration: Customer API', () => {
         });
     });
 
+    describe('Total Paid Calculation (TDD)', () => {
+        it('should return correct totalPaid sum for customer', async () => {
+            // 1. Setup Customer
+            const cust = await prisma.user.create({
+                data: {
+                    username: 'paid_customer',
+                    password: '123',
+                    fullName: 'Rich Customer',
+                    type: 'CUSTOMER',
+                    role: 'USER'
+                }
+            });
+
+            // 2. Setup Transactions
+            const adminId = (await prisma.user.findFirst({ where: { role: 'ADMIN' } })).id;
+
+            // Trans 1: Success (50,000)
+            await prisma.transaction.create({
+                data: {
+                    customerId: cust.id,
+                    amount: 50000,
+                    status: 'SUCCESS',
+                    createdById: adminId
+                }
+            });
+
+            // Trans 2: Success (150,000)
+            await prisma.transaction.create({
+                data: {
+                    customerId: cust.id,
+                    amount: 150000,
+                    status: 'SUCCESS',
+                    createdById: adminId
+                }
+            });
+
+            // Trans 3: Cancelled (1,000,000) - Should NOT be counted
+            await prisma.transaction.create({
+                data: {
+                    customerId: cust.id,
+                    amount: 1000000,
+                    status: 'CANCELLED',
+                    createdById: adminId
+                }
+            });
+
+            // 3. Call API
+            const res = await request(BASE_URL)
+                .get('/api/customers?search=paid_customer')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.data.customers).toHaveLength(1);
+
+            const customerData = res.body.data.customers[0];
+            expect(customerData.username).toBe('paid_customer');
+
+            // 4. Verify Total Paid (50k + 150k = 200k)
+            // Note: API might return number or string for BigInt/Decimal
+            expect(Number(customerData.totalPaid)).toBe(200000);
+        });
+    });
+
     describe('Cascading Cache Invalidation', () => {
         beforeEach(async () => {
             // Seed Caches

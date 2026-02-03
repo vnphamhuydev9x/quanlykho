@@ -138,6 +138,7 @@
         "edit": "编辑客户",
         "customerCode": "客户代码",
         "fullName": "姓名",
+        "totalPaid": "已付款",
         "phone": "电话",
         "address": "地址",
         "sale": "销售员",

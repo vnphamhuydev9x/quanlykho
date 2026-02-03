@@ -257,6 +257,17 @@ const CustomerList = () => {
             key: 'fullName',
         },
         {
+            title: t('customer.totalPaid'),
+            dataIndex: 'totalPaid',
+            key: 'totalPaid',
+            align: 'right',
+            render: (value) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '0 ₫'}
+                </span>
+            ),
+        },
+        {
             title: t('customer.phone'),
             dataIndex: 'phone',
             key: 'phone',

@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
 
@@ -23,7 +23,7 @@ const categoryController = {
             logger.info('[GetAllCategories] Cache MISS');
 
             // 2. Build Query
-            const where = {};
+            const where = { deletedAt: null };
             if (search) {
                 where.name = { contains: search, mode: 'insensitive' };
             }
@@ -101,7 +101,7 @@ const categoryController = {
             const { id } = req.params;
             const { name, status } = req.body;
 
-            const existing = await prisma.category.findUnique({ where: { id: parseInt(id) } });
+            const existing = await prisma.category.findUnique({ where: { id: parseInt(id), deletedAt: null } });
             if (!existing) {
                 return res.status(404).json({ code: 99006, message: "Category not found" });
             }

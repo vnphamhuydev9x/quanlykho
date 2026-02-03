@@ -122,9 +122,17 @@ describe('Integration: Category API', () => {
 
             expect(res.status).toBe(200);
 
-            // Verify DB
-            const check = await prisma.category.findUnique({ where: { id: cat.id } });
-            expect(check).toBeNull();
+            // Verify DB (Soft Delete) - Use raw query to bypass middleware
+            const check = await prisma.$queryRaw`SELECT * FROM categories WHERE id = ${cat.id}`;
+            expect(check.length).toBe(1);
+            expect(check[0].deletedAt).not.toBeNull();
+
+            // Verify API usage
+            const listRes = await request(BASE_URL)
+                .get('/api/categories')
+                .set('Authorization', `Bearer ${adminToken}`);
+            const found = listRes.body.data.items.find(c => c.id === cat.id);
+            expect(found).toBeUndefined();
         });
     });
 

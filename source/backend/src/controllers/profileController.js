@@ -2,14 +2,14 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const logger = require('../config/logger');
 
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 const getProfile = async (req, res) => {
     try {
         const { userId } = req.user;
 
         const profile = await prisma.user.findUnique({
-            where: { id: userId },
+            where: { id: userId, deletedAt: null },
             select: {
                 id: true,
                 username: true,
@@ -110,7 +110,7 @@ const changePassword = async (req, res) => {
             });
         }
 
-        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
         if (!user) {
             return res.status(404).json({ code: 99006, message: 'User not found' });
         }

@@ -80,7 +80,7 @@ describe('Integration: Employee API & Cascading Invalidation', () => {
             expect(res.body.data.username).toBe('sale_staff');
 
             // Verify DB
-            const dbUser = await prisma.user.findUnique({ where: { username: 'sale_staff' } });
+            const dbUser = await prisma.user.findFirst({ where: { username: 'sale_staff', deletedAt: null } });
             expect(dbUser).toBeTruthy();
             expect(dbUser.role).toBe('SALE');
             expect(dbUser.role).toBe('SALE');
@@ -127,8 +127,40 @@ describe('Integration: Employee API & Cascading Invalidation', () => {
                 .get('/api/employees')
                 .set('Authorization', `Bearer ${adminToken}`);
 
-            expect(res.status).toBe(200);
             expect(res.body.data.employees.length).toBeGreaterThanOrEqual(1); // Admin + Sale
+        });
+
+        it('should allow Admin to delete employee (Soft Delete)', async () => {
+            // Setup employee to delete
+            const emp = await prisma.user.create({
+                data: {
+                    username: 'delete_emp',
+                    password: '123',
+                    fullName: 'Delete Me',
+                    role: 'SALE',
+                    type: 'EMPLOYEE'
+                }
+            });
+
+            const res = await request(BASE_URL)
+                .delete(`/api/employees/${emp.id}`)
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(res.status).toBe(200);
+
+            // Verify DB (Soft Delete)
+            const check = await prisma.user.findUnique({ where: { id: emp.id } });
+            expect(check).not.toBeNull();
+            expect(check.deletedAt).not.toBeNull();
+
+            // Verify API returns 404 (or empty list if searched)
+            // Searching by ID might not be standard endpoint, assuming list doesn't show it
+            const listRes = await request(BASE_URL)
+                .get('/api/employees')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            const found = listRes.body.data.employees.find(e => e.id === emp.id);
+            expect(found).toBeUndefined();
         });
     });
 

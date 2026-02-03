@@ -51,7 +51,44 @@ Sử dụng `translation.json` để map code:
 
 ---
 
-## 2. Redis Caching Strategy
+## 2. Frontend API Calls (axiosInstance)
+
+### ⚠️ QUY TẮC BẮT BUỘC
+**LUÔN LUÔN** sử dụng `axiosInstance` thay vì `axios` trực tiếp cho mọi API call (trừ Login page).
+
+### Lý do:
+- ✅ **Tự động thêm token** vào headers (không cần code thủ công)
+- ✅ **Tự động redirect về login** khi token hết hạn (401, 403 + code 99004)
+- ✅ **Nhất quán** trong toàn bộ app
+- ✅ **Dễ maintain** (logic auth tập trung ở 1 chỗ)
+
+### Cách dùng:
+
+```javascript
+// ❌ SAI - Dùng axios trực tiếp
+import axios from 'axios';
+const token = localStorage.getItem('access_token');
+const response = await axios.get('http://localhost:3000/api/customers', {
+    headers: { Authorization: `Bearer ${token}` }
+});
+
+// ✅ ĐÚNG - Dùng axiosInstance
+import axiosInstance from '../utils/axios';
+const response = await axiosInstance.get('/customers');
+```
+
+### Exception (Ngoại lệ):
+- **Login page**: Có thể dùng `axios` trực tiếp vì chưa có token
+
+### Checklist khi tạo Service/Page mới:
+- [ ] Import `axiosInstance` từ `../utils/axios`
+- [ ] Không import `axios` từ `'axios'`
+- [ ] Không thêm token thủ công vào headers
+- [ ] URL chỉ cần path (VD: `/customers`), không cần full URL
+
+---
+
+## 3. Redis Caching Strategy
 
 ### Quy tắc
 Khi sử dụng Redis Cache cho các dữ liệu ít thay đổi (Ví dụ: Danh sách nhân viên, Danh mục), **BẮT BUỘC** phải đảm bảo tính nhất quán dữ liệu (Consistensy).

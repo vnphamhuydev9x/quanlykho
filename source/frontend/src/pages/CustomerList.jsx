@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined, DownloadOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined, FileExcelOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import axiosInstance from '../utils/axios';
 import * as XLSX from 'xlsx';
 
 const { Option } = Select;
@@ -45,7 +45,6 @@ const CustomerList = () => {
     const fetchCustomers = async (page = 1, limit = 20, currentFilters = filters) => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('access_token');
             const { search, status, saleId } = currentFilters;
 
             const params = {
@@ -56,10 +55,7 @@ const CustomerList = () => {
                 saleId: saleId || undefined
             };
 
-            const response = await axios.get('http://localhost:3000/api/customers', {
-                headers: { Authorization: `Bearer ${token}` },
-                params
-            });
+            const response = await axiosInstance.get('/customers', { params });
             const { customers, total, page: currentPage } = response.data.data;
             setCustomers(customers);
             setPagination(prev => ({
@@ -85,11 +81,8 @@ const CustomerList = () => {
     // Fetch employees for the Sale selection
     const fetchEmployees = async () => {
         try {
-            const token = localStorage.getItem('access_token');
             // Fetch all employees for dropdown (limit=0 means unlimited)
-            const response = await axios.get('http://localhost:3000/api/employees?limit=0', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axiosInstance.get('/employees', { params: { limit: 0 } });
             // Handle paginated response structure
             const employeeData = response.data.data.employees || [];
             setEmployees(employeeData);
@@ -152,10 +145,7 @@ const CustomerList = () => {
 
     const handleDelete = async (id) => {
         try {
-            const token = localStorage.getItem('access_token');
-            await axios.delete(`http://localhost:3000/api/customers/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await axiosInstance.delete(`/customers/${id}`);
             message.success(t('customer.deleteSuccess'));
             fetchCustomers(pagination.current, pagination.pageSize);
         } catch (error) {
@@ -165,10 +155,7 @@ const CustomerList = () => {
 
     const handleResetPassword = async (id) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.post(`http://localhost:3000/api/customers/${id}/reset-password`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axiosInstance.post(`/customers/${id}/reset-password`, {});
             const newPassword = response.data.data.newPassword;
             message.success(t('customer.resetPasswordSuccess', { password: newPassword }));
         } catch (error) {
@@ -183,16 +170,11 @@ const CustomerList = () => {
 
     const handleSave = async (values) => {
         try {
-            const token = localStorage.getItem('access_token');
             if (editingCustomer) {
-                await axios.put(`http://localhost:3000/api/customers/${editingCustomer.id}`, values, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axiosInstance.put(`/customers/${editingCustomer.id}`, values);
                 message.success(t('customer.updateSuccess'));
             } else {
-                await axios.post('http://localhost:3000/api/customers', values, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axiosInstance.post('/customers', values);
                 message.success(t('customer.createSuccess'));
             }
             setIsModalVisible(false);
@@ -211,14 +193,12 @@ const CustomerList = () => {
     const handleExport = async () => {
         try {
             setExportLoading(true);
-            const token = localStorage.getItem('access_token');
-            const response = await axios.get('http://localhost:3000/api/customers/export-data', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axiosInstance.get('/customers/export-data');
             const data = response.data.data;
 
             // Map data to localized headers and values
             const exportData = data.map(item => ({
+                [t('common.id')]: item.id,
                 [t('profile.username')]: item.username,
                 [t('customer.fullName')]: item.fullName,
                 [t('customer.phone')]: item.phone,
@@ -244,6 +224,13 @@ const CustomerList = () => {
     };
 
     const columns = [
+        {
+            title: t('common.id'),
+            dataIndex: 'id',
+            key: 'id',
+            width: 80,
+            fixed: 'left',
+        },
         {
             title: t('profile.username'),
             dataIndex: 'username',
@@ -325,8 +312,9 @@ const CustomerList = () => {
                         <Space wrap>
                             {userRole === 'ADMIN' && (
                                 <Button
-                                    icon={<DownloadOutlined />}
+                                    icon={<FileExcelOutlined />}
                                     onClick={handleExport}
+                                    style={{ backgroundColor: '#217346', color: '#fff', borderColor: '#217346' }}
                                     loading={exportLoading}
                                 >
                                     {t('customer.export')}

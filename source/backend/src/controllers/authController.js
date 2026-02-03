@@ -18,8 +18,8 @@ const login = async (req, res) => {
         }
 
         // 1. Find User
-        const user = await prisma.user.findUnique({
-            where: { username },
+        const user = await prisma.user.findFirst({
+            where: { username, deletedAt: null },
         });
 
         if (!user) {

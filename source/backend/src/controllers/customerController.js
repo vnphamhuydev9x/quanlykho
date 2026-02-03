@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 const logger = require('../config/logger');
 
 const redisClient = require('../config/redisClient');
@@ -19,7 +19,7 @@ const customerController = {
             }
 
             // Check if username exists
-            const existing = await prisma.user.findUnique({ where: { username } });
+            const existing = await prisma.user.findFirst({ where: { username, deletedAt: null } });
             if (existing) {
                 return res.status(400).json({ code: 99005, message: "Username already exists" });
             }
@@ -78,6 +78,7 @@ const customerController = {
 
             const where = {
                 type: 'CUSTOMER',
+                deletedAt: null
             };
 
             if (search) {
@@ -167,7 +168,7 @@ const customerController = {
             const { id } = req.params;
             const { fullName, phone, address, saleId, isActive, password } = req.body; // Add password
 
-            const existing = await prisma.user.findUnique({ where: { id: parseInt(id) } });
+            const existing = await prisma.user.findUnique({ where: { id: parseInt(id), deletedAt: null } });
             if (!existing || existing.type !== 'CUSTOMER') {
                 return res.status(404).json({ code: 99006, message: "Customer not found" });
             }
@@ -253,7 +254,7 @@ const customerController = {
             const bcrypt = require('bcryptjs');
 
             const customer = await prisma.user.findUnique({
-                where: { id: customerId, type: 'CUSTOMER' }
+                where: { id: customerId, type: 'CUSTOMER', deletedAt: null }
             });
 
             if (!customer) {
@@ -299,7 +300,7 @@ const customerController = {
             // No pagination, just simple list for export
             // Fetch relevant fields only
             const customers = await prisma.user.findMany({
-                where: { type: 'CUSTOMER' },
+                where: { type: 'CUSTOMER', deletedAt: null },
                 orderBy: { createdAt: 'desc' },
                 select: {
                     username: true,

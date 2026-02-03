@@ -15,7 +15,7 @@ enum UserType {
 
 model User {
   id        Int      @id @default(autoincrement())
-  username  String   @unique
+  username  String   // Manual Unique Index (Partial)
   password  String
   fullName  String
   email     String?
@@ -25,7 +25,7 @@ model User {
   isActive  Boolean  @default(true)
 
   // Customer specific fields
-  customerCode String? @unique
+  customerCode String? // Manual Unique Index (Partial)
   address      String?
   
   // Relations
@@ -38,6 +38,8 @@ model User {
 
   transactions        Transaction[] @relation("CustomerTransactions")
   createdTransactions Transaction[] @relation("CreatedTransactions")
+
+  deletedAt DateTime? // Soft Delete
 
   @@map("users")
 }
@@ -53,6 +55,7 @@ model Warehouse {
   status    WarehouseStatus @default(AVAILABLE)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+  deletedAt DateTime?       // Soft Delete
 
   @@map("warehouses")
 }
@@ -68,6 +71,7 @@ model Category {
   status    CategoryStatus @default(AVAILABLE)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  deletedAt DateTime?      // Soft Delete
 
   @@map("categories")
 }

@@ -1,14 +1,8 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000/api/employees';
+import axiosInstance from '../utils/axios';
 
 const employeeService = {
     getAll: async (params) => {
-        const token = localStorage.getItem('access_token');
-        const response = await axios.get(API_URL, {
-            headers: { Authorization: `Bearer ${token}` },
-            params
-        });
+        const response = await axiosInstance.get('/employees', { params });
         return response.data;
     },
     // Add other methods if needed later

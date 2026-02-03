@@ -210,4 +210,35 @@ describe('Integration: Transaction API', () => {
             expect(keys.length).toBe(0);
         });
     });
+
+    describe('Export Data', () => {
+        it('should allow ADMIN to export all data', async () => {
+            // Create some data
+            await prisma.transaction.createMany({
+                data: [
+                    { customerId, amount: 100, status: 'SUCCESS', createdById: adminId, content: 'T1' },
+                    { customerId, amount: 200, status: 'CANCELLED', createdById: adminId, content: 'T2' }
+                ]
+            });
+
+            const res = await request(BASE_URL)
+                .get('/api/transactions/export-data')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(res.status).toBe(200);
+            expect(Array.isArray(res.body.data)).toBe(true);
+            expect(res.body.data.length).toBeGreaterThanOrEqual(2);
+            // Verify structure
+            expect(res.body.data[0]).toHaveProperty('customer');
+            expect(res.body.data[0]).toHaveProperty('creator');
+        });
+
+        it('should forbid USER from exporting data', async () => {
+            const res = await request(BASE_URL)
+                .get('/api/transactions/export-data')
+                .set('Authorization', `Bearer ${userToken}`);
+
+            expect(res.status).toBe(403);
+        });
+    });
 });

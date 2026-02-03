@@ -133,9 +133,19 @@ describe('Integration: Warehouse API (Black Box)', () => {
 
             expect(res.status).toBe(200);
 
-            // Verify DB
+            // Verify DB (Soft Delete) - Record should still exist but have deletedAt
             const check = await prisma.warehouse.findUnique({ where: { id: wh.id } });
-            expect(check).toBeNull();
+            expect(check).not.toBeNull();
+            expect(check.deletedAt).not.toBeNull();
+
+            // Verify API access is blocked (404)
+            // Since we use middleware to filter deletedAt: null on finds
+            const verifyRes = await request(BASE_URL)
+                .get(`/api/warehouses?search=${wh.name}`) // or get by id if endpoint exists
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            // Search should not return it
+            expect(verifyRes.body.data).toHaveLength(0);
         });
     });
 
@@ -197,7 +207,7 @@ describe('Integration: Warehouse API (Black Box)', () => {
             expect(keysAfterGet.length).toBe(1);
 
             // 3. Mutation (Update)
-            const wh = await prisma.warehouse.findFirst({ where: { name: 'Kho Cache Test' } });
+            const wh = await prisma.warehouse.findFirst({ where: { name: 'Kho Cache Test', deletedAt: null } });
             await request(BASE_URL)
                 .put(`/api/warehouses/${wh.id}`)
                 .set('Authorization', `Bearer ${adminToken}`)

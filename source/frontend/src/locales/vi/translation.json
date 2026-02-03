@@ -91,7 +91,10 @@
         "filterByStatus": "Lọc theo Trạng thái",
         "filterByRole": "Lọc theo Quyền hạn",
         "filterBySale": "Lọc theo Nhân viên Sale",
-        "createdAt": "Ngày tạo"
+        "createdAt": "Ngày tạo",
+        "exportExcel": "Xuất Excel",
+        "exportSuccess": "Xuất Excel thành công!",
+        "id": "ID"
     },
     "validation": {
         "required": "Trường này là bắt buộc!",

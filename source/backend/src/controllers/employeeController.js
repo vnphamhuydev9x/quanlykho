@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 const CACHE_KEY = 'employees:list';
 
@@ -37,7 +37,7 @@ const getAllEmployees = async (req, res) => {
             take = undefined;
         }
 
-        const where = { type: 'EMPLOYEE' };
+        const where = { type: 'EMPLOYEE', deletedAt: null };
 
         if (search) {
             where.OR = [
@@ -116,7 +116,7 @@ const createEmployee = async (req, res) => {
         }
 
         // Check if username exists
-        const existing = await prisma.user.findUnique({ where: { username } });
+        const existing = await prisma.user.findFirst({ where: { username, deletedAt: null } });
         if (existing) {
             return res.status(400).json({ code: 99005, message: 'Tên đăng nhập đã tồn tại' });
         }

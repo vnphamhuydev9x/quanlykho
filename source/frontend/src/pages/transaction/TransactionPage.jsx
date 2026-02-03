@@ -5,8 +5,12 @@ import {
     SearchOutlined,
     ReloadOutlined,
     CloseCircleOutlined,
-    EyeOutlined
+    EyeOutlined,
+    FileExcelOutlined
 } from '@ant-design/icons';
+import * as XLSX from 'xlsx'; // Import XLSX
+
+
 import { useTranslation } from 'react-i18next';
 import employeeService from '../../services/employeeService'; // Import Service
 import transactionService from '../../services/transactionService';
@@ -124,7 +128,49 @@ const TransactionPage = () => {
         message.success(t('transaction.createSuccess'));
     };
 
+    const handleExport = async () => {
+        try {
+            const response = await transactionService.exportData();
+            const data = response.data; // Corrected: API returns { data: [...] } directly inside response body
+
+            if (!data || !Array.isArray(data)) {
+                console.error("Invalid data format for export", data);
+                message.error(t('error.UNKNOWN'));
+                return;
+            }
+
+            // Format data for Excel
+            const excelData = data.map(item => ({
+                [t('common.id')]: item.id,
+                [t('transaction.customer')]: item.customer?.fullName,
+                [t('transaction.phone')]: item.customer?.phone,
+                [t('transaction.amount')]: item.amount,
+                [t('transaction.content')]: item.content,
+                [t('transaction.status')]: item.status,
+                [t('transaction.createdBy')]: item.creator?.fullName,
+                [t('common.createdAt')]: moment(item.createdAt).format('DD/MM/YYYY HH:mm')
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+            XLSX.writeFile(workbook, "Danh_Sach_Giao_Dich.xlsx");
+
+            message.success(t('common.exportSuccess') || 'Export Excel successful');
+        } catch (error) {
+            console.error("Export error", error);
+            message.error(t('error.UNKNOWN'));
+        }
+    };
+
     const columns = [
+        {
+            title: t('common.id'),
+            dataIndex: 'id',
+            key: 'id',
+            width: 80,
+            fixed: 'left',
+        },
         {
             title: t('transaction.customer'),
             key: 'customer',
@@ -208,6 +254,13 @@ const TransactionPage = () => {
                     <Col xs={24} md={24} lg={12} style={{ textAlign: 'right' }}>
                         {userRole === 'ADMIN' && (
                             <Space wrap>
+                                <Button
+                                    icon={<FileExcelOutlined />}
+                                    onClick={handleExport}
+                                    style={{ backgroundColor: '#217346', color: '#fff', borderColor: '#217346' }}
+                                >
+                                    {t('common.exportExcel') || "Export Excel"}
+                                </Button>
                                 <Button
                                     type="primary"
                                     icon={<PlusOutlined />}

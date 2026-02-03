@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const redisClient = require('../config/redisClient');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 const warehouseController = {
     // GET: List all warehouses (with Search & Filter)
@@ -20,7 +20,7 @@ const warehouseController = {
                 });
             }
 
-            const where = {};
+            const where = { deletedAt: null };
 
             if (search) {
                 where.name = {
@@ -71,7 +71,7 @@ const warehouseController = {
 
             // Check duplicate name
             const existing = await prisma.warehouse.findFirst({
-                where: { name: { equals: name, mode: 'insensitive' } }
+                where: { name: { equals: name, mode: 'insensitive' }, deletedAt: null }
             });
 
             if (existing) {
@@ -116,7 +116,7 @@ const warehouseController = {
             const warehouseId = parseInt(id);
 
             const existingWarehouse = await prisma.warehouse.findUnique({
-                where: { id: warehouseId }
+                where: { id: warehouseId, deletedAt: null }
             });
 
             if (!existingWarehouse) {
@@ -131,7 +131,8 @@ const warehouseController = {
                 const nameCheck = await prisma.warehouse.findFirst({
                     where: {
                         name: { equals: name, mode: 'insensitive' },
-                        NOT: { id: warehouseId }
+                        NOT: { id: warehouseId },
+                        deletedAt: null
                     }
                 });
                 if (nameCheck) {
@@ -177,7 +178,7 @@ const warehouseController = {
             const warehouseId = parseInt(id);
 
             const existingWarehouse = await prisma.warehouse.findUnique({
-                where: { id: warehouseId }
+                where: { id: warehouseId, deletedAt: null }
             });
 
             if (!existingWarehouse) {

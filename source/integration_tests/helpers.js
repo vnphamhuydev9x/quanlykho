@@ -18,6 +18,7 @@ const redisClient = createClient({
 redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
 const BASE_URL = `http://localhost:${process.env.PORT || 5001}`;
+console.log('Testing against BASE_URL:', BASE_URL);
 
 // Helper: Connect DBs
 const connectTestInfra = async () => {

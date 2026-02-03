@@ -131,9 +131,18 @@ describe('Integration: Customer API', () => {
 
             expect(res.status).toBe(200);
 
-            // Verify DB
-            const check = await prisma.user.findUnique({ where: { id: customerId } });
-            expect(check).toBeNull();
+            // Verify DB (Soft Delete) - Use raw query
+            const check = await prisma.$queryRaw`SELECT * FROM users WHERE id = ${customerId}`;
+            expect(check.length).toBe(1);
+            expect(check[0].deletedAt).not.toBeNull();
+
+            // Verify API returns 404
+            const verifyRes = await request(BASE_URL)
+                .get(`/api/customers/${customerId}`) // Assumes get by ID endpoint exists
+                .set('Authorization', `Bearer ${adminToken}`);
+            // If Get By ID is not implemented or returns 404, check that.
+            // If get by ID uses findUnique, middleware might filter it out (returns null -> 404).
+            expect(verifyRes.status).toBe(404);
         });
     });
 

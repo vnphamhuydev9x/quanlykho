@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
 
@@ -170,6 +170,41 @@ const transactionController = {
 
         } catch (error) {
             logger.error(`[CancelTransaction] Error: ${error.message}`);
+            return res.status(500).json({ code: 99500, message: "Internal Server Error" });
+        }
+    },
+
+    getAllTransactionsForExport: async (req, res) => {
+        try {
+            // No pagination, just simple sorted list
+            const transactions = await prisma.transaction.findMany({
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    customer: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                            username: true,
+                            phone: true
+                        }
+                    },
+                    creator: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                            username: true
+                        }
+                    }
+                }
+            });
+
+            return res.status(200).json({
+                code: 200,
+                message: "Success",
+                data: transactions
+            });
+        } catch (error) {
+            logger.error(`[GetAllTransactionsForExport] Error: ${error.message}`);
             return res.status(500).json({ code: 99500, message: "Internal Server Error" });
         }
     }

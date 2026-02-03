@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Modal, Form, Input, Button, message } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import axiosInstance from '../utils/axios';
 import { useNavigate } from 'react-router-dom';
 
 const ChangePasswordModal = ({ visible, onCancel, onSuccess, forceChange = false }) => {
@@ -12,10 +12,7 @@ const ChangePasswordModal = ({ visible, onCancel, onSuccess, forceChange = false
 
     const handleChangePassword = async (values) => {
         try {
-            const token = localStorage.getItem('access_token');
-            await axios.post('http://localhost:3000/api/profile/change-password', values, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await axiosInstance.post('/profile/change-password', values);
             message.success(t('profile.changePasswordSuccess'));
             form.resetFields();
             if (onSuccess) onSuccess();

@@ -1,30 +1,23 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000/api/transactions';
+import axiosInstance from '../utils/axios';
 
 const transactionService = {
     getAll: async (params) => {
-        const token = localStorage.getItem('access_token');
-        const response = await axios.get(API_URL, {
-            headers: { Authorization: `Bearer ${token}` },
-            params
-        });
+        const response = await axiosInstance.get('/transactions', { params });
         return response.data;
     },
 
     create: async (data) => {
-        const token = localStorage.getItem('access_token');
-        const response = await axios.post(API_URL, data, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosInstance.post('/transactions', data);
         return response.data;
     },
 
     cancel: async (id) => {
-        const token = localStorage.getItem('access_token');
-        const response = await axios.post(`${API_URL}/${id}/cancel`, {}, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosInstance.post(`/transactions/${id}/cancel`, {});
+        return response.data;
+    },
+
+    exportData: async () => {
+        const response = await axiosInstance.get('/transactions/export-data');
         return response.data;
     }
 };

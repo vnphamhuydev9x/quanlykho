@@ -108,6 +108,13 @@ const CategoryPage = () => {
 
     const columns = [
         {
+            title: t('common.id'),
+            dataIndex: 'id',
+            key: 'id',
+            width: 80,
+            fixed: 'left',
+        },
+        {
             title: t('category.name'),
             dataIndex: 'name',
             key: 'name',

@@ -92,7 +92,10 @@
         "filterByStatus": "按状态筛选",
         "filterByRole": "按权限筛选",
         "filterBySale": "按销售筛选",
-        "createdAt": "创建日期"
+        "createdAt": "创建日期",
+        "exportExcel": "导出 Excel",
+        "exportSuccess": "导出 Excel 成功！",
+        "id": "ID"
     },
     "validation": {
         "required": "此项必填！",

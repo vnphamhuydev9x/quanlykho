@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import axiosInstance from '../utils/axios';
 
 const { Option } = Select;
 
@@ -33,7 +33,6 @@ const EmployeeList = () => {
     const fetchEmployees = async (page = 1, limit = 20, currentFilters = filters) => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('access_token');
             const { search, status, role } = currentFilters;
 
             const params = {
@@ -44,10 +43,7 @@ const EmployeeList = () => {
                 role: role || undefined
             };
 
-            const response = await axios.get('http://localhost:3000/api/employees', {
-                headers: { Authorization: `Bearer ${token}` },
-                params
-            });
+            const response = await axiosInstance.get('/employees', { params });
 
             const { employees, total, page: currentPage } = response.data.data;
             setEmployees(employees);
@@ -104,10 +100,7 @@ const EmployeeList = () => {
 
     const handleDelete = async (id) => {
         try {
-            const token = localStorage.getItem('access_token');
-            await axios.delete(`http://localhost:3000/api/employees/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await axiosInstance.delete(`/employees/${id}`);
             message.success(t('employee.deleteSuccess'));
             fetchEmployees(pagination.current, pagination.pageSize);
         } catch (error) {
@@ -122,10 +115,7 @@ const EmployeeList = () => {
 
     const handleResetPassword = async (id) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.post(`http://localhost:3000/api/employees/${id}/reset-password`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axiosInstance.post(`/employees/${id}/reset-password`, {});
             const newPassword = response.data.data.newPassword;
             message.success(t('employee.resetPasswordSuccess', { password: newPassword }));
         } catch (error) {
@@ -140,16 +130,11 @@ const EmployeeList = () => {
 
     const handleSave = async (values) => {
         try {
-            const token = localStorage.getItem('access_token');
             if (editingEmployee) {
-                await axios.put(`http://localhost:3000/api/employees/${editingEmployee.id}`, values, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axiosInstance.put(`/employees/${editingEmployee.id}`, values);
                 message.success(t('employee.updateSuccess'));
             } else {
-                await axios.post('http://localhost:3000/api/employees', values, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axiosInstance.post('/employees', values);
                 message.success(t('employee.createSuccess'));
             }
             setIsModalVisible(false);
@@ -165,6 +150,13 @@ const EmployeeList = () => {
     };
 
     const columns = [
+        {
+            title: t('common.id'),
+            dataIndex: 'id',
+            key: 'id',
+            width: 80,
+            fixed: 'left',
+        },
         {
             title: t('profile.username'),
             dataIndex: 'username',

@@ -1,38 +1,23 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000/api/categories';
+import axiosInstance from '../utils/axios';
 
 const categoryService = {
     getAll: async (params) => {
-        const token = localStorage.getItem('access_token');
-        const response = await axios.get(API_URL, {
-            headers: { Authorization: `Bearer ${token}` },
-            params
-        });
+        const response = await axiosInstance.get('/categories', { params });
         return response.data;
     },
 
     create: async (data) => {
-        const token = localStorage.getItem('access_token');
-        const response = await axios.post(API_URL, data, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosInstance.post('/categories', data);
         return response.data;
     },
 
     update: async (id, data) => {
-        const token = localStorage.getItem('access_token');
-        const response = await axios.put(`${API_URL}/${id}`, data, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosInstance.put(`/categories/${id}`, data);
         return response.data;
     },
 
     delete: async (id) => {
-        const token = localStorage.getItem('access_token');
-        const response = await axios.delete(`${API_URL}/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axiosInstance.delete(`/categories/${id}`);
         return response.data;
     }
 };

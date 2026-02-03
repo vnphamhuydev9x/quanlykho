@@ -53,3 +53,18 @@ model Warehouse {
 
   @@map("warehouses")
 }
+
+enum CategoryStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+model Category {
+  id        Int            @id @default(autoincrement())
+  name      String
+  status    CategoryStatus @default(AVAILABLE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@map("categories")
+}

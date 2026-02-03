@@ -12,7 +12,8 @@
         "profile": "个人资料",
         "logout": "注销",
         "customers": "客户",
-        "warehouses": "仓库"
+        "warehouses": "仓库",
+        "categories": "货类"
     },
     "warehouse": {
         "title": "越南仓库管理",
@@ -25,6 +26,19 @@
         "createSuccess": "创建新仓库成功！",
         "updateSuccess": "更新仓库成功！",
         "deleteSuccess": "删除仓库成功！"
+    },
+    "category": {
+        "title": "货类管理",
+        "add": "新增货类",
+        "edit": "编辑货类",
+        "name": "货类名称",
+        "status": "状态",
+        "searchPlaceholder": "按货类名称搜索...",
+        "available": "可用",
+        "unavailable": "不可用",
+        "createSuccess": "创建货类成功！",
+        "updateSuccess": "更新货类成功！",
+        "deleteSuccess": "删除货类成功！"
     },
     "header": {
         "language": "中文"

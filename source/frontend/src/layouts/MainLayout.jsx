@@ -139,6 +139,11 @@ const MainLayout = ({ children }) => {
                     key: '/settings/warehouses',
                     label: t('menu.warehouseVN'),
                     onClick: () => navigate('/settings/warehouses'),
+                },
+                {
+                    key: '/settings/categories',
+                    label: t('menu.categories'),
+                    onClick: () => navigate('/settings/categories'),
                 }
             ],
         },

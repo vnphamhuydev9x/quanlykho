@@ -12,7 +12,8 @@
         "profile": "Hồ sơ",
         "logout": "Đăng xuất",
         "customers": "Khách hàng",
-        "warehouses": "Kho hàng"
+        "warehouses": "Kho hàng",
+        "categories": "Loại hàng"
     },
     "warehouse": {
         "title": "Quản lý Kho VN",
@@ -25,6 +26,19 @@
         "createSuccess": "Tạo kho mới thành công!",
         "updateSuccess": "Cập nhật kho thành công!",
         "deleteSuccess": "Xóa kho thành công!"
+    },
+    "category": {
+        "title": "Quản lý Loại hàng",
+        "add": "Thêm loại hàng",
+        "edit": "Sửa loại hàng",
+        "name": "Tên loại hàng",
+        "status": "Trạng thái",
+        "searchPlaceholder": "Tìm theo tên loại hàng...",
+        "available": "Khả dụng",
+        "unavailable": "Không khả dụng",
+        "createSuccess": "Tạo loại hàng thành công!",
+        "updateSuccess": "Cập nhật loại hàng thành công!",
+        "deleteSuccess": "Xóa loại hàng thành công!"
     },
     "header": {
         "language": "Tiếng Việt"

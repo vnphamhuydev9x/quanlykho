@@ -6,11 +6,25 @@
     "menu": {
         "dashboard": "仪表板",
         "settings": "设置",
+        "warehouseVN": "越南仓库",
         "warehouse": "仓库",
         "employees": "员工",
         "profile": "个人资料",
         "logout": "注销",
-        "customers": "客户"
+        "customers": "客户",
+        "warehouses": "仓库"
+    },
+    "warehouse": {
+        "title": "越南仓库管理",
+        "add": "新增",
+        "name": "仓库名称",
+        "searchPlaceholder": "按仓库名称搜索...",
+        "status": "状态",
+        "available": "可用",
+        "unavailable": "不可用",
+        "createSuccess": "创建新仓库成功！",
+        "updateSuccess": "更新仓库成功！",
+        "deleteSuccess": "删除仓库成功！"
     },
     "header": {
         "language": "中文"
@@ -40,7 +54,12 @@
         "search": "搜索",
         "clear": "清除",
         "delete": "删除",
-        "edit": "编辑"
+        "edit": "编辑",
+        "status": "状态",
+        "filterByStatus": "按状态筛选",
+        "filterByRole": "按权限筛选",
+        "filterBySale": "按销售筛选",
+        "createdAt": "创建日期"
     },
     "validation": {
         "required": "此项必填！",

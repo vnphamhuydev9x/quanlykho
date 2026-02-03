@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import EmployeeList from './pages/EmployeeList';
 import CustomerList from './pages/CustomerList';
+import WarehousePage from './pages/warehouse/WarehousePage';
 import MainLayout from './layouts/MainLayout';
 
 // Protected Route Component
@@ -47,6 +48,16 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <EmployeeList />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/warehouses"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <WarehousePage />
               </MainLayout>
             </ProtectedRoute>
           }

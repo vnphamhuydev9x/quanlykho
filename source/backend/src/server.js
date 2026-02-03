@@ -10,6 +10,7 @@ const authRoutes = require('./routes/authRoute');
 const profileRoutes = require('./routes/profileRoute');
 const employeeRoutes = require('./routes/employeeRoute');
 const customerRoutes = require('./routes/customerRoute');
+const warehouseRoutes = require('./routes/warehouseRoute');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/warehouses', warehouseRoutes);
 
 
 app.get('/', (req, res) => {

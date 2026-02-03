@@ -134,6 +134,11 @@ const MainLayout = ({ children }) => {
                     key: '/settings/employees',
                     label: t('menu.employees'),
                     onClick: () => navigate('/settings/employees'),
+                },
+                {
+                    key: '/settings/warehouses',
+                    label: t('menu.warehouseVN'),
+                    onClick: () => navigate('/settings/warehouses'),
                 }
             ],
         },

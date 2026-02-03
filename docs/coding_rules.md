@@ -127,8 +127,14 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
 *   **KHÔNG** được sử dụng kích thước cố định (`px`) cho các layout chính (Ví dụ: `width: 1200px` là **CẤM**, phải dùng `width: 100%` hoặc `max-width`).
 
 ### Checklist Responsive
-- [ ] **Grid System**: Sử dụng `Col` của Ant Design với các breakpoint `xs`, `sm`, `md`, `lg` (Ví dụ: `xs={24} md={12}` -> Mobile 1 cột, PC 2 cột).
-- [ ] **Table**: Luôn thêm `scroll={{ x: 'max-content' }}` để bảng có thể cuộn ngang trên màn hình nhỏ.
+- [ ] **Grid System**:
+    *   Sử dụng `Col` của Ant Design với các breakpoint hợp lý.
+    *   **Quy tắc An toàn**: Đối với các hàng có > 2 cột (Ví dụ: 2 Filter + 1 Button Group), chỉ nên chia cột ngang ở màn hình `lg` (>= 992px).
+    *   Tại màn hình `md` (768px - 991px), hãy chia `12-12` hoặc stacked `24` để tránh vỡ giao diện.
+    *   Ví dụ: Filter 1 `lg={8} md={12}`, Filter 2 `lg={8} md={12}`, Button `lg={8} md={24}`.
+- [ ] **Table**:
+    *   Luôn thêm `scroll={{ x: 'max-content' }}` để bảng có thể cuộn ngang trên màn hình nhỏ.
+    *   **Sticky First Column Rule**: Cột đầu tiên (thường là Tên hoặc Mã định danh quan trọng) **BẮT BUỘC** phải được cố định bên trái (`fixed: 'left'`) để người dùng luôn biết mình đang xem dòng nào khi cuộn ngang.
 - [ ] **Modal/Drawer**:
     *   Modal trên Mobile nên set `width: 90%` hoặc `100%`.
     *   Menu bên trái (Sidebar) trên PC -> Chuyển thành Drawer (Menu ẩn) trên Mobile.
@@ -145,6 +151,24 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
     *   Sử dụng component `Switch` (Thanh gạt) cho các trường trạng thái 2 giá trị (Active/Inactive, On/Off).
     *   **KHÔNG** sử dụng Dropdown/Select cho trường hợp này.
     *   Logic: `checked` = Active/True, `unchecked` = Inactive/False.
+    *   **Page Layout (Trang danh sách)**:
+        *   Tuân thủ chuẩn "Customer List Layout".
+        *   **Header**:
+            *   Left: Tiêu đề "Quản lý + [Tên tính năng]".
+            *   Right: Các nút thao tác (Export Excel, Thêm mới...).
+            *   **Responsive**: Ở màn hình `md`, Header và nút Action nên xếp chồng (Stacked `span={24}`) để đảm bảo nút hiển thị ngang. Chỉ xếp hàng ngang (Side-by-side) ở màn hình `lg`.
+        *   **Search/Filter Bar** (Trong Card):
+            *   **Search Input**: Kích thước `large`, Width ~100%, Prefix icon `EyeOutlined`.
+            *   **Wording**: Input placeholder là "Tìm theo ...", Label dropdown là "Lọc theo ...".
+            *   **Buttons**: Nút "Tìm kiếm" và "Xóa lọc" nằm ở góc phải (Right aligned on desktop).
+            *   **Buttons**: Nút "Tìm kiếm" và "Xóa lọc" nằm ở góc phải (Right aligned on desktop).
+            *   **Right Alignment Rule**:
+                *   Ở màn hình `lg`: Cột chứa Button chiếm toàn bộ không gian còn lại (24 - sum(filters)).
+                *   Ở màn hình `md`: Cột chứa Button **PHẢI** xuống dòng (`span={24}`) để đảm bảo không gian.
+            *   **Wording Consistency**:
+                *   Tiêu đề của Filter **PHẢI** khớp hoàn toàn với tiêu đề cột trong bảng (bao gồm cả Chữ hoa/Chữ thường).
+                *   Ví dụ: Header cột là "Trạng thái", thì Placeholder filter phải là "Lọc theo Trạng thái" (Không dùng "trạng thái").
+                *   Ví dụ: Header cột là "Quyền hạn", thì Placeholder filter phải là "Lọc theo Quyền hạn" (Không dùng "quyền").
 
 ## 10. Code Style Consistency (Quy chuẩn Coding Style)
 *   **Import/Require**: Giữ style nhất quán trong cùng 1 file.
@@ -184,5 +208,24 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
 *   **Missing Key Rule**:
     *   **TUYỆT ĐỐI** không được để thiếu key giữa các file ngôn ngữ (Ví dụ: `vi` có key `common.delete` thì `zh` và `en` cũng PHẢI có).
     *   **Checklist**: Trước khi commit code liên quan đến translation, phải rà soát so sánh cả 2 file `translation.json`.
+    *   **Bắt buộc**: Khi thêm một key mới (ví dụ `common.status`), bắt buộc phải thêm message tương ứng vào cả 2 file ngôn ngữ (Tiếng Việt `vi` và Tiếng Trung `zh`).
 *   **Placeholder**:
     *   Nội dung placeholder phải khớp với thứ tự các cột hoặc trường dữ liệu hiển thị trên UI.
+
+### 12.1 Nguyên tắc Localization Hướng Ngữ cảnh (Context-Aware Localization)
+**Mục tiêu**: Tránh việc dùng chung từ khóa gây sai lệch ngữ nghĩa khi mở rộng và đảm bảo không hardcode ngôn ngữ.
+
+1.  **Feature-Scoped Keys (Phạm vi Tính năng)**:
+    *   **QUY TẮC**: Hạn chế tối đa dùng `common.*` cho các trường nghiệp vụ chính (Business Fields).
+    *   **Lý do**: Cùng là "Status" nhưng kho hàng là "Tình trạng" (Available), đơn hàng là "Trạng thái" (Pending). Dùng chung `common.status` sẽ không thể dịch chuẩn cho từng ngữ cảnh.
+    *   **Chuẩn**: `[feature].[field]`. Ví dụ: `warehouse.status`, `employee.status`.
+
+2.  **Enum/Value Mapping (Ánh xạ Giá trị)**:
+    *   Đối với các trường dữ liệu dạng Enum (Status, Type, Role...), **TUYỆT ĐỐI KHÔNG** hardcode text hiển thị (như `'Hoạt động'`, `'Available'`) trong code JavaScript/React.
+    *   **Phải** tạo key riêng cho từng giá trị Enum.
+    *   *Ví dụ sai*: `status === 'AVAILABLE' ? 'Khả dụng' : 'Hết hàng'`
+    *   *Ví dụ đúng*: `t(status === 'AVAILABLE' ? 'warehouse.available' : 'warehouse.unavailable')`
+
+3.  **Quy trình xác minh (Definition of Done)**:
+    *   Một tính năng chỉ được coi là hoàn thành khi toàn bộ text (Label, Header, Enum Value, Placeholder) đã có key trong **CẢ 2 FILE** `vi/translation.json` và `zh/translation.json`.
+    *   Thiếu translation => **Bug**.

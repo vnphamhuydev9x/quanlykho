@@ -244,12 +244,12 @@ const EmployeeList = () => {
     return (
         <div>
             <div style={{ marginBottom: 16 }}>
-                <Row justify="space-between" align="middle">
-                    <Col>
+                <Row justify="space-between" align="middle" gutter={[16, 16]}>
+                    <Col xs={24} md={24} lg={12}>
                         <h2>{t('employee.title')}</h2>
                     </Col>
-                    <Col>
-                        <Space>
+                    <Col xs={24} md={24} lg={12} style={{ textAlign: 'right' }}>
+                        <Space wrap>
                             <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                                 {t('employee.add')}
                             </Button>
@@ -271,10 +271,10 @@ const EmployeeList = () => {
                                 size="large"
                             />
                         </Col>
-                        <Col xs={24} sm={12} md={8} lg={8}>
+                        <Col xs={24} sm={12} md={12} lg={8}>
                             <Select
                                 style={{ width: '100%' }}
-                                placeholder={t('employee.status')}
+                                placeholder={t('common.filterByStatus')}
                                 value={filters.status}
                                 onChange={val => handleFilterChange('status', val)}
                                 allowClear
@@ -284,10 +284,10 @@ const EmployeeList = () => {
                                 <Option value="inactive">{t('employee.inactive')}</Option>
                             </Select>
                         </Col>
-                        <Col xs={24} sm={12} md={8} lg={8}>
+                        <Col xs={24} sm={12} md={12} lg={8}>
                             <Select
                                 style={{ width: '100%' }}
-                                placeholder={t('profile.role')}
+                                placeholder={t('common.filterByRole')}
                                 value={filters.role}
                                 onChange={val => handleFilterChange('role', val)}
                                 allowClear
@@ -302,7 +302,7 @@ const EmployeeList = () => {
                                 <Option value="CHUNG_TU">{t('roles.CHUNG_TU')}</Option>
                             </Select>
                         </Col>
-                        <Col xs={24} sm={24} md={8} lg={8} style={{ textAlign: 'right' }}>
+                        <Col xs={24} sm={24} md={24} lg={8} style={{ textAlign: 'right' }}>
                             <Space>
                                 <Button type="primary" onClick={handleSearch} size="large">
                                     {t('common.search')}

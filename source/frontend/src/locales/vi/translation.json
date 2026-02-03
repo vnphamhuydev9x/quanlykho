@@ -6,11 +6,25 @@
     "menu": {
         "dashboard": "Bảng điều khiển",
         "settings": "Cài đặt",
+        "warehouseVN": "Kho VN",
         "warehouse": "Kho hàng",
         "employees": "Nhân viên",
         "profile": "Hồ sơ",
         "logout": "Đăng xuất",
-        "customers": "Khách hàng"
+        "customers": "Khách hàng",
+        "warehouses": "Kho hàng"
+    },
+    "warehouse": {
+        "title": "Quản lý Kho VN",
+        "add": "Thêm mới",
+        "name": "Tên kho",
+        "searchPlaceholder": "Tìm theo tên kho...",
+        "status": "Trạng thái",
+        "available": "Khả dụng",
+        "unavailable": "Không khả dụng",
+        "createSuccess": "Tạo kho mới thành công!",
+        "updateSuccess": "Cập nhật kho thành công!",
+        "deleteSuccess": "Xóa kho thành công!"
     },
     "header": {
         "language": "Tiếng Việt"
@@ -39,7 +53,12 @@
         "search": "Tìm kiếm",
         "clear": "Xóa lọc",
         "delete": "Xóa",
-        "edit": "Sửa"
+        "edit": "Sửa",
+        "status": "Trạng thái",
+        "filterByStatus": "Lọc theo Trạng thái",
+        "filterByRole": "Lọc theo Quyền hạn",
+        "filterBySale": "Lọc theo Nhân viên Sale",
+        "createdAt": "Ngày tạo"
     },
     "validation": {
         "required": "Trường này là bắt buộc!",

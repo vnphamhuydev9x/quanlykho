@@ -38,3 +38,18 @@ model User {
 
   @@map("users")
 }
+
+enum WarehouseStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+model Warehouse {
+  id        Int             @id @default(autoincrement())
+  name      String
+  status    WarehouseStatus @default(AVAILABLE)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@map("warehouses")
+}

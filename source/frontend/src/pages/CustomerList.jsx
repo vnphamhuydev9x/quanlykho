@@ -307,10 +307,10 @@ const CustomerList = () => {
         <div>
             <div style={{ marginBottom: 16 }}>
                 <Row justify="space-between" align="middle" gutter={[16, 16]}>
-                    <Col xs={24} md={12}>
+                    <Col xs={24} md={24} lg={12}>
                         <h2>{t('customer.title')}</h2>
                     </Col>
-                    <Col xs={24} md={12} style={{ textAlign: 'right' }}>
+                    <Col xs={24} md={24} lg={12} style={{ textAlign: 'right' }}>
                         <Space wrap>
                             {userRole === 'ADMIN' && (
                                 <Button
@@ -342,10 +342,10 @@ const CustomerList = () => {
                                 size="large"
                             />
                         </Col>
-                        <Col xs={24} sm={12} md={8} lg={8}>
+                        <Col xs={24} sm={12} md={12} lg={8}>
                             <Select
                                 style={{ width: '100%' }}
-                                placeholder={t('customer.status')}
+                                placeholder={t('common.filterByStatus')}
                                 value={filters.status}
                                 onChange={val => handleFilterChange('status', val)}
                                 allowClear
@@ -355,10 +355,10 @@ const CustomerList = () => {
                                 <Option value="inactive">{t('customer.inactive')}</Option>
                             </Select>
                         </Col>
-                        <Col xs={24} sm={12} md={8} lg={8}>
+                        <Col xs={24} sm={12} md={12} lg={8}>
                             <Select
                                 style={{ width: '100%' }}
-                                placeholder={t('customer.sale')}
+                                placeholder={t('common.filterBySale')}
                                 value={filters.saleId}
                                 onChange={val => handleFilterChange('saleId', val)}
                                 allowClear
@@ -375,7 +375,7 @@ const CustomerList = () => {
                                 ))}
                             </Select>
                         </Col>
-                        <Col xs={24} sm={24} md={8} lg={8} style={{ textAlign: 'right' }}>
+                        <Col xs={24} sm={24} md={24} lg={8} style={{ textAlign: 'right' }}>
                             <Space>
                                 <Button type="primary" onClick={handleSearch} size="large">
                                     {t('common.search')}

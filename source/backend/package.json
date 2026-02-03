@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:restart": "echo 'Run tests in source/integration_tests'",
+    "dev:test": "dotenv -e .env.test -- nodemon src/server.js",
     "dev": "nodemon src/server.js"
   },
   "keywords": [],
@@ -22,8 +23,12 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "dotenv-cli": "^11.0.0",
+    "jest": "^30.2.0",
+    "jest-mock-extended": "^4.0.0",
     "nodemon": "^3.1.11",
-    "prisma": "5.22.0"
+    "prisma": "5.22.0",
+    "supertest": "^7.2.2"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

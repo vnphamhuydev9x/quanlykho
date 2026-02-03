@@ -1,0 +1,26 @@
+{
+    "name": "integration-tests",
+    "version": "1.0.0",
+    "description": "Black-box integration tests for QuanLyKho Backend",
+    "main": "index.js",
+    "scripts": {
+        "test": "dotenv -e ../backend/.env.test -- jest --runInBand",
+        "test:watch": "dotenv -e ../backend/.env.test -- jest --watch",
+        "copy:schema": "copy ..\\backend\\prisma\\schema.prisma prisma\\schema.prisma",
+        "db:push": "dotenv -e ../backend/.env.test -- prisma db push",
+        "generate": "prisma generate",
+        "setup": "npm run copy:schema && npm run generate && npm run db:push"
+    },
+    "dependencies": {
+        "@prisma/client": "^5.22.0",
+        "dotenv": "^16.4.5",
+        "dotenv-cli": "^7.3.0",
+        "jsonwebtoken": "^9.0.2",
+        "redis": "^4.6.10"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0",
+        "prisma": "^5.22.0",
+        "supertest": "^6.3.3"
+    }
+}

@@ -271,3 +271,26 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
 *   **Checklist Review**:
     *   [ ] Search toàn bộ project các string tiếng Việt có dấu (ví dụ: "Thêm", "Sửa", "Tên").
     *   [ ] Đảm bảo tất cả đều được bọc trong hàm `t('key')`.
+
+## 13. Backend Integration Testing Standard
+*   **Full Coverage**:
+    *   Tests MUST cover **Happy Path**, **Edge Cases**, and **Corner Cases** (e.g., max values, empty inputs, duplicate data, invalid formats).
+*   **Role Verification**:
+    *   **Strict Authorization**: Tests MUST verified that unauthorized roles (e.g., User) cannot perform Admin actions.
+    *   Verify both Positive (Admin succeeds) and Negative (User fails 403) flows.
+*   **Cache Logic (Critical)**:
+    *   **Invalidation**: MUST verify that mutations (Create/Update/Delete) clear relevant cache keys.
+    *   **Cascading Invalidation**: For relational data (e.g., Employee -> Customer, Customer -> Transaction), verify that updating the parent entity clears the child lists where the parent data might be displayed.
+    *   **Verification**: Use `redisClient.keys()` in tests to assert cache state before and after actions.
+*   **Black-Box Principle**:
+    *   Tests run against a live server and DB, simulating real HTTP requests, treating the backend as a black box.
+
+## 14. Test-Driven Development (TDD) Methodology
+*   **TDD Workflow**:
+    *   **Red**: Write a failing test case *before* implementing any feature or fix.
+    *   **Green**: Write just enough code to make the test pass.
+    *   **Refactor**: Improve the code without changing behavior (test must remain green).
+*   **Immutable Tests Rule** (QUAN TRỌNG):
+    *   **Source of Truth**: Test assertions phản ánh Requirements.
+    *   **Restricted Modification**: Không được phép sửa đổi Test Case đã viết trừ khi Requirements thay đổi.
+    *   **Approval Process**: Nếu cần sửa Test Case (do logic cũ sai hoặc đổi nghiệp vụ), **BẮT BUỘC** phải hỏi ý kiến User và được sự đồng ý mới được sửa. Code phải sửa để theo Test, không được sửa Test để theo Code.

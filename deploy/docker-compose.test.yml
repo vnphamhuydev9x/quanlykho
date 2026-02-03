@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  db_test:
+    image: postgres:15-alpine
+    container_name: quanlykho-db-test
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_DB: quanlykho_test
+    ports:
+      - "5433:5432" # Map to 5433 to avoid conflict
+    tmpfs:
+      - /var/lib/postgresql/data # RAM Disk for speed & auto-cleanup
+    networks:
+      - quanlykho-test-network
+
+  redis_test:
+    image: redis:alpine
+    container_name: quanlykho-redis-test
+    restart: always
+    ports:
+      - "6380:6379" # Map to 6380
+    networks:
+      - quanlykho-test-network
+
+networks:
+  quanlykho-test-network:
+    driver: bridge

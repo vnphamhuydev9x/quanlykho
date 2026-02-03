@@ -36,6 +36,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  transactions        Transaction[] @relation("CustomerTransactions")
+  createdTransactions Transaction[] @relation("CreatedTransactions")
+
   @@map("users")
 }
 
@@ -67,4 +70,28 @@ model Category {
   updatedAt DateTime       @updatedAt
 
   @@map("categories")
+}
+
+enum TransactionStatus {
+  SUCCESS
+  CANCELLED
+}
+
+model Transaction {
+  id          Int               @id @default(autoincrement())
+  amount      Decimal           @db.Decimal(15, 0)
+  content     String?
+  status      TransactionStatus @default(SUCCESS)
+  
+  // Relations
+  customerId  Int
+  customer    User              @relation("CustomerTransactions", fields: [customerId], references: [id])
+  
+  createdById Int
+  creator     User              @relation("CreatedTransactions", fields: [createdById], references: [id])
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@map("transactions")
 }

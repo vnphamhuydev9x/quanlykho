@@ -12,6 +12,7 @@
         "profile": "Hồ sơ",
         "logout": "Đăng xuất",
         "customers": "Khách hàng",
+        "transactions": "Nạp tiền",
         "warehouses": "Kho hàng",
         "categories": "Loại hàng"
     },
@@ -19,7 +20,7 @@
         "title": "Quản lý Kho VN",
         "add": "Thêm mới",
         "name": "Tên kho",
-        "searchPlaceholder": "Tìm theo tên kho...",
+        "searchPlaceholder": "Tìm theo Tên kho",
         "status": "Trạng thái",
         "available": "Khả dụng",
         "unavailable": "Không khả dụng",
@@ -33,12 +34,30 @@
         "edit": "Sửa loại hàng",
         "name": "Tên loại hàng",
         "status": "Trạng thái",
-        "searchPlaceholder": "Tìm theo tên loại hàng...",
+        "searchPlaceholder": "Tìm theo Tên loại hàng",
         "available": "Khả dụng",
         "unavailable": "Không khả dụng",
         "createSuccess": "Tạo loại hàng thành công!",
         "updateSuccess": "Cập nhật loại hàng thành công!",
         "deleteSuccess": "Xóa loại hàng thành công!"
+    },
+    "transaction": {
+        "title": "Nạp tiền",
+        "add": "Nạp tiền",
+        "customer": "Khách hàng",
+        "amount": "Số tiền",
+        "content": "Nội dung giao dịch",
+        "status": "Trạng thái",
+        "success": "Thành công",
+        "cancelled": "Đã hủy",
+        "createdBy": "Người tạo",
+        "cancelAction": "Hủy giao dịch",
+        "createSuccess": "Nạp tiền thành công!",
+        "cancelSuccess": "Hủy giao dịch thành công!",
+        "searchPlaceholder": "Tìm theo Khách hàng (Họ và tên, Tên đăng nhập, Số điện thoại), Nội dung giao dịch",
+        "selectCustomer": "Tìm theo Họ và tên, Tên đăng nhập, Số điện thoại",
+        "filterByCreator": "Lọc theo Người tạo",
+        "filterBySale": "Lọc theo Sale"
     },
     "header": {
         "language": "Tiếng Việt"

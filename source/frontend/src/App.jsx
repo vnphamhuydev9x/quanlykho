@@ -7,6 +7,7 @@ import EmployeeList from './pages/EmployeeList';
 import CustomerList from './pages/CustomerList';
 import WarehousePage from './pages/warehouse/WarehousePage';
 import CategoryPage from './pages/category/CategoryPage';
+import TransactionPage from './pages/transaction/TransactionPage';
 import MainLayout from './layouts/MainLayout';
 
 // Protected Route Component
@@ -69,6 +70,16 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <CategoryPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <TransactionPage />
               </MainLayout>
             </ProtectedRoute>
           }

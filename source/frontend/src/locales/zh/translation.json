@@ -12,6 +12,7 @@
         "profile": "个人资料",
         "logout": "注销",
         "customers": "客户",
+        "transactions": "充值",
         "warehouses": "仓库",
         "categories": "货类"
     },
@@ -19,7 +20,7 @@
         "title": "越南仓库管理",
         "add": "新增",
         "name": "仓库名称",
-        "searchPlaceholder": "按仓库名称搜索...",
+        "searchPlaceholder": "按仓库名称搜索",
         "status": "状态",
         "available": "可用",
         "unavailable": "不可用",
@@ -33,12 +34,30 @@
         "edit": "编辑货类",
         "name": "货类名称",
         "status": "状态",
-        "searchPlaceholder": "按货类名称搜索...",
+        "searchPlaceholder": "按货类名称搜索",
         "available": "可用",
         "unavailable": "不可用",
         "createSuccess": "创建货类成功！",
         "updateSuccess": "更新货类成功！",
         "deleteSuccess": "删除货类成功！"
+    },
+    "transaction": {
+        "title": "充值管理",
+        "add": "充值",
+        "customer": "客户",
+        "amount": "金额",
+        "content": "交易内容",
+        "status": "状态",
+        "success": "成功",
+        "cancelled": "已取消",
+        "createdBy": "创建者",
+        "cancelAction": "取消交易",
+        "createSuccess": "充值成功！",
+        "cancelSuccess": "取消交易成功！",
+        "searchPlaceholder": "按客户(姓名, 用户名, 电话), 交易内容搜索",
+        "selectCustomer": "搜索姓名，用户名，电话",
+        "filterByCreator": "按创建者筛选",
+        "filterBySale": "按销售筛选"
     },
     "header": {
         "language": "中文"

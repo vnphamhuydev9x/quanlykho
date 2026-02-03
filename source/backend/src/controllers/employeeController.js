@@ -27,7 +27,16 @@ const getAllEmployees = async (req, res) => {
 
         logger.info('[GetEmployees] Cache Miss. Querying DB...');
 
-        const skip = (parseInt(page) - 1) * parseInt(limit);
+        let skip, take;
+        if (parseInt(limit) > 0) {
+            skip = (parseInt(page) - 1) * parseInt(limit);
+            take = parseInt(limit);
+        } else {
+            // limit = 0 -> Fetch All
+            skip = undefined;
+            take = undefined;
+        }
+
         const where = { type: 'EMPLOYEE' };
 
         if (search) {
@@ -48,24 +57,29 @@ const getAllEmployees = async (req, res) => {
             where.role = req.query.role;
         }
 
+        const queryOptions = {
+            where,
+            select: {
+                id: true,
+                username: true,
+                fullName: true,
+                email: true,
+                phone: true,
+                role: true,
+                isActive: true,
+                createdAt: true
+            },
+            orderBy: { createdAt: 'desc' }
+        };
+
+        if (take !== undefined) {
+            queryOptions.skip = skip;
+            queryOptions.take = take;
+        }
+
         // 2. Query DB
         const [employees, total] = await prisma.$transaction([
-            prisma.user.findMany({
-                where,
-                skip,
-                take: parseInt(limit),
-                select: {
-                    id: true,
-                    username: true,
-                    fullName: true,
-                    email: true,
-                    phone: true,
-                    role: true,
-                    isActive: true,
-                    createdAt: true
-                },
-                orderBy: { createdAt: 'desc' }
-            }),
+            prisma.user.findMany(queryOptions),
             prisma.user.count({ where })
         ]);
 
@@ -73,7 +87,7 @@ const getAllEmployees = async (req, res) => {
             employees,
             total,
             page: parseInt(page),
-            totalPages: Math.ceil(total / parseInt(limit))
+            totalPages: take ? Math.ceil(total / take) : 1
         };
 
         // 3. Set Cache (Expire after 1 hour)
@@ -172,6 +186,14 @@ const updateEmployee = async (req, res) => {
         // Invalidate User Status Cache
         await redisClient.del(`user:status:${empId}`);
 
+        // CASCADE: Invalidate dependent caches (Customer List & Transaction List)
+        // Reason: Employee name might be displayed in these lists
+        const customerKeys = await redisClient.keys('customers:list:*');
+        if (customerKeys.length > 0) await redisClient.del(customerKeys);
+
+        const transactionKeys = await redisClient.keys('transactions:list:*');
+        if (transactionKeys.length > 0) await redisClient.del(transactionKeys);
+
         logger.info(`[UpdateEmployee] Success for ID: ${id}`);
 
         res.json({
@@ -206,6 +228,13 @@ const deleteEmployee = async (req, res) => {
         }
         // Invalidate User Status Cache
         await redisClient.del(`user:status:${empId}`);
+
+        // CASCADE: Invalidate dependent caches
+        const customerKeys = await redisClient.keys('customers:list:*');
+        if (customerKeys.length > 0) await redisClient.del(customerKeys);
+
+        const transactionKeys = await redisClient.keys('transactions:list:*');
+        if (transactionKeys.length > 0) await redisClient.del(transactionKeys);
 
         logger.info(`[DeleteEmployee] Success. ID: ${id} deleted`);
 

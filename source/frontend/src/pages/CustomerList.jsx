@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined, DownloadOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -86,8 +86,8 @@ const CustomerList = () => {
     const fetchEmployees = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            // Fetch with large limit for dropdown
-            const response = await axios.get('http://localhost:3000/api/employees?limit=100', {
+            // Fetch all employees for dropdown (limit=0 means unlimited)
+            const response = await axios.get('http://localhost:3000/api/employees?limit=0', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Handle paginated response structure
@@ -342,7 +342,7 @@ const CustomerList = () => {
                                 size="large"
                             />
                         </Col>
-                        <Col xs={24} sm={12} md={12} lg={8}>
+                        <Col xs={24} sm={12} md={12} lg={7}>
                             <Select
                                 style={{ width: '100%' }}
                                 placeholder={t('common.filterByStatus')}
@@ -350,12 +350,16 @@ const CustomerList = () => {
                                 onChange={val => handleFilterChange('status', val)}
                                 allowClear
                                 size="large"
+                                showSearch
+                                filterOption={(input, option) =>
+                                    (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                }
                             >
                                 <Option value="active">{t('customer.active')}</Option>
                                 <Option value="inactive">{t('customer.inactive')}</Option>
                             </Select>
                         </Col>
-                        <Col xs={24} sm={12} md={12} lg={8}>
+                        <Col xs={24} sm={12} md={12} lg={7}>
                             <Select
                                 style={{ width: '100%' }}
                                 placeholder={t('common.filterBySale')}
@@ -365,7 +369,7 @@ const CustomerList = () => {
                                 showSearch
                                 size="large"
                                 filterOption={(input, option) =>
-                                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                    (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
                                 }
                             >
                                 {employees.map(emp => (
@@ -375,12 +379,12 @@ const CustomerList = () => {
                                 ))}
                             </Select>
                         </Col>
-                        <Col xs={24} sm={24} md={24} lg={8} style={{ textAlign: 'right' }}>
+                        <Col xs={24} sm={24} md={24} lg={10} style={{ textAlign: 'right' }}>
                             <Space>
-                                <Button type="primary" onClick={handleSearch} size="large">
+                                <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch} size="large">
                                     {t('common.search')}
                                 </Button>
-                                <Button onClick={handleClearFilter} size="large">
+                                <Button icon={<ReloadOutlined />} onClick={handleClearFilter} size="large">
                                     {t('common.clear')}
                                 </Button>
                             </Space>
@@ -453,7 +457,15 @@ const CustomerList = () => {
                         name="saleId"
                         label={t('customer.sale')}
                     >
-                        <Select allowClear placeholder={t('customer.sale')} disabled={isViewMode}>
+                        <Select
+                            allowClear
+                            placeholder={t('customer.sale')}
+                            disabled={isViewMode}
+                            showSearch
+                            filterOption={(input, option) =>
+                                (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                            }
+                        >
                             {employees.map(emp => (
                                 <Option key={emp.id} value={emp.id}>
                                     {emp.fullName || emp.username} ({t(`roles.${emp.role}`)})

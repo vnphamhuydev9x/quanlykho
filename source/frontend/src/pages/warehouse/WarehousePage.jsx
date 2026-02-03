@@ -207,6 +207,10 @@ const WarehousePage = () => {
                                 onChange={(value) => handleFilterChange('status', value)}
                                 allowClear
                                 size="large"
+                                showSearch
+                                filterOption={(input, option) =>
+                                    (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                }
                             >
                                 <Option value="AVAILABLE">{t('warehouse.available')}</Option>
                                 <Option value="UNAVAILABLE">{t('warehouse.unavailable')}</Option>

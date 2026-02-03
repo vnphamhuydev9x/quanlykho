@@ -119,6 +119,12 @@ const MainLayout = ({ children }) => {
             onClick: () => navigate('/'),
         },
         {
+            key: '/transactions',
+            icon: <FileTextOutlined />,
+            label: t('menu.transactions'),
+            onClick: () => navigate('/transactions'),
+        },
+        {
             key: '/customers',
             icon: <TeamOutlined />,
             label: t('menu.customers'),
@@ -131,11 +137,6 @@ const MainLayout = ({ children }) => {
             label: t('menu.settings'),
             children: [
                 {
-                    key: '/settings/employees',
-                    label: t('menu.employees'),
-                    onClick: () => navigate('/settings/employees'),
-                },
-                {
                     key: '/settings/warehouses',
                     label: t('menu.warehouseVN'),
                     onClick: () => navigate('/settings/warehouses'),
@@ -144,6 +145,11 @@ const MainLayout = ({ children }) => {
                     key: '/settings/categories',
                     label: t('menu.categories'),
                     onClick: () => navigate('/settings/categories'),
+                },
+                {
+                    key: '/settings/employees',
+                    label: t('menu.employees'),
+                    onClick: () => navigate('/settings/employees'),
                 }
             ],
         },

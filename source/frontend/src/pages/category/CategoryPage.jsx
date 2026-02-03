@@ -206,12 +206,15 @@ const CategoryPage = () => {
                                 onChange={(value) => handleFilterChange('status', value)}
                                 allowClear
                                 size="large"
+                                showSearch
+                                filterOption={(input, option) =>
+                                    (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                }
                             >
                                 <Option value="AVAILABLE">{t('category.available')}</Option>
                                 <Option value="UNAVAILABLE">{t('category.unavailable')}</Option>
                             </Select>
                         </Col>
-                        {/* Placeholder fix, using category.status for filter label if generic */}
 
                         <Col xs={24} sm={24} md={24} lg={16} style={{ textAlign: 'right' }}>
                             <Space>

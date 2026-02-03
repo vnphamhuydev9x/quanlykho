@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, message } from 'antd';
+import { Modal, Form, Input, Select, message, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
@@ -13,12 +13,12 @@ const WarehouseModal = ({ visible, onCancel, onSuccess, editingWarehouse }) => {
             if (editingWarehouse) {
                 form.setFieldsValue({
                     name: editingWarehouse.name,
-                    status: editingWarehouse.status,
+                    status: editingWarehouse.status === 'AVAILABLE',
                 });
             } else {
                 form.resetFields();
                 form.setFieldsValue({
-                    status: 'AVAILABLE',
+                    status: true, // Default AVAILABLE
                 });
             }
         }
@@ -28,7 +28,11 @@ const WarehouseModal = ({ visible, onCancel, onSuccess, editingWarehouse }) => {
         form
             .validateFields()
             .then((values) => {
-                onSuccess(values);
+                const submitData = {
+                    ...values,
+                    status: values.status ? 'AVAILABLE' : 'UNAVAILABLE'
+                };
+                onSuccess(submitData);
             })
             .catch((info) => {
                 console.log('Validate Failed:', info);
@@ -38,7 +42,7 @@ const WarehouseModal = ({ visible, onCancel, onSuccess, editingWarehouse }) => {
     return (
         <Modal
             open={visible}
-            title={editingWarehouse ? "Cập nhật Kho" : "Thêm mới Kho"}
+            title={editingWarehouse ? t('common.edit') + " " + t('menu.warehouse') : t('warehouse.add') + " " + t('menu.warehouse')}
             okText={t('common.save')}
             cancelText={t('common.cancel')}
             onCancel={onCancel}
@@ -51,21 +55,22 @@ const WarehouseModal = ({ visible, onCancel, onSuccess, editingWarehouse }) => {
             >
                 <Form.Item
                     name="name"
-                    label="Tên kho"
+                    label={t('warehouse.name')}
                     rules={[{ required: true, message: t('validation.required') }]}
                 >
-                    <Input placeholder="Nhập tên kho" />
+                    <Input placeholder={t('warehouse.name')} />
                 </Form.Item>
 
                 <Form.Item
                     name="status"
-                    label="Trạng thái"
-                    rules={[{ required: true, message: t('validation.required') }]}
+                    label={t('warehouse.status')}
+                    valuePropName="checked"
+                    initialValue={true}
                 >
-                    <Select>
-                        <Option value="AVAILABLE">Khả dụng</Option>
-                        <Option value="UNAVAILABLE">Không khả dụng</Option>
-                    </Select>
+                    <Switch
+                        checkedChildren={t('warehouse.available')}
+                        unCheckedChildren={t('warehouse.unavailable')}
+                    />
                 </Form.Item>
             </Form>
         </Modal>

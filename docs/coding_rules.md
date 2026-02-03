@@ -75,6 +75,17 @@ Bất cứ khi nào dữ liệu gốc (Database) thay đổi, Cache tương ứn
 - [ ] API GET đã check cache chưa?
 - [ ] API POST/PUT/DELETE đã gọi lệnh xóa cache chưa?
 
+### Chiến lược Xóa Cache Liên hoàn (Cascading Invalidation)
+*   **Quy tắc**: Khi một tài nguyên (Resource A) thay đổi, hệ thống phải rà soát và xóa cache của tất cả các tài nguyên khác (Resource B, C) có chứa thông tin của A.
+*   **Ví dụ thực tế**:
+    *   Màn hình `Transaction` có hiển thị `Customer Name`.
+    *   Khi update thông tin `Customer` (ví dụ đổi tên), bắt buộc phải xóa cache `transactions:list`.
+    *   Nếu không xóa => Transaction vẫn hiện tên cũ của khách hàng => **Lỗi hiển thị**.
+*   **Checklist**:
+    *   [ ] Function này sửa đổi bảng nào? (VD: User).
+    *   [ ] Bảng này có được "Join" hoặc hiển thị dữ liệu ở màn hình khác không? (VD: Transaction list, Order list).
+    *   [ ] Nếu có, phải gọi lệnh `redisClient.del` cho cả các key liên quan đó.
+
 ---
 
 ## 3. Logging Strategy
@@ -166,9 +177,29 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
                 *   Ở màn hình `lg`: Cột chứa Button chiếm toàn bộ không gian còn lại (24 - sum(filters)).
                 *   Ở màn hình `md`: Cột chứa Button **PHẢI** xuống dòng (`span={24}`) để đảm bảo không gian.
             *   **Wording Consistency**:
-                *   Tiêu đề của Filter **PHẢI** khớp hoàn toàn với tiêu đề cột trong bảng (bao gồm cả Chữ hoa/Chữ thường).
                 *   Ví dụ: Header cột là "Trạng thái", thì Placeholder filter phải là "Lọc theo Trạng thái" (Không dùng "trạng thái").
                 *   Ví dụ: Header cột là "Quyền hạn", thì Placeholder filter phải là "Lọc theo Quyền hạn" (Không dùng "quyền").
+            *   **Search Placeholder**:
+                *   **Format**: "Tìm theo [Field 1], [Field 2]" (Không dùng dấu ba chấm "..." ở cuối).
+                *   **Capitalization**: Các tên trường phải viết In Hoa Chữ Cái Đầu (Title Case) để trang trọng.
+                    *   Đúng: "Tìm theo Tên kho", "Tìm theo Loại hàng"
+                    *   Sai: "Tìm theo tên kho..." (Lỗi: chữ thường, có "...")
+                *   Phải liệt kê rõ các trường có thể tìm kiếm, khớp với Header của bảng.
+                *   Ví dụ: "Tìm theo Khách hàng (Tên, SĐT), Nội dung" thay vì "Tìm kiếm...".
+            *   **Selection/Filter Box (Standard)**:
+                *   **Always Searchable**: Tất cả `Select` box (cho dù là Filter hay Form) đều phải có prop `showSearch`.
+                *   **Filter Logic**: Phải implement `filterOption` để search theo text hiển thị (không phân biệt hoa thường).
+                    ```javascript
+                    filterOption={(input, option) =>
+                        (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                    }
+                    ```
+                *   **Display Format**:
+                    *   **Tổng quát**: Hiển thị dạng `Username - FullName (Phone)` để hỗ trợ tìm kiếm đa chiều.
+                    *   **WYSIWYS (What You See Is What You Search)**: Đối với các filter lọc theo trường liên kết (ví dụ: Người tạo, Sale phụ trách) trong bảng dữ liệu:
+                        *   Nếu cột trong bảng chỉ hiển thị **Tên**, thì filter cũng chỉ hiển thị và cho phép tìm theo **Tên**.
+                        *   **TUYỆT ĐỐI** không hiển thị thêm thông tin (SĐT, Email) trong dropdown nếu cột tương ứng trên bảng không có.
+                        *   Lý do: Đảm bảo tính nhất quán giữa cái nhìn thấy và cái tìm kiếm được.
 
 ## 10. Code Style Consistency (Quy chuẩn Coding Style)
 *   **Import/Require**: Giữ style nhất quán trong cùng 1 file.
@@ -229,3 +260,14 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
 3.  **Quy trình xác minh (Definition of Done)**:
     *   Một tính năng chỉ được coi là hoàn thành khi toàn bộ text (Label, Header, Enum Value, Placeholder) đã có key trong **CẢ 2 FILE** `vi/translation.json` và `zh/translation.json`.
     *   Thiếu translation => **Bug**.
+
+### 12.2 Quy tắc Cấm Hardcode (No Hardcoded Strings Rule)
+*   **TUYỆT ĐỐI KHÔNG** dùng chuỗi tĩnh (static string) cho các thuộc tính hiển thị trên UI.
+*   **Các vị trí thường gặp lỗi**:
+    *   `title="..."` (Modal title, Page title).
+    *   `label="..."` (Form Item label).
+    *   `placeholder="..."` (Input placeholder).
+    *   `message="..."` (Rule validation message).
+*   **Checklist Review**:
+    *   [ ] Search toàn bộ project các string tiếng Việt có dấu (ví dụ: "Thêm", "Sửa", "Tên").
+    *   [ ] Đảm bảo tất cả đều được bọc trong hàm `t('key')`.

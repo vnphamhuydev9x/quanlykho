@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
@@ -271,7 +271,7 @@ const EmployeeList = () => {
                                 size="large"
                             />
                         </Col>
-                        <Col xs={24} sm={12} md={12} lg={8}>
+                        <Col xs={24} sm={12} md={12} lg={7}>
                             <Select
                                 style={{ width: '100%' }}
                                 placeholder={t('common.filterByStatus')}
@@ -279,12 +279,16 @@ const EmployeeList = () => {
                                 onChange={val => handleFilterChange('status', val)}
                                 allowClear
                                 size="large"
+                                showSearch
+                                filterOption={(input, option) =>
+                                    (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                }
                             >
                                 <Option value="active">{t('employee.active')}</Option>
                                 <Option value="inactive">{t('employee.inactive')}</Option>
                             </Select>
                         </Col>
-                        <Col xs={24} sm={12} md={12} lg={8}>
+                        <Col xs={24} sm={12} md={12} lg={7}>
                             <Select
                                 style={{ width: '100%' }}
                                 placeholder={t('common.filterByRole')}
@@ -292,6 +296,10 @@ const EmployeeList = () => {
                                 onChange={val => handleFilterChange('role', val)}
                                 allowClear
                                 size="large"
+                                showSearch
+                                filterOption={(input, option) =>
+                                    (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                }
                             >
                                 <Option value="ADMIN">{t('roles.ADMIN')}</Option>
                                 <Option value="SALE">{t('roles.SALE')}</Option>
@@ -302,12 +310,12 @@ const EmployeeList = () => {
                                 <Option value="CHUNG_TU">{t('roles.CHUNG_TU')}</Option>
                             </Select>
                         </Col>
-                        <Col xs={24} sm={24} md={24} lg={8} style={{ textAlign: 'right' }}>
+                        <Col xs={24} sm={24} md={24} lg={10} style={{ textAlign: 'right' }}>
                             <Space>
-                                <Button type="primary" onClick={handleSearch} size="large">
+                                <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch} size="large">
                                     {t('common.search')}
                                 </Button>
-                                <Button onClick={handleClearFilter} size="large">
+                                <Button icon={<ReloadOutlined />} onClick={handleClearFilter} size="large">
                                     {t('common.clear')}
                                 </Button>
                             </Space>
@@ -375,7 +383,13 @@ const EmployeeList = () => {
                         label={t('profile.role')}
                         rules={[{ required: true, message: t('validation.required') }]}
                     >
-                        <Select disabled={isViewMode}>
+                        <Select
+                            disabled={isViewMode}
+                            showSearch
+                            filterOption={(input, option) =>
+                                (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                            }
+                        >
                             <Option value="ADMIN">{t('roles.ADMIN')}</Option>
                             <Option value="SALE">{t('roles.SALE')}</Option>
                             <Option value="KHO_TQ">{t('roles.KHO_TQ')}</Option>

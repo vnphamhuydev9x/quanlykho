@@ -65,7 +65,16 @@ const customerController = {
     getCustomers: async (req, res) => {
         try {
             const { page = 1, limit = 20, search = '', status, saleId } = req.query;
-            const skip = (parseInt(page) - 1) * parseInt(limit);
+
+            let skip, take;
+            if (parseInt(limit) > 0) {
+                skip = (parseInt(page) - 1) * parseInt(limit);
+                take = parseInt(limit);
+            } else {
+                // limit = 0 or invalid (but we treat 0 as all) -> Fetch All
+                skip = undefined;
+                take = undefined;
+            }
 
             const where = {
                 type: 'CUSTOMER',
@@ -88,27 +97,32 @@ const customerController = {
                 where.saleId = parseInt(saleId);
             }
 
-            const [customers, total] = await prisma.$transaction([
-                prisma.user.findMany({
-                    where,
-                    skip: parseInt(skip),
-                    take: parseInt(limit),
-                    orderBy: {
-                        createdAt: 'desc',
-                    },
-                    select: {
-                        id: true,
-                        username: true,
-                        fullName: true,
-                        phone: true,
-                        address: true,
-                        isActive: true,
-                        saleId: true,
-                        sale: {
-                            select: { fullName: true } // Include Sale name
-                        }
+            const queryOptions = {
+                where,
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                select: {
+                    id: true,
+                    username: true,
+                    fullName: true,
+                    phone: true,
+                    address: true,
+                    isActive: true,
+                    saleId: true,
+                    sale: {
+                        select: { fullName: true } // Include Sale name
                     }
-                }),
+                }
+            };
+
+            if (take !== undefined) {
+                queryOptions.skip = skip;
+                queryOptions.take = take;
+            }
+
+            const [customers, total] = await prisma.$transaction([
+                prisma.user.findMany(queryOptions),
                 prisma.user.count({ where })
             ]);
 
@@ -116,7 +130,7 @@ const customerController = {
                 customers,
                 total,
                 page: parseInt(page),
-                totalPages: Math.ceil(total / parseInt(limit))
+                totalPages: take ? Math.ceil(total / take) : 1
             };
 
             // 2. Set Cache (disabled for dynamic search for now or update logic)
@@ -173,6 +187,12 @@ const customerController = {
             // Invalidate User Status Cache
             await redisClient.del(`user:status:${id}`);
 
+            // Invalidate Transaction Cache (Customer info might be displayed there)
+            const transactionKeys = await redisClient.keys('transactions:list:*');
+            if (transactionKeys.length > 0) {
+                await redisClient.del(transactionKeys);
+            }
+
             return res.status(200).json({
                 code: 200,
                 message: "Success",
@@ -197,6 +217,12 @@ const customerController = {
             }
             // Invalidate User Status Cache
             await redisClient.del(`user:status:${id}`);
+
+            // Invalidate Transaction Cache (Customer info might be displayed there)
+            const transactionKeys = await redisClient.keys('transactions:list:*');
+            if (transactionKeys.length > 0) {
+                await redisClient.del(transactionKeys);
+            }
 
             return res.status(200).json({
                 code: 200,

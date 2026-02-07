@@ -7,22 +7,30 @@ async function main() {
     const adminPassword = await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD || '123456', 10);
 
     // Create Admin User
-    const adminUser = await prisma.user.upsert({
-        where: { username: 'admin' },
-        update: {},
-        create: {
+    const existingAdmin = await prisma.user.findFirst({
+        where: {
             username: 'admin',
-            password: adminPassword,
-            fullName: 'Administrator',
-            email: 'admin@3t.com',
-            phone: '0909000000',
-            role: 'ADMIN',
-            type: 'EMPLOYEE',
-            isActive: true
+            deletedAt: null
         }
     });
 
-    console.log(`Created Admin User: ${adminUser.username}`);
+    if (!existingAdmin) {
+        const adminUser = await prisma.user.create({
+            data: {
+                username: 'admin',
+                password: adminPassword,
+                fullName: 'Administrator',
+                email: 'admin@3t.com',
+                phone: '0909000000',
+                role: 'ADMIN',
+                type: 'EMPLOYEE',
+                isActive: true
+            }
+        });
+        console.log(`Created Admin User: ${adminUser.username}`);
+    } else {
+        console.log(`Admin User already exists: ${existingAdmin.username}`);
+    }
     console.log('Seeding finished.');
 }
 

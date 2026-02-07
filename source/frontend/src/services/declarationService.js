@@ -30,7 +30,9 @@ const declarationService = {
         return response.data;
     },
 
-    exportData: async () => {
+
+
+    export: async () => {
         const response = await axiosInstance.get('/declarations/export/all');
         return response.data;
     }

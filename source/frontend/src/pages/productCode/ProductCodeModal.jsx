@@ -52,16 +52,27 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         setLoading(true);
         try {
             const [customersRes, warehousesRes, categoriesRes, declarationsRes] = await Promise.all([
-                customerService.getAll(1, 1000),
-                warehouseService.getAll(1, 1000),
-                categoryService.getAll(1, 1000),
-                declarationService.getAll(1, 1000)
+                customerService.getAll({ page: 1, limit: 1000 }),
+                warehouseService.getAll({ page: 1, limit: 1000 }),
+                categoryService.getAll({ page: 1, limit: 1000 }),
+                declarationService.getAll({ page: 1, limit: 1000 })
             ]);
 
-            setCustomers(customersRes.data.items || []);
-            setWarehouses(warehousesRes.data.items || []);
-            setCategories(categoriesRes.data.items || []);
-            setDeclarations(declarationsRes.data.items || []);
+
+            // Backend returns different structures:
+            // - customers: { customers: [...], total, page }
+            // - warehouses: array directly
+            // - categories: { items: [...], total, page }
+            // - declarations: { items: [...], total, page }
+            const customersData = customersRes.data?.customers || customersRes.customers || [];
+            const warehousesData = warehousesRes.data || warehousesRes || [];
+            const categoriesData = categoriesRes.data?.items || categoriesRes.items || [];
+            const declarationsData = declarationsRes.data?.items || declarationsRes.items || [];
+
+            setCustomers(Array.isArray(customersData) ? customersData : []);
+            setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
+            setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+            setDeclarations(Array.isArray(declarationsData) ? declarationsData : []);
         } catch (error) {
             message.error(t('common.loadError') || 'Lỗi khi tải dữ liệu');
         } finally {
@@ -468,7 +479,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 >
                                     <Select
                                         showSearch
-                                        placeholder={t('productCode.selectCustomer') || 'Chọn khách hàng'}
+                                        placeholder="Tìm theo Tên, Tên đăng nhập, SĐT"
                                         optionFilterProp="children"
                                         filterOption={(input, option) =>
                                             option.children.toLowerCase().includes(input.toLowerCase())
@@ -476,7 +487,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     >
                                         {customers.map(c => (
                                             <Option key={c.id} value={c.id}>
-                                                {c.fullName} ({c.username})
+                                                {`${c.fullName} (${c.username} - ${c.phone || 'N/A'})`}
                                             </Option>
                                         ))}
                                     </Select>
@@ -500,7 +511,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.warehouse') || 'Kho nhận'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <Select placeholder={t('productCode.selectWarehouse') || 'Chọn kho'}>
+                                    <Select showSearch placeholder="Tìm theo Tên kho" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
                                         {warehouses.map(w => (
                                             <Option key={w.id} value={w.id}>{w.name}</Option>
                                         ))}
@@ -513,7 +524,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.category') || 'Loại hàng'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <Select placeholder={t('productCode.selectCategory') || 'Chọn loại hàng'}>
+                                    <Select showSearch placeholder="Tìm theo Loại hàng" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
                                         {categories.map(c => (
                                             <Option key={c.id} value={c.id}>{c.name}</Option>
                                         ))}
@@ -538,12 +549,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.exchangeRate') || 'Tỷ giá'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber
-                                        style={{ width: '100%' }}
-                                        min={0}
-                                        step={0.0001}
-                                        placeholder="0.0000"
-                                    />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 70px)' }}
+                                            min={0}
+                                            step={0.0001}
+                                            placeholder="0.0000"
+                                            decimalSeparator=","
+                                        />
+                                        <Input
+                                            style={{ width: '70px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="VND/¥"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -557,8 +576,11 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     <Select
                                         allowClear
                                         showSearch
-                                        placeholder={t('productCode.selectDeclaration') || 'Chọn khai báo (tùy chọn)'}
+                                        placeholder="Tìm theo ID, Tên khai báo (tùy chọn)"
                                         optionFilterProp="children"
+                                        filterOption={(input, option) =>
+                                            option.children.toString().toLowerCase().includes(input.toLowerCase())
+                                        }
                                     >
                                         {declarations.map(d => (
                                             <Option key={d.id} value={d.id}>
@@ -607,7 +629,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.originalWeightPrice') || 'Giá cân gốc'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={0.01} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 60px)' }}
+                                            min={0}
+                                            step={0.01}
+                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                        />
+                                        <Input
+                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="VND"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={8}>
@@ -616,7 +651,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.originalVolumePrice') || 'Giá khối gốc'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={0.01} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 60px)' }}
+                                            min={0}
+                                            step={0.01}
+                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                        />
+                                        <Input
+                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="VND"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={8}>
@@ -625,7 +673,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.serviceFee') || 'Phí dịch vụ'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={0.01} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 60px)' }}
+                                            min={0}
+                                            step={0.01}
+                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                        />
+                                        <Input
+                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="VND"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -645,17 +706,43 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <Col xs={24} md={12}>
                                     <Form.Item
                                         name="importTax"
-                                        label={t('productCode.importTax') || 'Thuế nhập khẩu (VND)'}
+                                        label={t('productCode.importTax') || 'Thuế nhập khẩu'}
                                     >
-                                        <InputNumber style={{ width: '100%' }} min={0} step={1} />
+                                        <Space.Compact block>
+                                            <InputNumber
+                                                style={{ width: 'calc(100% - 60px)' }}
+                                                min={0}
+                                                step={1}
+                                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                                parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                            />
+                                            <Input
+                                                style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                                placeholder="VND"
+                                                disabled
+                                            />
+                                        </Space.Compact>
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Form.Item
                                         name="vat"
-                                        label={t('productCode.vat') || 'Thuế VAT (VND)'}
+                                        label={t('productCode.vat') || 'Thuế VAT'}
                                     >
-                                        <InputNumber style={{ width: '100%' }} min={0} step={1} />
+                                        <Space.Compact block>
+                                            <InputNumber
+                                                style={{ width: 'calc(100% - 60px)' }}
+                                                min={0}
+                                                step={1}
+                                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                                parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                            />
+                                            <Input
+                                                style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                                placeholder="VND"
+                                                disabled
+                                            />
+                                        </Space.Compact>
                                     </Form.Item>
                                 </Col>
                             </Row>
@@ -668,7 +755,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.totalAmount') || 'Thành tiền'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={0.01} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 60px)' }}
+                                            min={0}
+                                            step={0.01}
+                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                        />
+                                        <Input
+                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="VND"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={8}>
@@ -676,7 +776,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     name="incidentalFee"
                                     label={t('productCode.incidentalFee') || 'Phí phát sinh'}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={0.01} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 60px)' }}
+                                            min={0}
+                                            step={0.01}
+                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                        />
+                                        <Input
+                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="VND"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={8}>
@@ -684,7 +797,19 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     name="profit"
                                     label={t('productCode.profit') || 'Lợi nhuận'}
                                 >
-                                    <InputNumber style={{ width: '100%' }} step={0.01} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 60px)' }}
+                                            step={0.01}
+                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                        />
+                                        <Input
+                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="VND"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -741,19 +866,43 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                             <Col xs={24} md={8}>
                                 <Form.Item
                                     name="totalWeight"
-                                    label={t('productCode.totalWeight') || 'Tổng cân (kg)'}
+                                    label={t('productCode.totalWeight') || 'Tổng cân'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={0.01} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 40px)' }}
+                                            min={0}
+                                            step={0.01}
+                                            decimalSeparator=","
+                                        />
+                                        <Input
+                                            style={{ width: '40px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="kg"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={8}>
                                 <Form.Item
                                     name="totalVolume"
-                                    label={t('productCode.totalVolume') || 'Tổng khối (m³)'}
+                                    label={t('productCode.totalVolume') || 'Tổng khối'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={0.001} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 40px)' }}
+                                            min={0}
+                                            step={0.001}
+                                            decimalSeparator=","
+                                        />
+                                        <Input
+                                            style={{ width: '40px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="m³"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={8}>
@@ -762,7 +911,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.totalPackages') || 'Tổng kiện'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={1} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 50px)' }}
+                                            min={0}
+                                            step={1}
+                                        />
+                                        <Input
+                                            style={{ width: '50px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="kiện"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -787,7 +947,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.weightPrice') || 'Giá cân'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={0.01} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 60px)' }}
+                                            min={0}
+                                            step={0.01}
+                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                        />
+                                        <Input
+                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="VND"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={8}>
@@ -796,7 +969,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     label={t('productCode.volumePrice') || 'Giá khối'}
                                     rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
                                 >
-                                    <InputNumber style={{ width: '100%' }} min={0} step={0.01} />
+                                    <Space.Compact block>
+                                        <InputNumber
+                                            style={{ width: 'calc(100% - 60px)' }}
+                                            min={0}
+                                            step={0.01}
+                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                                        />
+                                        <Input
+                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
+                                            placeholder="VND"
+                                            disabled
+                                        />
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                         </Row>

@@ -56,5 +56,9 @@ source/**/prisma/*.db-journal
 # Vercel
 .vercel
 
+
 # Uploads
 source/backend/uploads/
+
+# Ignore Excel analysis folder
+excel/

@@ -22,13 +22,13 @@ Backend chạy tại cổng `3000` (mặc định).
     ```
 3.  Cấu hình Database (Lần đầu):
     ```bash
-    # Cập nhật DB (Sử dụng Migration để đảm bảo an toàn dữ liệu)
-    npx prisma migrate dev
-    
+    # Cập nhật DB (Force Update - Dùng trong giai đoạn phát triển chưa Go-live)
+    npx prisma db push
+
     # Tạo dữ liệu mẫu (Admin account...) - Chỉ chạy lần đầu
     npx prisma db seed
     ```
-    *Lưu ý: Không sử dụng `db push` nữa.*
+    *Lưu ý: Lệnh `db push` sẽ đồng bộ schema nhanh chóng mà không tạo file migration.*
 4.  Chạy server:
     ```bash
     npm run dev
@@ -67,34 +67,47 @@ cd source/frontend && npm run dev
 
 ---
 
-## 4. Quản lý Database (Go-live Strategy)
+## 4. Quản lý Database (Chiến lược Go-live)
 
-Chúng ta sử dụng chiến lược **"Evolutive Database Design"** với Prisma Migrate.
+Hiện tại, trong giai đoạn **Phát triển (Development)** chưa Go-live, chúng ta sử dụng chiến lược **"Force Update"** để nhanh chóng đồng bộ thay đổi Database mà không cần quản lý file migration lịch sử.
 
-### A. Lần đầu Go-live (Khởi tạo)
-Khi triển khai lên môi trường mới (Production/Staging) lần đầu tiên:
-```bash
-# Lệnh này sẽ chạy toàn bộ lịch sử migration để tạo bảng
-npx prisma migrate deploy
+### A. Giai đoạn Phát triển (Dev Phase)
+Mỗi khi thay đổi `schema.prisma` (Thêm bảng, sửa cột...):
+1.  Chạy lệnh:
+    ```bash
+    npx prisma db push
+    ```
+    *Lệnh này sẽ cập nhật trực tiếp vào DB hiện tại. Nếu có thay đổi gây mất dữ liệu, Prisma sẽ hỏi xác nhận.*
 
-# Seed dữ liệu admin ban đầu
-npx prisma db seed
-```
+### B. Giai đoạn Release (Go-live)
+Khi chốt phiên bản để đưa lên môi trường Production (Ví dụ: v1.0.0), chúng ta sẽ tạo một điểm mốc (Checkpoint) bằng Migration:
 
-### B. Cập nhật tính năng mới (Các lần Go-live sau)
-Ví dụ: Thêm bảng `Customer` sau khi hệ thống đã chạy được 1 tháng.
-1.  Tại máy Dev, chạy: `npx prisma migrate dev --name <ten_thay_doi>` (như bạn đã làm).
-2.  Commit folder `prisma/migrations` lên Git.
-3.  Tại máy Server (Production), pull code về và chạy:
+1.  Chạy lệnh tạo Migration Release:
+    ```bash
+    npx prisma migrate dev --name <ten_phien_ban>
+    # Ví dụ: npx prisma migrate dev --name golive_v1.0.0
+    ```
+2.  Commit folder `prisma/migrations` được sinh ra lên Git.
+3.  Trên Server Production:
     ```bash
     npx prisma migrate deploy
     ```
-92:     *Lệnh `deploy` này rất an toàn: Nó chỉ chạy những file migration mới chưa từng chạy (dựa vào bảng `_prisma_migrations`), tuyệt đối không reset DB hay mất dữ liệu cũ.*
-93: 
-94: ### C. Quy tắc Git (Quan trọng)
-95: *   **CẦN Commit**: Folder `prisma/migrations` (Để đồng bộ lịch sử DB).
-96: *   **KHÔNG Commit**:
-97:     *   File `.env` (Chứa mật khẩu).
-98:     *   Folder `node_modules`.
-99:     *   Folder `dist` hoặc `build`.
 
+### C. Quy tắc Git (Quan trọng)
+*   **CẦN Commit**: Folder `prisma/migrations` (Khi Go-live).
+*   **KHÔNG Commit**:
+    *   File `.env` (Chứa mật khẩu).
+    *   Folder `node_modules`.
+    *   Folder `dist` hoặc `build`.
+
+### D. Reset Database (Xóa trắng dữ liệu)
+Nếu bạn muốn xóa toàn bộ dữ liệu để làm lại từ đầu:
+
+```bash
+# Xóa sạch dữ liệu và đẩy lại Schema mới nhất
+npx prisma db push --force-reset
+
+# (Tùy chọn) Tạo lại dữ liệu mẫu Admin
+npx prisma db seed
+```
+*Cảnh báo: Lệnh này sẽ xóa vĩnh viễn toàn bộ dữ liệu trong Database. Hãy cẩn thận!*

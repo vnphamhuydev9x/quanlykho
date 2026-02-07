@@ -7,12 +7,14 @@ import {
     EditOutlined,
     DeleteOutlined,
     EyeOutlined,
-    DownloadOutlined
+    DownloadOutlined,
+    HistoryOutlined
 } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import { useTranslation } from 'react-i18next';
 import declarationService from '../../services/declarationService';
 import DeclarationModal from './DeclarationModal';
+
 import moment from 'moment';
 
 const { Option } = Select;
@@ -29,14 +31,15 @@ const DeclarationPage = () => {
 
     // Filter State
     const [filters, setFilters] = useState({
-        search: '',
-        isDeclared: undefined
+        search: ''
     });
 
     // Modal state
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingDeclaration, setEditingDeclaration] = useState(null);
     const [isViewMode, setIsViewMode] = useState(false);
+
+
 
     // User Role check
     const [userRole, setUserRole] = useState('USER');
@@ -62,7 +65,6 @@ const DeclarationPage = () => {
                 limit: pageSize
             };
             if (currentFilters.search) params.search = currentFilters.search;
-            if (currentFilters.isDeclared !== undefined) params.isDeclared = currentFilters.isDeclared;
 
             const response = await declarationService.getAll(params);
             if (response && response.data) {
@@ -94,7 +96,7 @@ const DeclarationPage = () => {
     };
 
     const handleClear = () => {
-        const newFilters = { search: '', isDeclared: undefined };
+        const newFilters = { search: '' };
         setFilters(newFilters);
         fetchDeclarations(1, pagination.pageSize, newFilters);
     };
@@ -117,6 +119,8 @@ const DeclarationPage = () => {
         setIsModalVisible(true);
     };
 
+
+
     const handleDelete = async (id) => {
         try {
             await declarationService.delete(id);
@@ -137,7 +141,7 @@ const DeclarationPage = () => {
     const handleExport = async () => {
         try {
             const response = await declarationService.exportData();
-            const data = response.data;
+            const data = response.data.data; // Response data structure might be { code, message, data: [...] }
 
             if (!data || !Array.isArray(data)) {
                 console.error("Invalid data format for export", data);
@@ -148,25 +152,20 @@ const DeclarationPage = () => {
             // Format data for Excel
             const excelData = data.map(item => ({
                 [t('common.id')]: item.id,
-                [t('declaration.invoiceRequestName')]: item.invoiceRequestName,
+                [t('declaration.entryDate')]: item.entryDate ? moment(item.entryDate).format('DD/MM/YYYY') : '',
                 [t('declaration.customer')]: item.customer?.fullName,
-                [t('transaction.phone')]: item.customer?.phone,
-                [t('declaration.productNameVi')]: item.productNameVi,
-                [t('declaration.hsCode')]: item.hsCode,
-                [t('declaration.quantity')]: item.quantity,
-                [t('declaration.totalPackages')]: item.totalPackages,
-                [t('declaration.totalWeight')]: item.totalWeight,
-                [t('declaration.totalVolume')]: item.totalVolume,
-                [t('declaration.contractPrice')]: item.contractPrice,
-                [t('declaration.productUnit')]: item.productUnit,
-                [t('declaration.declarationPriceVND')]: item.declarationPriceVND,
-                [t('declaration.importTaxPercent')]: item.importTaxPercent,
-                [t('declaration.vatPercent')]: item.vatPercent,
-                [t('declaration.serviceFeePercent')]: item.serviceFeePercent,
-                [t('declaration.isDeclared')]: item.isDeclared ? t('declaration.isDeclared') : t('declaration.notDeclared'),
-                [t('declaration.supplierName')]: item.supplierName,
-                [t('declaration.labelCode')]: item.labelCode,
-                [t('declaration.labelDate')]: item.labelDate ? moment(item.labelDate).format('DD/MM/YYYY') : '',
+                [t('declaration.customerCodeInput')]: item.customerCodeInput,
+                [t('declaration.orderCode')]: item.orderCode,
+                [t('declaration.productName')]: item.productName,
+                [t('declaration.declarationName')]: item.declarationName,
+                [t('declaration.packageCount')]: item.packageCount,
+                [t('declaration.weight')]: item.weight,
+                [t('declaration.volume')]: item.volume,
+                [t('declaration.domesticFeeRMB')]: item.domesticFeeRMB,
+                [t('declaration.totalTransportFeeEstimate')]: item.totalTransportFeeEstimate,
+                [t('declaration.declarationQuantity')]: item.declarationQuantity,
+                [t('declaration.declarationPrice')]: item.declarationPrice,
+                [t('declaration.note')]: item.note,
                 [t('common.createdAt')]: moment(item.createdAt).format('DD/MM/YYYY HH:mm')
             }));
 
@@ -187,152 +186,145 @@ const DeclarationPage = () => {
             title: t('common.id'),
             dataIndex: 'id',
             key: 'id',
-            width: 80,
+            width: 60,
             fixed: 'left',
+        },
+        {
+            title: t('declaration.entryDate'),
+            dataIndex: 'entryDate',
+            key: 'entryDate',
+            width: 110,
+            render: (value) => value ? moment(value).format('DD/MM/YYYY') : '-'
         },
         {
             title: t('declaration.customer'),
             key: 'customer',
-            fixed: 'left',
-            width: 200,
+            width: 180,
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
                     <Typography.Text strong>{record.customer?.fullName}</Typography.Text>
                     <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                        {record.customer?.username} - {record.customer?.phone}
+                        {record.customer?.username}
                     </Typography.Text>
                 </Space>
             )
         },
         {
-            title: t('declaration.invoiceRequestName'),
-            dataIndex: 'invoiceRequestName',
-            key: 'invoiceRequestName',
-            width: 200
+            title: t('declaration.customerCodeInput'),
+            dataIndex: 'customerCodeInput',
+            key: 'customerCodeInput',
+            width: 120,
         },
         {
-            title: t('declaration.hsCode'),
-            dataIndex: 'hsCode',
-            key: 'hsCode',
-            width: 120
+            title: t('declaration.orderCode'),
+            dataIndex: 'orderCode',
+            key: 'orderCode',
+            width: 150,
+            render: (text) => <Typography.Text strong>{text || '-'}</Typography.Text>
         },
         {
-            title: t('declaration.productNameVi'),
-            dataIndex: 'productNameVi',
-            key: 'productNameVi',
-            width: 200
-        },
-        {
-            title: t('declaration.productDescription'),
-            dataIndex: 'productDescription',
-            key: 'productDescription',
-            width: 250,
+            title: t('declaration.productName'),
+            dataIndex: 'productName',
+            key: 'productName',
+            width: 180,
             ellipsis: true
         },
+        // {
+        //     title: t('declaration.declarationName'),
+        //     dataIndex: 'declarationName',
+        //     key: 'declarationName',
+        //     width: 180,
+        //     ellipsis: true
+        // },
         {
-            title: t('declaration.images'),
-            dataIndex: 'images',
-            key: 'images',
-            width: 200,
-            render: (images) => {
-                if (!images || images.length === 0) return '-';
-                // Slice to get max 3 images, or show all if that's what user implies by "fit 3". 
-                // User said "widened to fit 3 if exist".
-                // Let's display up to 3 images directly.
-                const displayImages = images.slice(0, 3);
+            title: t('declaration.productImage'),
+            dataIndex: 'productImage',
+            key: 'productImage',
+            width: 80,
+            render: (image) => {
+                if (!image) return '-';
                 return (
-                    <Image.PreviewGroup>
-                        <Space size={4} wrap>
-                            {displayImages.map((img, index) => (
-                                <Image
-                                    key={index}
-                                    width={50}
-                                    height={50}
-                                    src={img}
-                                    style={{ objectFit: 'cover', cursor: 'pointer', border: '1px solid #f0f0f0' }}
-                                    fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-                                />
-                            ))}
-                            {images.length > 3 && (
-                                <Tag color="blue">+{images.length - 3}</Tag>
-                            )}
-                        </Space>
-                    </Image.PreviewGroup>
+                    <Image
+                        width={40}
+                        height={40}
+                        src={image}
+                        style={{ objectFit: 'cover', cursor: 'pointer', border: '1px solid #f0f0f0' }}
+                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                    />
                 );
             }
         },
         {
-            title: t('declaration.contractPrice'),
-            dataIndex: 'contractPrice',
-            key: 'contractPrice',
-            width: 150,
+            title: t('declaration.packageCount'),
+            dataIndex: 'packageCount',
+            key: 'packageCount',
+            width: 80,
+            align: 'center',
+            render: (value) => value || '-'
+        },
+        {
+            title: t('declaration.weight'),
+            dataIndex: 'weight',
+            key: 'weight',
+            width: 100,
+            align: 'right',
+            render: (value) => value ? `${value} kg` : '-'
+        },
+        {
+            title: t('declaration.volume'),
+            dataIndex: 'volume',
+            key: 'volume',
+            width: 100,
+            align: 'right',
+            render: (value) => value ? `${value} m³` : '-'
+        },
+        {
+            title: t('declaration.domesticFeeRMB'),
+            dataIndex: 'domesticFeeRMB',
+            key: 'domesticFeeRMB',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? `¥${value}` : '-'
+        },
+        {
+            title: t('declaration.totalTransportFeeEstimate'),
+            dataIndex: 'totalTransportFeeEstimate',
+            key: 'totalTransportFeeEstimate',
+            width: 140,
             align: 'right',
             render: (value) => (
                 <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '0 ₫'}
+                    {value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '-'}
                 </span>
             )
         },
         {
-            title: t('declaration.declarationPriceVND'),
-            dataIndex: 'declarationPriceVND',
-            key: 'declarationPriceVND',
-            width: 150,
-            align: 'right',
-            render: (value) => (
-                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '0 ₫'}
-                </span>
-            )
-        },
-        {
-            title: t('declaration.importTaxPercent'),
-            dataIndex: 'importTaxPercent',
-            key: 'importTaxPercent',
+            title: t('declaration.declarationQuantity'),
+            dataIndex: 'declarationQuantity',
+            key: 'declarationQuantity',
             width: 120,
-            render: (value) => `${new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}%`
         },
         {
-            title: t('declaration.vatPercent'),
-            dataIndex: 'vatPercent',
-            key: 'vatPercent',
+            title: t('declaration.declarationPrice'),
+            dataIndex: 'declarationPrice',
+            key: 'declarationPrice',
             width: 120,
-            render: (value) => `${new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}%`
         },
         {
-            title: t('declaration.serviceFeePercent'),
-            dataIndex: 'serviceFeePercent',
-            key: 'serviceFeePercent',
-            width: 120,
-            render: (value) => `${new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}%`
-        },
-        {
-            title: t('declaration.totalPackages'),
-            dataIndex: 'totalPackages',
-            key: 'totalPackages',
-            width: 120,
-            render: (packages) => new Intl.NumberFormat('de-DE').format(packages)
-        },
-        {
-            title: t('declaration.quantity'),
-            dataIndex: 'quantity',
-            key: 'quantity',
-            width: 120,
-            render: (quantity) => new Intl.NumberFormat('de-DE').format(quantity)
-        },
-        {
-            title: t('declaration.productUnit'),
-            dataIndex: 'productUnit',
-            key: 'productUnit',
-            width: 120
+            title: t('declaration.note'),
+            dataIndex: 'note',
+            key: 'note',
+            width: 200,
+            ellipsis: true
         },
         {
             title: t('common.action'),
             key: 'action',
-            width: 200,
+            width: 120,
             render: (_, record) => (
-                <Space size="middle">
+                <Space size="small">
                     <Button
+                        type="text"
                         icon={<EyeOutlined />}
                         onClick={() => handleView(record)}
                         title={t('common.view')}
@@ -340,10 +332,12 @@ const DeclarationPage = () => {
                     {userRole === 'ADMIN' && (
                         <>
                             <Button
-                                icon={<EditOutlined />}
+                                type="text"
+                                icon={<EditOutlined style={{ color: '#faad14' }} />}
                                 onClick={() => handleEdit(record)}
                                 title={t('common.edit')}
                             />
+
                             <Popconfirm
                                 title={t('common.confirmDelete')}
                                 onConfirm={() => handleDelete(record.id)}
@@ -351,8 +345,8 @@ const DeclarationPage = () => {
                                 cancelText="No"
                             >
                                 <Button
-                                    icon={<DeleteOutlined />}
-                                    danger
+                                    type="text"
+                                    icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
                                     title={t('common.delete')}
                                 />
                             </Popconfirm>
@@ -395,10 +389,10 @@ const DeclarationPage = () => {
                 {/* Advanced Filter Bar */}
                 <Card size="small" style={{ marginTop: 16 }}>
                     <Row gutter={[16, 16]} align="middle">
-                        <Col xs={24} sm={24} md={24} lg={24}>
+                        <Col xs={24} sm={24} md={24} lg={14}>
                             <Input
-                                placeholder={t('declaration.searchPlaceholder')}
-                                prefix={<EyeOutlined />}
+                                placeholder={t('declaration.searchPlaceholder') || "Search by Order Code, Product Name..."}
+                                prefix={<SearchOutlined />}
                                 value={filters.search}
                                 onChange={(e) => handleFilterChange('search', e.target.value)}
                                 onPressEnter={handleSearch}
@@ -406,25 +400,8 @@ const DeclarationPage = () => {
                                 size="large"
                             />
                         </Col>
-                        <Col xs={24} sm={12} md={12} lg={7}>
-                            <Select
-                                style={{ width: '100%' }}
-                                placeholder={t('declaration.filterByDeclared')}
-                                value={filters.isDeclared}
-                                onChange={(value) => handleFilterChange('isDeclared', value)}
-                                allowClear
-                                size="large"
-                                showSearch
-                                filterOption={(input, option) =>
-                                    (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
-                                }
-                            >
-                                <Option value="true">{t('declaration.isDeclared')}</Option>
-                                <Option value="false">{t('declaration.notDeclared')}</Option>
-                            </Select>
-                        </Col>
 
-                        <Col xs={24} sm={24} md={24} lg={17} style={{ textAlign: 'right' }}>
+                        <Col xs={24} sm={24} md={24} lg={10} style={{ textAlign: 'right' }}>
                             <Space>
                                 <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch} size="large">
                                     {t('common.search')}
@@ -443,8 +420,8 @@ const DeclarationPage = () => {
                 dataSource={declarations}
                 rowKey="id"
                 loading={loading}
-                scroll={{ x: 'max-content' }}
-                size="small"
+                scroll={{ x: 2200 }}
+                size="middle"
                 pagination={{
                     current: pagination.current,
                     pageSize: pagination.pageSize,
@@ -468,6 +445,8 @@ const DeclarationPage = () => {
                 }}
                 onSuccess={handleModalSuccess}
             />
+
+
         </div>
     );
 };

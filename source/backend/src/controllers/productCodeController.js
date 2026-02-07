@@ -96,7 +96,7 @@ const productCodeController = {
                         declaration: {
                             select: {
                                 id: true,
-                                invoiceRequestName: true
+                                declarationName: true
                             }
                         }
                     }
@@ -159,7 +159,7 @@ const productCodeController = {
                     declaration: {
                         select: {
                             id: true,
-                            invoiceRequestName: true
+                            declarationName: true
                         }
                     },
                     warehouseCosts: {
@@ -663,7 +663,7 @@ const productCodeController = {
                     declaration: {
                         select: {
                             id: true,
-                            invoiceRequestName: true
+                            declarationName: true
                         }
                     },
                     warehouseCosts: true,

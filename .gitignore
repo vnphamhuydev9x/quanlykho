@@ -55,3 +55,6 @@ source/**/prisma/*.db-journal
 
 # Vercel
 .vercel
+
+# Uploads
+source/backend/uploads/

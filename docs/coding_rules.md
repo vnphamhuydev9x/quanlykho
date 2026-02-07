@@ -112,6 +112,17 @@ Bất cứ khi nào dữ liệu gốc (Database) thay đổi, Cache tương ứn
 - [ ] API GET đã check cache chưa?
 - [ ] API POST/PUT/DELETE đã gọi lệnh xóa cache chưa?
 
+### Caching Processed Data (Cache dữ liệu đã xử lý)
+*   **Quy tắc**: "Cache what you serve".
+*   **Mô tả**: Dữ liệu lưu trong cache PHẢI là dữ liệu cuối cùng (Response DTO) đã qua xử lý logic (ví dụ: đã format ngày tháng, đã ghép full URL cho ảnh, đã tính toán tổng tiền).
+*   **Lý do**:
+    *   Tránh việc logic xử lý bị chạy lại nhiều lần không cần thiết.
+    *   Đảm bảo tính nhất quán: Dữ liệu trả về từ Cache phải giống hệt dữ liệu trả về từ Database (sau khi qua tầng Controller/Service).
+    *   **Tránh lỗi**: Cache lưu raw data -> Cache Hit trả về raw -> Frontend hiển thị sai (ví dụ thiếu domain ảnh).
+*   **Pattern**:
+    *   ❌ **Sai (Cache Raw)**: `Query DB` -> `Save Cache` -> `Format Data` -> `Response`.
+    *   ✅ **Đúng (Cache Response)**: `Query DB` -> `Format Data` -> `Save Cache` -> `Response`.
+
 ### Chiến lược Xóa Cache Liên hoàn (Cascading Invalidation)
 *   **Quy tắc**: Khi một tài nguyên (Resource A) thay đổi, hệ thống phải rà soát và xóa cache của tất cả các tài nguyên khác (Resource B, C) có chứa thông tin của A.
 *   **Ví dụ thực tế**:
@@ -199,6 +210,63 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
     *   Sử dụng component `Switch` (Thanh gạt) cho các trường trạng thái 2 giá trị (Active/Inactive, On/Off).
     *   **KHÔNG** sử dụng Dropdown/Select cho trường hợp này.
     *   Logic: `checked` = Active/True, `unchecked` = Inactive/False.
+*   **Table Fixed Columns (Cột cố định trong Table)**:
+    *   **Quy tắc**: Chỉ cố định tối đa 2 cột đầu tiên bên trái (`fixed: 'left'`).
+    *   **Cột 1**: Luôn là ID hoặc mã định danh chính.
+    *   **Cột 2**: Thông tin quan trọng nhất (thường là tên, khách hàng, hoặc đối tượng chính).
+    *   **KHÔNG** cố định cột Action ở bên phải (`fixed: 'right'`).
+    *   **Lý do**: 
+        *   Tránh tình trạng table bị "kẹp" giữa 2 cột fixed, gây khó khăn khi scroll.
+        *   Cột Action không cần thiết phải luôn hiển thị, user có thể scroll để thấy.
+        *   Cải thiện UX trên màn hình nhỏ.
+    *   **Ví dụ**:
+        ```javascript
+        const columns = [
+            { title: 'ID', dataIndex: 'id', fixed: 'left', width: 80 }, // ✅ Fixed
+            { title: 'Khách hàng', key: 'customer', fixed: 'left', width: 200 }, // ✅ Fixed
+            { title: 'Sản phẩm', dataIndex: 'product', width: 150 }, // ❌ Không fixed
+            { title: 'Giá', dataIndex: 'price', width: 120 }, // ❌ Không fixed
+            { title: 'Action', key: 'action', width: 150 } // ❌ KHÔNG fixed right
+        ];
+        ```
+*   **Action Buttons Format (Format nút hành động trong Table)**:
+    *   **Quy tắc**: Các nút hành động trong cột Action chỉ hiển thị **icon**, không có text.
+    *   **Component**: Sử dụng `Button` với `icon` prop, không có children text.
+    *   **Tooltip**: Sử dụng `title` attribute để hiển thị tooltip khi hover.
+    *   **Spacing**: Sử dụng `Space size="middle"` để bọc các nút.
+    *   **Lý do**:
+        *   Tiết kiệm không gian trong table (đặc biệt khi có nhiều cột).
+        *   Giao diện gọn gàng, hiện đại.
+        *   Icon đã đủ rõ ràng để user hiểu chức năng.
+    *   **Ví dụ**:
+        ```jsx
+        {
+            title: t('common.action'),
+            key: 'action',
+            render: (_, record) => (
+                <Space size="middle">
+                    <Button icon={<EyeOutlined />} onClick={() => handleView(record)} title={t('common.view')} />
+                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} title={t('common.edit')} />
+                    <Popconfirm title={t('common.confirmDelete')} onConfirm={() => handleDelete(record.id)}>
+                        <Button icon={<DeleteOutlined />} danger title={t('common.delete')} />
+                    </Popconfirm>
+                </Space>
+            )
+        }
+        ```
+    *   **Các icon thường dùng**:
+        *   View: `<EyeOutlined />`
+        *   Edit: `<EditOutlined />`
+        *   Delete: `<DeleteOutlined />` với `danger` prop
+        *   Reset Password: `<KeyOutlined />` với style orange
+    *   **Lưu ý quan trọng**:
+        *   **PHẢI** đảm bảo mỗi nút gọi đúng handler function tương ứng:
+            *   Nút View → `handleView(record)`
+            *   Nút Edit → `handleEdit(record)`
+            *   Nút Delete → `handleDelete(record.id)`
+        *   **KHÔNG** được nhầm lẫn giữa các handler (ví dụ: nút View gọi `handleEdit`).
+        *   Nếu chưa có `handleView`, cần implement function này để xử lý chế độ view-only.
+
     *   **Page Layout (Trang danh sách)**:
         *   Tuân thủ chuẩn "Customer List Layout".
         *   **Header**:
@@ -237,6 +305,134 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
                         *   Nếu cột trong bảng chỉ hiển thị **Tên**, thì filter cũng chỉ hiển thị và cho phép tìm theo **Tên**.
                         *   **TUYỆT ĐỐI** không hiển thị thêm thông tin (SĐT, Email) trong dropdown nếu cột tương ứng trên bảng không có.
                         *   Lý do: Đảm bảo tính nhất quán giữa cái nhìn thấy và cái tìm kiếm được.
+            *   **Customer Display Format (Format hiển thị Khách hàng)**:
+                *   **Quy tắc**: Khi hiển thị thông tin khách hàng trong bảng hoặc danh sách, luôn sử dụng format 2 dòng:
+                    *   **Dòng 1**: Họ và tên (`Typography.Text strong`)
+                    *   **Dòng 2**: `<Tên đăng nhập> - <Số điện thoại>` (`Typography.Text type="secondary"`, `fontSize: 12px`)
+                *   **Component**: Sử dụng `Space direction="vertical" size={0}` để bọc 2 dòng.
+                *   **Áp dụng**: Tất cả màn hình có hiển thị thông tin khách hàng (Transaction, Declaration, ProductCode...).
+                *   **Ví dụ**:
+                    ```jsx
+                    <Space direction="vertical" size={0}>
+                        <Typography.Text strong>{customer.fullName}</Typography.Text>
+                        <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                            {customer.username} - {customer.phone}
+                        </Typography.Text>
+                    </Space>
+                    ```
+            *   **Customer Selection Box Format (Format hiển thị Khách hàng trong Dropdown)**:
+                *   **Quy tắc**: Khi hiển thị khách hàng trong Select/Dropdown, sử dụng format: `<Họ và tên> (<Tên đăng nhập> - <Số điện thoại>)`
+                *   **Áp dụng**: Tất cả Select box cho phép chọn khách hàng (Form, Filter...).
+                *   **Ví dụ**:
+                    ```jsx
+                    <Select showSearch filterOption={...}>
+                        {customers.map(customer => (
+                            <Option key={customer.id} value={customer.id}>
+                                {`${customer.fullName} (${customer.username} - ${customer.phone || 'N/A'})`}
+                            </Option>
+                        ))}
+                    </Select>
+                    ```
+                *   **Kết quả hiển thị**: `Nguyễn Văn A (nguyenvana - 0123456789)`
+            *   **Number Format (Format hiển thị Số)**:
+                *   **Quy tắc**: Sử dụng chuẩn Việt Nam cho việc hiển thị số:
+                    *   **Dấu chấm (.)**: Phân tách hàng nghìn
+                    *   **Dấu phẩy (,)**: Phân tách phần thập phân
+                *   **Ví dụ**:
+                    *   `1.000.000,29` = 1 triệu lẻ 0,29 đơn vị
+                    *   `50.000` = 50 nghìn
+                    *   `123,45` = 123 phẩy 45
+                *   **Implementation**:
+                    ```javascript
+                    // Số nguyên (hàng nghìn)
+                    new Intl.NumberFormat('de-DE').format(1000000) // "1.000.000"
+                    
+                    // Số thập phân
+                    new Intl.NumberFormat('de-DE', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                    }).format(1000000.29) // "1.000.000,29"
+                    
+                    // Tiền tệ VND (không có phần thập phân)
+                    new Intl.NumberFormat('vi-VN', { 
+                        style: 'currency', 
+                        currency: 'VND' 
+                    }).format(1000000) // "1.000.000 ₫"
+                    ```
+                *   **Lưu ý**: 
+                    *   Sử dụng locale `'de-DE'` cho số thông thường (vì de-DE dùng dấu chấm/phẩy giống Việt Nam)
+                    *   Sử dụng locale `'vi-VN'` cho tiền tệ VND
+
+            *   **Number Input Standard (Quy chuẩn Nhập liệu Số)**:
+                *   **Loại 1: Số Nguyên (Integer)** - Dùng cho Tiền VND, Số lượng...
+                    *   **Mục tiêu**: Tự động thêm dấu chấm phân cách hàng nghìn khi nhập.
+                    *   **Cấu hình**:
+                        ```jsx
+                        <InputNumber
+                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
+                        />
+                        ```
+                *   **Loại 2: Số Thập phân (Decimal)** - Dùng cho %, Tỷ giá...
+                    *   **Mục tiêu**: Sử dụng dấu phẩy (`,`) làm dấu phân cách thập phân thay vì dấu chấm.
+                    *   **Cấu hình**:
+                        ```jsx
+                        <InputNumber
+                            decimalSeparator="," // Quan trọng để hiểu dấu phẩy là thập phân
+                            step={0.01} // Hoặc step phù hợp
+                        />
+                        ```
+                *   **Lưu ý chung**: Luôn disable InputNumber khi ở chế độ `isViewMode`.
+
+            *   **Input with Unit Suffix (Input kèm Đơn vị)**:
+                *   **Quy tắc**: Khi Input có đơn vị đo lường (kg, m3, VND, %...), BẮT BUỘC sử dụng `Space.Compact` để hiển thị đơn vị ở cuối Input.
+                *   **Mục đích**: Giúp người dùng biết rõ đơn vị đang nhập mà không cần nhìn Label, đồng thời tạo giao diện hiện đại.
+                *   **Styling**: 
+                    *   Phần Suffix (Input chứa đơn vị) phải có background xám nhạt (`#fafafa`), text xám (`rgba(0,0,0,0.45)`), và `pointerEvents: 'none'`.
+                    *   **Width**:
+                        *   Đơn vị ngắn (%, kg): `width: '40px'`.
+                        *   Đơn vị dài (VND, USD): `width: '60px'` (Để tránh bị khuất text).
+                *   **Code Mẫu**:
+                    ```jsx
+                    <Form.Item label="Giá trị">
+                        <Space.Compact block>
+                            <InputNumber 
+                                style={{ width: 'calc(100% - 60px)' }} // 100% - Suffix Width
+                            />
+                            <Input
+                                style={{ 
+                                    width: '60px', 
+                                    textAlign: 'center', 
+                                    pointerEvents: 'none', 
+                                    backgroundColor: '#fafafa', 
+                                    color: 'rgba(0, 0, 0, 0.45)' 
+                                }}
+                                placeholder="VND"
+                                disabled
+                            />
+                        </Space.Compact>
+                    </Form.Item>
+                    ```
+
+            *   **Currency Display in Table (Hiển thị Tiền trong Bảng)**:
+                *   **Quy tắc**:
+                    *   **Align**: `right` (Căn phải).
+                    *   **Style**: Màu xanh lá (`#389e0d`), in đậm (`fontWeight: 'bold'`).
+                    *   **Format**: Có đơn vị tiền tệ chuẩn (VD: `1.000.000 ₫`).
+                *   **Code Mẫu**:
+                    ```jsx
+                    {
+                        title: t('customer.totalPaid'),
+                        dataIndex: 'totalPaid',
+                        key: 'totalPaid',
+                        align: 'right', // ⚠️ Bắt buộc
+                        render: (value) => (
+                            <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                                {value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '0 ₫'}
+                            </span>
+                        ),
+                    }
+                    ```
 
 ## 10. Code Style Consistency (Quy chuẩn Coding Style)
 *   **Import/Require**: Giữ style nhất quán trong cùng 1 file.

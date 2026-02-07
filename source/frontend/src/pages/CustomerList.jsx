@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined, FileExcelOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined, DownloadOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../utils/axios';
 import * as XLSX from 'xlsx';
@@ -312,12 +312,11 @@ const CustomerList = () => {
                         <Space wrap>
                             {userRole === 'ADMIN' && (
                                 <Button
-                                    icon={<FileExcelOutlined />}
+                                    icon={<DownloadOutlined />}
                                     onClick={handleExport}
                                     style={{ backgroundColor: '#217346', color: '#fff', borderColor: '#217346' }}
-                                    loading={exportLoading}
                                 >
-                                    {t('customer.export')}
+                                    {t('common.exportExcel') || "Export Excel"}
                                 </Button>
                             )}
                             <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>

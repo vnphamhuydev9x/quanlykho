@@ -38,10 +38,40 @@ model User {
 
   transactions        Transaction[] @relation("CustomerTransactions")
   createdTransactions Transaction[] @relation("CreatedTransactions")
+  declarations        Declaration[] @relation("CustomerDeclarations")
+  productCodes        ProductCode[] @relation("CustomerProductCodes")
 
   deletedAt DateTime? // Soft Delete
 
   @@map("users")
+}
+
+enum CostType {
+  SHIP_NOI_DIA
+  PHI_NANG_HANG
+  PHI_HA_HANG
+  PHI_KEO_HANG
+  PHI_GIA_CO
+  PHI_DONG_GO
+  PHI_KIEM_DEM
+  PHI_LUU_KHO
+  PHI_CAN
+  PHI_KIEM_TRA_CHAT_LUONG
+  PHI_TU_CONG_BO
+  PHI_XU_LY_HAI_QUAN
+  PHI_THUONG_KIEM
+  PHI_KHAC
+}
+
+enum Currency {
+  YUAN
+  VND
+}
+
+enum CostCalculationMethod {
+  AUTO
+  BY_WEIGHT
+  BY_VOLUME
 }
 
 enum WarehouseStatus {
@@ -56,6 +86,8 @@ model Warehouse {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
   deletedAt DateTime?       // Soft Delete
+
+  productCodes ProductCode[]
 
   @@map("warehouses")
 }
@@ -72,6 +104,8 @@ model Category {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   deletedAt DateTime?      // Soft Delete
+
+  productCodes ProductCode[]
 
   @@map("categories")
 }
@@ -98,4 +132,143 @@ model Transaction {
   updatedAt   DateTime          @updatedAt
 
   @@map("transactions")
+}
+
+model Declaration {
+  id                   Int       @id @default(autoincrement())
+  invoiceRequestName   String    // Tên yêu cầu xuất hóa đơn
+  
+  // Relations
+  customerId           Int
+  customer             User      @relation("CustomerDeclarations", fields: [customerId], references: [id])
+  
+  // Product Information
+  productNameVi        String    // Tên hàng tiếng việt
+  hsCode               String    // Mã HSCode
+  quantity             Int       // Số lượng sản phẩm
+  totalPackages        Int       // Tổng số kiện
+  totalWeight          Decimal   @db.Decimal(15, 2) // Tổng cân nặng
+  totalVolume          Decimal   @db.Decimal(15, 3) // Tổng thể tích m3
+  productDescription   String?   // Mô tả sản phẩm
+  contractPrice        Decimal   @db.Decimal(15, 2) // Giá xuất hợp đồng
+  productUsage         String?   // Công dụng
+  productUnit          String    // Đơn vị sản phẩm
+  
+  // Tax and Fee Information
+  declarationPriceVND  Decimal   @db.Decimal(15, 0) // Giá cần khai báo VND
+  importTaxPercent     Decimal   @db.Decimal(5, 2)  // Thuế nhập khẩu (%)
+  vatPercent           Decimal   @db.Decimal(5, 2) @default(10.00) // Thuế VAT (%)
+  serviceFeePercent    Decimal   @db.Decimal(5, 2)  // Phí dịch vụ (%)
+  
+  // Declaration Status
+  isDeclared           Boolean   @default(false) // Đã khai báo hay chưa
+  
+  // Supplier Information
+  supplierName         String?   // Tên nhà cung cấp
+  supplierAddress      String?   // Địa chỉ nhà cung cấp
+  
+  // Label Information
+  labelCode            String?   // Mã nhãn
+  labelDate            DateTime? // Ngày nhãn
+  
+  // Images (max 3)
+  images               String[]  // Mảng đường dẫn ảnh
+  
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime? // Soft Delete
+
+  productCodes         ProductCode[]
+
+  @@map("declarations")
+}
+
+model ProductCode {
+  id                    Int       @id @default(autoincrement())
+  
+  customerId            Int
+  customer              User      @relation("CustomerProductCodes", fields: [customerId], references: [id])
+  
+  partnerName           String
+  
+  warehouseId           Int
+  warehouse             Warehouse @relation(fields: [warehouseId], references: [id])
+  
+  categoryId            Int
+  category              Category  @relation(fields: [categoryId], references: [id])
+  
+  productName           String
+  exchangeRate          Decimal   @db.Decimal(15, 4)
+  
+  declarationId         Int?
+  declaration           Declaration? @relation(fields: [declarationId], references: [id])
+  
+  notes                 String?
+  
+  separateTax           Boolean   @default(false)
+  originalWeightPrice   Decimal   @db.Decimal(15, 2)
+  originalVolumePrice   Decimal   @db.Decimal(15, 2)
+  serviceFee            Decimal   @db.Decimal(15, 2)
+  importTax             Decimal?  @db.Decimal(15, 0)
+  vat                   Decimal?  @db.Decimal(15, 0)
+  totalAmount           Decimal   @db.Decimal(15, 2)
+  incidentalFee         Decimal   @db.Decimal(15, 2) @default(0)
+  incidentalNotes       String?
+  profit                Decimal   @db.Decimal(15, 2) @default(0)
+  
+  totalWeight           Decimal   @db.Decimal(15, 2)
+  totalVolume           Decimal   @db.Decimal(15, 3)
+  totalPackages         Int
+  
+  costCalculationMethod CostCalculationMethod @default(AUTO)
+  weightPrice           Decimal   @db.Decimal(15, 2)
+  volumePrice           Decimal   @db.Decimal(15, 2)
+  
+  images                String[]
+  
+  warehouseCosts        WarehouseCost[]
+  packageDetails        PackageDetail[]
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+
+  @@map("product_codes")
+}
+
+model WarehouseCost {
+  id                Int         @id @default(autoincrement())
+  
+  productCodeId     Int
+  productCode       ProductCode @relation(fields: [productCodeId], references: [id], onDelete: Cascade)
+  
+  costType          CostType
+  currency          Currency
+  originalCost      Decimal     @db.Decimal(15, 2)
+  otherFee          Decimal     @db.Decimal(15, 2) @default(0)
+  notes             String?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("warehouse_costs")
+}
+
+model PackageDetail {
+  id                Int         @id @default(autoincrement())
+  
+  productCodeId     Int
+  productCode       ProductCode @relation(fields: [productCodeId], references: [id], onDelete: Cascade)
+  
+  trackingCode      String
+  length            Decimal     @db.Decimal(10, 2)
+  width             Decimal     @db.Decimal(10, 2)
+  height            Decimal     @db.Decimal(10, 2)
+  totalWeight       Decimal     @db.Decimal(15, 2)
+  totalPackages     Int
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("package_details")
 }

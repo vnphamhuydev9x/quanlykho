@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Input, Select, Card, Tag, Popconfirm, message, Typography, Row, Col } from 'antd';
+import { Table, Button, Space, Input, Select, Card, Tag, Popconfirm, message, Typography, Row, Col, Tooltip } from 'antd';
 import {
     PlusOutlined,
     SearchOutlined,
     ReloadOutlined,
     CloseCircleOutlined,
     EyeOutlined,
-    FileExcelOutlined
+    DownloadOutlined
 } from '@ant-design/icons';
 import * as XLSX from 'xlsx'; // Import XLSX
 
@@ -188,6 +188,7 @@ const TransactionPage = () => {
             title: t('transaction.amount'),
             dataIndex: 'amount',
             key: 'amount',
+            align: 'right',
             render: (amount) => (
                 <Typography.Text strong style={{ color: '#52c41a' }}>
                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)}
@@ -234,9 +235,9 @@ const TransactionPage = () => {
                             okText="Yes"
                             cancelText="No"
                         >
-                            <Button danger icon={<CloseCircleOutlined />} title={t('transaction.cancelAction')}>
-                                {t('common.cancel')}
-                            </Button>
+                            <Tooltip title={t('transaction.cancelAction')}>
+                                <Button danger icon={<CloseCircleOutlined />} />
+                            </Tooltip>
                         </Popconfirm>
                     )}
                 </Space>
@@ -255,7 +256,7 @@ const TransactionPage = () => {
                         {userRole === 'ADMIN' && (
                             <Space wrap>
                                 <Button
-                                    icon={<FileExcelOutlined />}
+                                    icon={<DownloadOutlined />}
                                     onClick={handleExport}
                                     style={{ backgroundColor: '#217346', color: '#fff', borderColor: '#217346' }}
                                 >

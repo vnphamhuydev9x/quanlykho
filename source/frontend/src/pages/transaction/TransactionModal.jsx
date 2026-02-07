@@ -96,7 +96,7 @@ const TransactionModal = ({ visible, onCancel, onSuccess }) => {
                     >
                         {customers.map(customer => (
                             <Option key={customer.id} value={customer.id}>
-                                {`${customer.fullName} - ${customer.username} (${customer.phone || 'N/A'})`}
+                                {`${customer.fullName} (${customer.username} - ${customer.phone || 'N/A'})`}
                             </Option>
                         ))}
                     </Select>
@@ -109,8 +109,8 @@ const TransactionModal = ({ visible, onCancel, onSuccess }) => {
                 >
                     <InputNumber
                         style={{ width: '100%' }}
-                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                        parser={value => value.replace(/\$\s?|(\.\*)/g, '')}
                         addonAfter="VND"
                         min={0}
                     />

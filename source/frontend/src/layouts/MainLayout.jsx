@@ -12,6 +12,7 @@ import {
     TeamOutlined, // Added TeamOutlined
     HomeOutlined, // Added HomeOutlined
     FileTextOutlined, // Added FileTextOutlined
+    InboxOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -119,6 +120,12 @@ const MainLayout = ({ children }) => {
             onClick: () => navigate('/'),
         },
         {
+            key: '/declarations',
+            icon: <FileTextOutlined />,
+            label: t('menu.declarations'),
+            onClick: () => navigate('/declarations'),
+        },
+        {
             key: '/transactions',
             icon: <FileTextOutlined />,
             label: t('menu.transactions'),
@@ -129,6 +136,75 @@ const MainLayout = ({ children }) => {
             icon: <TeamOutlined />,
             label: t('menu.customers'),
             onClick: () => navigate('/customers'),
+        },
+        {
+            key: 'product-codes',
+            icon: <InboxOutlined />,
+            label: t('menu.productCodes'),
+            children: [
+                {
+                    key: '/product-codes',
+                    label: t('productCode.statusAll') || 'Tất cả',
+                    onClick: () => navigate('/product-codes'),
+                },
+                {
+                    key: '/product-codes?status=NHAP_KHO_TQ',
+                    label: t('productCode.statusNhapKhoTQ') || 'Nhập kho TQ',
+                    onClick: () => navigate('/product-codes?status=NHAP_KHO_TQ'),
+                },
+                {
+                    key: '/product-codes?status=CHO_XEP_XE',
+                    label: t('productCode.statusChoXepXe') || 'Chờ xếp xe',
+                    onClick: () => navigate('/product-codes?status=CHO_XEP_XE'),
+                },
+                {
+                    key: '/product-codes?status=DA_XEP_XE',
+                    label: t('productCode.statusDaXepXe') || 'Đã xếp xe',
+                    onClick: () => navigate('/product-codes?status=DA_XEP_XE'),
+                },
+                {
+                    key: '/product-codes?status=KIEM_HOA',
+                    label: t('productCode.statusKiemHoa') || 'Kiểm hóa',
+                    onClick: () => navigate('/product-codes?status=KIEM_HOA'),
+                },
+                {
+                    key: '/product-codes?status=CHO_THONG_QUAN_VN',
+                    label: t('productCode.statusChoThongQuanVN') || 'Chờ thông quan VN',
+                    onClick: () => navigate('/product-codes?status=CHO_THONG_QUAN_VN'),
+                },
+                {
+                    key: '/product-codes?status=NHAP_KHO_VN',
+                    label: t('productCode.statusNhapKhoVN') || 'Nhập kho VN',
+                    onClick: () => navigate('/product-codes?status=NHAP_KHO_VN'),
+                },
+                {
+                    key: '/product-codes?status=XUAT_DU',
+                    label: t('productCode.statusXuatDu') || 'Đã xuất kho',
+                    onClick: () => navigate('/product-codes?status=XUAT_DU'),
+                },
+                {
+                    key: '/product-codes?status=XUAT_THIEU',
+                    label: t('productCode.statusXuatThieu') || 'Hàng không tên',
+                    onClick: () => navigate('/product-codes?status=XUAT_THIEU'),
+                }
+            ],
+        },
+        {
+            key: 'inventory',
+            icon: <InboxOutlined />,
+            label: t('menu.inventory') || 'Hàng tồn',
+            children: [
+                {
+                    key: '/product-codes?inventory=TQ',
+                    label: t('menu.inventoryTQ') || 'Tồn kho TQ',
+                    onClick: () => navigate('/product-codes?inventory=TQ'),
+                },
+                {
+                    key: '/product-codes?inventory=VN',
+                    label: t('menu.inventoryVN') || 'Tồn kho VN',
+                    onClick: () => navigate('/product-codes?inventory=VN'),
+                }
+            ],
         },
         // Show Settings for everyone to test permission
         {

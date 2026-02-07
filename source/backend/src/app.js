@@ -12,12 +12,17 @@ const customerRoutes = require('./routes/customerRoute');
 const warehouseRoutes = require('./routes/warehouseRoute');
 const categoryRoutes = require('./routes/categoryRoute');
 const transactionRoutes = require('./routes/transactionRoute');
+const declarationRoutes = require('./routes/declarationRoute');
+const productCodeRoutes = require('./routes/productCodeRoute');
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static files for uploads
+app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -26,6 +31,8 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/declarations', declarationRoutes);
+app.use('/api/product-codes', productCodeRoutes);
 app.use('/api/transactions', transactionRoutes);
 
 app.get('/', (req, res) => {

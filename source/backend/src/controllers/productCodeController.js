@@ -218,55 +218,55 @@ const productCodeController = {
                 categoryId,
                 declarationId,
 
-                // Fields (40 Columns Match)
-                entryDate, // [A]
-                // [B] sale is derived
-                customerCodeInput, // [C]
-                productName, // [D]
-                orderCode, // [E]
-                packageCount, // [F] Decimal
-                packing, // [G] New
-                weight, // [H] Decimal
-                volume, // [I] Decimal
-                infoSource, // [J] New
-                domesticFeeRMB, // [K] Renamed from domesticFeeTQ
-                haulingFeeRMB, // [L] Renamed from haulingFeeTQ
-                unloadingFeeRMB, // [M] New
-                transportRate, // [N] Kg
-                transportRateVolume, // [O] m3 - New
-                totalTransportFeeEstimate, // [P]
-                notes, // [Q]
-                images, // [R], [S] Array
-                mainTag, // [T]
-                subTag, // [U]
-                pctConfirmation, // [V] New
-                productQuantity, // [W]
-                specification, // [X]
-                productDescription, // [Y]
-                brand, // [Z]
-                supplierTaxCode, // [AA]
-                supplierName, // [AB]
-                declarationNeed, // [AC]
-                declarationPolicy, // [AD]
-                declarationQuantity, // [AE]
-                invoicePriceExport, // [AF]
-                declarationPrice, // [AG] New
-                trustFee, // [AH]
-                declarationName, // [AI] New
-                feeAmount, // [AJ] "Phí phải nộp"
-                otherNotes, // [AH]
-                importTax, // [AK]
-                vatImportTax, // [AL]
-                totalImportCost, // [AL]
-                purchaseFee, // [AM] New
-                accountingConfirmation, // [AN] New
+                // Fields (Align with Excel Spec [A] - [AM])
+                entryDate, // [A] Ngày nhập kho
+                customerCodeInput, // [B] Mã khách hàng
+                orderCode, // [C] Mã đơn hàng
+                productName, // [D] Tên mặt hàng
+                packageCount, // [E] Số Kiện
+                packing, // [F] Đơn vị kiện
+                weight, // [G] Trọng lượng (Kg)
+                volume, // [H] Khối lượng (m3)
+                domesticFeeRMB, // [I] Phí nội địa TQ (RMB)
+                haulingFeeRMB, // [J] Phí kéo hàng TQ (RMB)
+                exchangeRate, // [K] Tỷ giá
+                transportRate, // [L] Đơn giá cước vận chuyển TQ_HN
+                totalTransportFeeEstimate, // [M] Tổng cước vận chuyển TQ_HN tạm tính
+                domesticFeeVN, // [N] Phí nội địa VN
+                notes, // [O] Ghi chú
+                status, // [P] Tình trạng hàng hoá
+                images, // [Q] Ảnh hàng hóa
+                // [R] Hidden
+                mainTag, // [S] Tem chính
+                subTag, // [T] Tem phụ
+                taggedImages, // [U] Ảnh hàng dán tem
+                productQuantity, // [V] Số Lượng sản phẩm
+                specification, // [W] Quy cách
+                productDescription, // [X] Mô Tả sản phẩm
+                brand, // [Y] Nhãn Hiệu
+                supplierTaxCode, // [Z] Mã Số Thuế đơn vị bán hàng
+                supplierName, // [AA] Tên Công Ty bán hàng
+                declarationNeed, // [AB] Nhu cầu khai báo
+                declarationQuantity, // [AC] Số lượng khai báo
+                invoicePriceExport, // [AD] Giá xuất hoá đơn
+                totalValueExport, // [AE] Tổng giá trị lô hàng
+                declarationPolicy, // [AF] Chính sách NK
+                feeAmount, // [AG] Phí phải nộp
+                otherNotes, // [AH] Ghi chú
+                vatImportTax, // [AI] Thuế VAT nhập khẩu phải nộp
+                importTax, // [AJ] Thuế NK phải nộp
+                trustFee, // [AK] Phí uỷ thác
+                totalImportCost, // [AL] Tổng chi phí nhập khẩu hàng hoá đến tay KH
+                vatExportStatus, // [AM] Tình trạng xuất VAT
 
-                // Extra/Legacy
-                taggedImages, // Array
-                domesticFeeVN,
-                status,
-                exchangeRate,
-                vatExportStatus,
+                // System / Extra / Legacy
+                pctConfirmation,
+                accountingConfirmation,
+                declarationPrice, // Extra/Unused in new spec? Keep for safety
+                declarationName, // Extra/Unused in new spec? Keep for safety
+                unloadingFeeRMB, // Extra? Not in A-AM list
+                transportRateVolume, // Extra? Not in A-AM list
+                purchaseFee, // Extra? Not in A-AM list
                 partnerName,
 
                 // Sub-tables
@@ -303,25 +303,24 @@ const productCodeController = {
 
                     entryDate: entryDate ? new Date(entryDate) : null,
                     customerCodeInput,
-                    productName,
                     orderCode,
+                    productName,
                     packageCount: packageCount ? parseInt(packageCount) : null,
                     packing,
                     weight: weight ? parseFloat(weight) : null,
                     volume: volume ? parseFloat(volume) : null,
-                    infoSource,
                     domesticFeeRMB: domesticFeeRMB ? parseFloat(domesticFeeRMB) : null,
                     haulingFeeRMB: haulingFeeRMB ? parseFloat(haulingFeeRMB) : null,
-                    unloadingFeeRMB: unloadingFeeRMB ? parseFloat(unloadingFeeRMB) : null,
+                    exchangeRate: exchangeRate ? parseFloat(exchangeRate) : null,
                     transportRate: transportRate ? parseFloat(transportRate) : null,
-                    transportRateVolume: transportRateVolume ? parseFloat(transportRateVolume) : null,
                     totalTransportFeeEstimate: totalTransportFeeEstimate ? parseFloat(totalTransportFeeEstimate) : null,
+                    domesticFeeVN: domesticFeeVN ? parseFloat(domesticFeeVN) : null,
                     notes,
+                    status,
                     images: images || [],
                     mainTag,
                     subTag,
                     taggedImages: taggedImages || [],
-                    pctConfirmation,
                     productQuantity: productQuantity ? parseFloat(productQuantity) : null,
                     specification,
                     productDescription,
@@ -329,24 +328,27 @@ const productCodeController = {
                     supplierTaxCode,
                     supplierName,
                     declarationNeed,
-                    declarationPolicy,
                     declarationQuantity: declarationQuantity ? parseFloat(declarationQuantity) : null,
                     invoicePriceExport: invoicePriceExport ? parseFloat(invoicePriceExport) : null,
-                    declarationPrice: declarationPrice ? parseFloat(declarationPrice) : null,
-                    trustFee: trustFee ? parseFloat(trustFee) : null,
-                    declarationName,
+                    totalValueExport: totalValueExport ? parseFloat(totalValueExport) : null,
+                    declarationPolicy,
                     feeAmount: feeAmount ? parseFloat(feeAmount) : null,
                     otherNotes,
-                    importTax: importTax ? parseFloat(importTax) : null,
                     vatImportTax: vatImportTax ? parseFloat(vatImportTax) : null,
+                    importTax: importTax ? parseFloat(importTax) : null,
+                    trustFee: trustFee ? parseFloat(trustFee) : null,
                     totalImportCost: totalImportCost ? parseFloat(totalImportCost) : null,
-                    purchaseFee: purchaseFee ? parseFloat(purchaseFee) : null,
-                    accountingConfirmation,
-
-                    domesticFeeVN: domesticFeeVN ? parseFloat(domesticFeeVN) : null,
-                    status,
-                    exchangeRate: exchangeRate ? parseFloat(exchangeRate) : null,
                     vatExportStatus,
+
+                    // Extras
+                    infoSource,
+                    pctConfirmation,
+                    accountingConfirmation,
+                    unloadingFeeRMB: unloadingFeeRMB ? parseFloat(unloadingFeeRMB) : null,
+                    transportRateVolume: transportRateVolume ? parseFloat(transportRateVolume) : null,
+                    purchaseFee: purchaseFee ? parseFloat(purchaseFee) : null,
+                    declarationPrice: declarationPrice ? parseFloat(declarationPrice) : null,
+                    declarationName,
 
                     // Nested create
                     warehouseCosts: warehouseCosts && Array.isArray(warehouseCosts) ? {
@@ -415,21 +417,51 @@ const productCodeController = {
             const dataToUpdate = {};
 
             // Map all potential fields
+            // Map all potential fields (Align with Excel Spec [A]-[AM])
             const fields = [
-                'entryDate', 'customerCodeInput', 'productName', 'orderCode',
-                'packageCount', 'packing', 'weight', 'volume', 'infoSource',
-                'domesticFeeRMB', 'haulingFeeRMB', 'unloadingFeeRMB',
-                'transportRate', 'transportRateVolume', 'totalTransportFeeEstimate',
-                'notes', 'images', 'mainTag', 'subTag', 'pctConfirmation',
-                'productQuantity', 'specification', 'productDescription',
-                'brand', 'supplierTaxCode', 'supplierName',
-                'invoicePriceExport', 'declarationPrice', 'trustFee',
-                'declarationName', 'feeAmount', 'otherNotes', 'importTax', 'vatImportTax', 'totalImportCost',
-                'purchaseFee', 'accountingConfirmation',
+                'entryDate', // [A]
+                'customerCodeInput', // [B]
+                'orderCode', // [C]
+                'productName', // [D]
+                'packageCount', // [E]
+                'packing', // [F]
+                'weight', // [G]
+                'volume', // [H]
+                'domesticFeeRMB', // [I]
+                'haulingFeeRMB', // [J]
+                'exchangeRate', // [K]
+                'transportRate', // [L]
+                'totalTransportFeeEstimate', // [M]
+                'domesticFeeVN', // [N]
+                'notes', // [O]
+                'status', // [P]
+                'images', // [Q]
+                'mainTag', // [S]
+                'subTag', // [T]
+                'taggedImages', // [U]
+                'productQuantity', // [V]
+                'specification', // [W]
+                'productDescription', // [X]
+                'brand', // [Y]
+                'supplierTaxCode', // [Z]
+                'supplierName', // [AA]
+                'declarationNeed', // [AB]
+                'declarationQuantity', // [AC]
+                'invoicePriceExport', // [AD]
+                'totalValueExport', // [AE]
+                'declarationPolicy', // [AF]
+                'feeAmount', // [AG]
+                'otherNotes', // [AH]
+                'vatImportTax', // [AI]
+                'importTax', // [AJ]
+                'trustFee', // [AK]
+                'totalImportCost', // [AL]
+                'vatExportStatus', // [AM]
 
-                // Extra/Legacy
-                'taggedImages', 'domesticFeeVN', 'status', 'exchangeRate', 'vatExportStatus',
-                'partnerName', 'otherNotes'
+                // Extras/System
+                'infoSource', 'pctConfirmation', 'accountingConfirmation',
+                'unloadingFeeRMB', 'transportRateVolume', 'purchaseFee', 'declarationPrice', 'declarationName',
+                'partnerName'
             ];
 
             // Special handling for Types
@@ -441,12 +473,15 @@ const productCodeController = {
                         dataToUpdate[field] = updateData[field];
                     } else if ([
                         'weight', 'volume',
-                        'domesticFeeRMB', 'haulingFeeRMB', 'unloadingFeeRMB',
-                        'transportRate', 'transportRateVolume', 'totalTransportFeeEstimate',
-                        'productQuantity', 'declarationQuantity', 'invoicePriceExport',
-                        'declarationPrice', 'trustFee', 'feeAmount', 'importTax',
-                        'vatImportTax', 'totalImportCost', 'purchaseFee',
-                        'domesticFeeVN', 'exchangeRate'
+                        'domesticFeeRMB', 'haulingFeeRMB', 'exchangeRate',
+                        'transportRate', 'totalTransportFeeEstimate',
+                        'domesticFeeVN',
+                        'productQuantity', 'declarationQuantity', 'invoicePriceExport', 'totalValueExport',
+                        'feeAmount',
+                        'vatImportTax', 'importTax', 'trustFee', 'totalImportCost',
+
+                        // Extras
+                        'unloadingFeeRMB', 'transportRateVolume', 'purchaseFee', 'declarationPrice'
                     ].includes(field)) {
                         dataToUpdate[field] = updateData[field] ? parseFloat(updateData[field]) : null;
                     } else if (field === 'packageCount') {

@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
+const { createNotification } = require('../utils/notification');
 
 const CACHE_KEY = 'product_codes:list';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
@@ -555,6 +556,11 @@ const productCodeController = {
                 data: dataToUpdate,
                 include: { warehouseCosts: true, packageDetails: true }
             });
+
+            // Handle Notification if status changed
+            if (dataToUpdate.status && dataToUpdate.status !== productCode.status && updated.customerId) {
+                await createNotification(updated.customerId, [updated.id]);
+            }
 
             // Invalidate Cache
             const keys = await redisClient.keys(`${CACHE_KEY}:*`);

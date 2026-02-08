@@ -40,7 +40,7 @@ model User {
   createdTransactions Transaction[] @relation("CreatedTransactions")
   declarations        Declaration[] @relation("CustomerDeclarations")
   productCodes        ProductCode[] @relation("CustomerProductCodes")
-
+  notifications       Notification[] @relation("UserNotifications")
 
   deletedAt DateTime? // Soft Delete
 
@@ -511,6 +511,19 @@ model PackageDetail {
   updatedAt         DateTime    @updatedAt
 
   @@map("package_details")
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int      // Recipient
+  user        User     @relation("UserNotifications", fields: [userId], references: [id])
+  content     String
+  isRead      Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("notifications")
 }
 
 

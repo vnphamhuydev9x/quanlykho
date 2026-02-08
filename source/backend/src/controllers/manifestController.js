@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
+const { createNotification } = require('../utils/notification');
 
 const manifestController = {
     // 1. Create Manifest
@@ -112,13 +112,32 @@ const manifestController = {
                 return res.status(400).json({ message: 'Danh sách hàng hóa trống' });
             }
 
+            // Fetch to know customers
+            const items = await prisma.productCode.findMany({
+                where: { id: { in: productCodeIds.map(pid => parseInt(pid)) } },
+                select: { id: true, customerId: true }
+            });
+
             await prisma.productCode.updateMany({
-                where: { id: { in: productCodeIds } },
+                where: { id: { in: productCodeIds.map(pid => parseInt(pid)) } },
                 data: {
                     manifestId: parseInt(id),
                     status: 'DA_XEP_XE' // Update status
                 }
             });
+
+            // Group notifications
+            const customerGroups = items.reduce((acc, item) => {
+                if (item.customerId) {
+                    if (!acc[item.customerId]) acc[item.customerId] = [];
+                    acc[item.customerId].push(item.id);
+                }
+                return acc;
+            }, {});
+
+            for (const [customerId, ids] of Object.entries(customerGroups)) {
+                await createNotification(parseInt(customerId), ids);
+            }
 
             res.json({ message: 'Đã thêm hàng vào chuyến xe thành công' });
         } catch (error) {
@@ -137,9 +156,18 @@ const manifestController = {
                 return res.status(400).json({ message: 'Danh sách hàng hóa trống' });
             }
 
+            // Fetch to know customers
+            const items = await prisma.productCode.findMany({
+                where: {
+                    id: { in: productCodeIds.map(pid => parseInt(pid)) },
+                    manifestId: parseInt(id)
+                },
+                select: { id: true, customerId: true }
+            });
+
             await prisma.productCode.updateMany({
                 where: {
-                    id: { in: productCodeIds },
+                    id: { in: productCodeIds.map(pid => parseInt(pid)) },
                     manifestId: parseInt(id)
                 },
                 data: {
@@ -147,6 +175,19 @@ const manifestController = {
                     status: 'CHO_XEP_XE' // Revert status (or keep previous logic if complex)
                 }
             });
+
+            // Group notifications
+            const customerGroups = items.reduce((acc, item) => {
+                if (item.customerId) {
+                    if (!acc[item.customerId]) acc[item.customerId] = [];
+                    acc[item.customerId].push(item.id);
+                }
+                return acc;
+            }, {});
+
+            for (const [customerId, ids] of Object.entries(customerGroups)) {
+                await createNotification(parseInt(customerId), ids);
+            }
 
             res.json({ message: 'Đã xóa hàng khỏi chuyến xe thành công' });
         } catch (error) {
@@ -162,10 +203,30 @@ const manifestController = {
 
             // check if has items? Or just dissociate them?
             // Simple: Dissociate items first
+
+            // Fetch to know customers
+            const items = await prisma.productCode.findMany({
+                where: { manifestId: parseInt(id) },
+                select: { id: true, customerId: true }
+            });
+
             await prisma.productCode.updateMany({
                 where: { manifestId: parseInt(id) },
                 data: { manifestId: null, status: 'CHO_XEP_XE' }
             });
+
+            // Group notifications
+            const customerGroups = items.reduce((acc, item) => {
+                if (item.customerId) {
+                    if (!acc[item.customerId]) acc[item.customerId] = [];
+                    acc[item.customerId].push(item.id);
+                }
+                return acc;
+            }, {});
+
+            for (const [customerId, ids] of Object.entries(customerGroups)) {
+                await createNotification(parseInt(customerId), ids);
+            }
 
             await prisma.manifest.update({
                 where: { id: parseInt(id) },

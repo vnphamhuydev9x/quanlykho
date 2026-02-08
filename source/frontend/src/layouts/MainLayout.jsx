@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Button, Dropdown, Avatar, Typography, Space, message, Drawer, Grid } from 'antd';
+import { Layout, Menu, Button, Dropdown, Avatar, Typography, Space, message, Drawer, Grid, Badge, Tooltip } from 'antd';
 const { useBreakpoint } = Grid;
 import {
     MenuFoldOutlined,
@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import axiosInstance from '../utils/axios';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 
 const { Header, Sider, Content } = Layout;
@@ -76,6 +77,40 @@ const MainLayout = ({ children }) => {
             setIsForcePassModalVisible(true);
         }
     }, [mustChangePassword]);
+
+    const [notifications, setNotifications] = useState([]);
+
+    const fetchNotifications = async () => {
+        if (userType === 'CUSTOMER') {
+            try {
+                const response = await axiosInstance.get('/notifications');
+                if (response.data && response.data.data) {
+                    setNotifications(response.data.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch notifications", error);
+            }
+        }
+    };
+
+    const markNotificationsAsRead = async () => {
+        if (notifications.length > 0) {
+            try {
+                await axiosInstance.put('/notifications/read');
+                setNotifications([]);
+            } catch (error) {
+                console.error("Failed to mark notifications as read", error);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (userType === 'CUSTOMER') {
+            fetchNotifications();
+            const interval = setInterval(fetchNotifications, 10000); // Poll every 10s
+            return () => clearInterval(interval);
+        }
+    }, [userType]);
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
@@ -153,12 +188,50 @@ const MainLayout = ({ children }) => {
             children: [
                 {
                     key: '/product-codes',
-                    label: t('productCode.statusAll') || 'Tất cả',
-                    onClick: () => navigate('/product-codes'),
+                    label: (
+                        <div
+                            style={{ display: 'flex', alignItems: 'center', width: '100%' }}
+                            onMouseEnter={() => {
+                                if (userType === 'CUSTOMER' && notifications.length > 0) {
+                                    // Start a timer when hovering
+                                    window.notiTimer = setTimeout(() => {
+                                        window.shouldMarkRead = true;
+                                    }, 1000); // Must hover for at least 1s
+                                }
+                            }}
+                            onMouseLeave={() => {
+                                // Clear timer and mark as read if it was hovered long enough
+                                clearTimeout(window.notiTimer);
+                                if (window.shouldMarkRead) {
+                                    markNotificationsAsRead();
+                                    window.shouldMarkRead = false;
+                                }
+                            }}
+                        >
+                            <span>{t('productCode.statusAll') || 'Tất cả'}</span>
+                            {userType === 'CUSTOMER' && notifications.length > 0 && (
+                                <Tooltip
+                                    title={
+                                        <div style={{ whiteSpace: 'pre-line', padding: '4px' }}>
+                                            {notifications.map(n => n.content).join('\n')}
+                                        </div>
+                                    }
+                                    placement="right"
+                                    mouseLeaveDelay={1.5} // Keep tooltip visible for 1.5s after leaving
+                                >
+                                    <Badge count={notifications.length} size="small" style={{ marginLeft: '8px' }} title="" />
+                                </Tooltip>
+                            )}
+                        </div>
+                    ),
+                    onClick: () => {
+                        if (userType === 'CUSTOMER') markNotificationsAsRead();
+                        navigate('/product-codes');
+                    },
                 },
                 {
                     key: '/product-codes?status=NHAP_KHO_TQ',
-                    label: t('productCode.statusNhapKhoTQ') || 'Nhập kho TQ',
+                    label: t('productCode.statusNhapKho') || 'Nhập kho TQ',
                     onClick: () => navigate('/product-codes?status=NHAP_KHO_TQ'),
                 },
                 {

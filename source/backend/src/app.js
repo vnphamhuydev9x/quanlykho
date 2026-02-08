@@ -14,6 +14,7 @@ const categoryRoutes = require('./routes/categoryRoute');
 const transactionRoutes = require('./routes/transactionRoute');
 const declarationRoutes = require('./routes/declarationRoute');
 const productCodeRoutes = require('./routes/productCodeRoute');
+const notificationRoutes = require('./routes/notificationRoute');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/declarations', declarationRoutes);
 app.use('/api/product-codes', productCodeRoutes);
 app.use('/api/product-codes', productCodeRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/manifests', require('./routes/manifestRoutes'));
 
 app.get('/', (req, res) => {

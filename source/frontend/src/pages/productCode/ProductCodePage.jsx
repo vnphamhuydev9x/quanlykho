@@ -184,8 +184,8 @@ const ProductCodePage = () => {
         // 6. [F] Đơn vị kiện
         {
             title: t('productCode.packageUnit'),
-            dataIndex: 'packageUnit',
-            key: 'packageUnit',
+            dataIndex: 'packing',
+            key: 'packing',
             width: 120
         },
         // 7. [G] Trọng lượng
@@ -209,8 +209,8 @@ const ProductCodePage = () => {
         // 9. [I] Phí nội địa TQ
         {
             title: t('productCode.domesticFeeTQ'),
-            dataIndex: 'domesticFeeTQ',
-            key: 'domesticFeeTQ',
+            dataIndex: 'domesticFeeRMB',
+            key: 'domesticFeeRMB',
             width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
@@ -218,8 +218,8 @@ const ProductCodePage = () => {
         // 10. [J] Phí kéo hàng TQ
         {
             title: t('productCode.haulingFeeTQ'),
-            dataIndex: 'haulingFeeTQ',
-            key: 'haulingFeeTQ',
+            dataIndex: 'haulingFeeRMB',
+            key: 'haulingFeeRMB',
             width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
@@ -438,15 +438,15 @@ const ProductCodePage = () => {
         // 31. [AF] Chính sách NK
         {
             title: t('productCode.importPolicy'),
-            dataIndex: 'importPolicy',
-            key: 'importPolicy',
+            dataIndex: 'declarationPolicy',
+            key: 'declarationPolicy',
             width: 150
         },
         // 32. [AG] Phí phải nộp
         {
             title: t('productCode.otherFeeLabel'),
-            dataIndex: 'otherFee',
-            key: 'otherFee',
+            dataIndex: 'feeAmount',
+            key: 'feeAmount',
             width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'

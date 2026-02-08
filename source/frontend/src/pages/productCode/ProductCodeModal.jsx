@@ -60,6 +60,11 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             form.setFieldsValue({
                 ...data,
                 entryDate: data.entryDate ? dayjs(data.entryDate) : null,
+                domesticFeeRMB: data.domesticFeeRMB || data.domesticFeeTQ,
+                haulingFeeRMB: data.haulingFeeRMB || data.haulingFeeTQ,
+                packing: data.packing || data.packageUnit,
+                declarationPolicy: data.declarationPolicy || data.importPolicy,
+                feeAmount: data.feeAmount || data.otherFee,
             });
             setTotalAmount(data.totalImportCost || 0); // Set total amount on load
         } catch (error) {
@@ -196,14 +201,14 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
         // 5. [AL] Total Import Cost = [AJ] + [AI] + [AG] + [N] + [M] + [AK] + (([I] + [J]) * [K])
         const importTax = getVal('importTax'); // [AJ]
-        const otherFee = getVal('otherFee'); // [AG]
+        const feeAmount = getVal('feeAmount'); // [AG]
         const domesticFeeVN = getVal('domesticFeeVN'); // [N]
-        const domesticFeeTQ = getVal('domesticFeeTQ'); // [I]
-        const haulingFeeTQ = getVal('haulingFeeTQ'); // [J]
+        const domesticFeeRMB = getVal('domesticFeeRMB'); // [I]
+        const haulingFeeRMB = getVal('haulingFeeRMB'); // [J]
         const exchangeRate = getVal('exchangeRate'); // [K]
 
-        const val_CostTQ_VND = (domesticFeeTQ + haulingFeeTQ) * exchangeRate;
-        const val_AL = importTax + val_AI + otherFee + domesticFeeVN + val_M + val_AK + val_CostTQ_VND;
+        const val_CostTQ_VND = (domesticFeeRMB + haulingFeeRMB) * exchangeRate;
+        const val_AL = importTax + val_AI + feeAmount + domesticFeeVN + val_M + val_AK + val_CostTQ_VND;
 
         if (allValues.totalImportCost !== val_AL) {
             updates.totalImportCost = val_AL;
@@ -282,7 +287,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                                         {/* 6. [F] Đơn vị kiện */}
                                         <Col3>
-                                            <Form.Item name="packageUnit" label={t('productCode.packageUnit')} rules={[{ required: true, message: t('productCode.packageUnitRequired') }]}>
+                                            <Form.Item name="packing" label={t('productCode.packageUnit')} rules={[{ required: true, message: t('productCode.packageUnitRequired') }]}>
                                                 <Select placeholder={t('productCode.selectUnit')}>
                                                     <Option value="Thùng cotton">Thùng cotton</Option>
                                                     <Option value="Pallet">Pallet</Option>
@@ -313,7 +318,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                                         {/* 9. [I] Phí nội địa TQ */}
                                         <Col3>
-                                            <Form.Item name="domesticFeeTQ" label={t('productCode.domesticFeeTQ')}>
+                                            <Form.Item name="domesticFeeRMB" label={t('productCode.domesticFeeTQ')}>
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
@@ -323,7 +328,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                                         {/* 10. [J] Phí kéo hàng TQ */}
                                         <Col3>
-                                            <Form.Item name="haulingFeeTQ" label={t('productCode.haulingFeeTQ')}>
+                                            <Form.Item name="haulingFeeRMB" label={t('productCode.haulingFeeTQ')}>
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
@@ -571,14 +576,14 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                                         {/* 31. [AF] Chính sách NK */}
                                         <Col3>
-                                            <Form.Item name="importPolicy" label={t('productCode.importPolicy')}>
+                                            <Form.Item name="declarationPolicy" label={t('productCode.importPolicy')}>
                                                 <Input />
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 32. [AG] Phí phải nộp */}
                                         <Col3>
-                                            <Form.Item name="otherFee" label={t('productCode.otherFeeLabel')}>
+                                            <Form.Item name="feeAmount" label={t('productCode.otherFeeLabel')}>
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}

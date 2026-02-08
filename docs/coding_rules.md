@@ -136,7 +136,17 @@ Bất cứ khi nào dữ liệu gốc (Database) thay đổi, Cache tương ứn
 
 ---
 
-## 3. Logging Strategy
+## 4. Frontend Components & UI Rules
+
+### InputNumber
+*   **Step**: Luôn luôn đặt `step={1}` (hoặc để mặc định) để khi bấm nút mũi tên lên/xuống, giá trị tăng/giảm theo đơn vị nguyên (1, 2, 3...) thay vì tăng giảm phần thập phân.
+*   **Formatter/Parser**: Sử dụng bộ định dạng chuẩn để phân cách hàng nghìn.
+    ```jsx
+    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+    ```
+*   **Min/Max**: Luôn xác định `min={0}` cho các trường số tiền, trọng lượng, số lượng nếu không cho phép số âm.
+*   **Màu sắc (Disabled)**: Sử dụng `className="bg-gray-100"` cho các ô bị khóa (disabled) để đồng nhất giao diện màu xám. KHÔNG dùng màu xanh/vàng tự chế.
 
 ### Thư viện
 Sử dụng `winston` (App Logs) và `morgan` (Request Logs).
@@ -363,26 +373,34 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
                     *   Sử dụng locale `'de-DE'` cho số thông thường (vì de-DE dùng dấu chấm/phẩy giống Việt Nam)
                     *   Sử dụng locale `'vi-VN'` cho tiền tệ VND
 
-            *   **Number Input Standard (Quy chuẩn Nhập liệu Số)**:
-                *   **Loại 1: Số Nguyên (Integer)** - Dùng cho Tiền VND, Số lượng...
-                    *   **Mục tiêu**: Tự động thêm dấu chấm phân cách hàng nghìn khi nhập.
-                    *   **Cấu hình**:
-                        ```jsx
-                        <InputNumber
-                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                        />
-                        ```
-                *   **Loại 2: Số Thập phân (Decimal)** - Dùng cho %, Tỷ giá...
-                    *   **Mục tiêu**: Sử dụng dấu phẩy (`,`) làm dấu phân cách thập phân thay vì dấu chấm.
-                    *   **Cấu hình**:
-                        ```jsx
-                        <InputNumber
-                            decimalSeparator="," // Quan trọng để hiểu dấu phẩy là thập phân
-                            step={0.01} // Hoặc step phù hợp
-                        />
-                        ```
-                *   **Lưu ý chung**: Luôn disable InputNumber khi ở chế độ `isViewMode`.
+            *   **Number Format Standard (Chuẩn số duy nhất - Standardized Application-wide)**:
+                *   **Mục tiêu**: Đồng nhất cách nhập và hiển thị số cho toàn bộ ứng dụng (Tiền tệ, Trọng lượng, Khối lượng, Số lượng...). 
+                *   **Quy chuẩn**: Phân cách đối với hàng nghìn bằng dấu chấm (`.`), phân cách thập phân bằng dấu phẩy (`,`) và **luôn hiển thị 2 số thập phân**.
+                *   **Cấu hình InputNumber (Edit Mode)**: Bắt buộc dùng cấu hình sau:
+                    ```jsx
+                    <InputNumber
+                        precision={2}
+                        step={0.01}
+                        formatter={value => {
+                            if (value === null || value === undefined || value === '') return '';
+                            const parts = value.toString().split('.');
+                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                            const decimalPart = parts[1] || '00';
+                            return `${integerPart},${decimalPart}`;
+                        }}
+                        parser={value => value.replace(/\./g, '').replace(',', '.')}
+                    />
+                    ```
+                *   **Hiển thị (Display Mode / Table)**: Sử dụng `Intl.NumberFormat` với cấu hình:
+                    ```javascript
+                    new Intl.NumberFormat('vi-VN', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                    }).format(amount)
+                    ```
+                *   **Lưu ý chung**: 
+                    *   Luôn disable `InputNumber` khi ở chế độ `isViewMode` và thêm `className="bg-gray-100"`.
+                    *   Luôn để `min={0}` trừ khi có yêu cầu đặc biệt.
 
             *   **Input with Unit Suffix (Input kèm Đơn vị)**:
                 *   **Quy tắc**: Khi Input có đơn vị đo lường (kg, m3, VND, %...), BẮT BUỘC sử dụng `Space.Compact` để hiển thị đơn vị ở cuối Input.

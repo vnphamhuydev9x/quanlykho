@@ -191,7 +191,12 @@ const TransactionPage = () => {
             align: 'right',
             render: (amount) => (
                 <Typography.Text strong style={{ color: '#52c41a' }}>
-                    {new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(amount)}
+                    {new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', {
+                        style: 'currency',
+                        currency: t('common.id') === 'ID' ? 'VND' : 'CNY',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(amount)}
                 </Typography.Text>
             )
         },

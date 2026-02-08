@@ -159,7 +159,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
 
         const getVal = (field) => {
             const val = allValues[field];
-            if (typeof val === 'string') return parseFloat(val.replace(/,/g, '')) || 0;
+            if (typeof val === 'string') return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
             return parseFloat(val) || 0;
         };
 
@@ -256,7 +256,13 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 6. [F] Số Kiện */}
                         <Col3>
                             <Form.Item name="packageCount" label="6. [F] Số Kiện">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 7. [G] Đóng gói */}
@@ -268,13 +274,25 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 8. [H] Trọng lượng */}
                         <Col3>
                             <Form.Item name="weight" label="8. [H] Trọng lượng (Kg)">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 9. [I] Khối lượng */}
                         <Col3>
                             <Form.Item name="volume" label="9. [I] Khối lượng (m3)">
-                                <InputNumber style={{ width: '100%' }} step={0.001} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 10. [J] Nguồn cung cấp thông tin */}
@@ -290,37 +308,73 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 11. [K] Phí nội địa (RMB) */}
                         <Col3>
                             <Form.Item name="domesticFeeRMB" label="11. [K] Phí nội địa (RMB)">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 12. [L] Phí kéo hàng (RMB) */}
                         <Col3>
                             <Form.Item name="haulingFeeRMB" label="12. [L] Phí kéo hàng (RMB)">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 13. [M] Phí dỡ hàng (RMB) */}
                         <Col3>
                             <Form.Item name="unloadingFeeRMB" label="13. [M] Phí dỡ hàng (RMB)">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 14. [N] Đơn giá cước TQ_HN (Kg) */}
                         <Col3>
                             <Form.Item name="transportRate" label="14. [N] Cước TQ_HN (Kg)">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 15. [O] Đơn giá cước TQ_HN (m3) */}
                         <Col3>
                             <Form.Item name="transportRateVolume" label="15. [O] Cước TQ_HN (m3)">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 16. [P] Tổng cước TQ_HN tạm tính */}
                         <Col3>
                             <Form.Item name="totalTransportFeeEstimate" label="16. [P] Tổng cước TQ_HN">
-                                <InputNumber style={{ width: '100%' }} disabled className="bg-gray-100" />
+                                <InputNumber style={{ width: '100%' }} precision={2} step={0.01} disabled className="bg-gray-100" formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 17. [Q] Ghi chú */}
@@ -363,7 +417,13 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 23. [W] SL SP */}
                         <Col3>
                             <Form.Item name="productQuantity" label="23. [W] SL Sản phẩm">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 24. [X] Quy cách */}
@@ -411,25 +471,49 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 31. [AE] SL Khai báo */}
                         <Col3>
                             <Form.Item name="declarationQuantity" label="31. [AE] SL Khai báo">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 32. [AF] Giá xuất hóa đơn */}
                         <Col3>
                             <Form.Item name="invoicePriceExport" label="32. [AF] Giá xuất HĐ">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 33. [AG] Giá khai báo */}
                         <Col3>
                             <Form.Item name="declarationPrice" label="33. [AG] Giá khai báo">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 34. [AH] Phí ủy thác */}
                         <Col3>
                             <Form.Item name="trustFee" label="34. [AH] Phí ủy thác">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 35. [AI] Tên khai báo */}
@@ -441,25 +525,49 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 36. [AJ] Phí phải nộp */}
                         <Col3>
                             <Form.Item name="feeAmount" label="36. [AJ] Phí phải nộp">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 37. [AK] Thuế NK phải nộp */}
                         <Col3>
                             <Form.Item name="importTax" label="37. [AK] Thuế NK">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 38. [AL] Thuế VAT NK */}
                         <Col3>
                             <Form.Item name="vatImportTax" label="38. [AL] Thuế VAT NK">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 39. [AM] Phí mua hàng */}
                         <Col3>
                             <Form.Item name="purchaseFee" label="39. [AM] Phí mua hàng">
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Col3>
                         {/* 40. [AN] Xác nhận PKT */}

@@ -5,12 +5,14 @@
  * @returns {string} The formatted string
  */
 export const formatNumber = (value) => {
-    if (value === undefined || value === null || value === '') return '0';
+    if (value === undefined || value === null || value === '') return '0,00';
     const num = parseFloat(value);
-    if (isNaN(num)) return '0';
-    // Format with thousand separators, no decimals by default for VND usage context usually
-    // But let's stick to a standard format
-    return new Intl.NumberFormat('vi-VN').format(num);
+    if (isNaN(num)) return '0,00';
+
+    return new Intl.NumberFormat('vi-VN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(num);
 };
 
 /**
@@ -19,12 +21,14 @@ export const formatNumber = (value) => {
  * @param {string} currency - 'VND' | 'USD' | 'CNY'
  */
 export const formatCurrency = (value, currency = 'VND') => {
-    if (value === undefined || value === null || value === '') return '0';
+    if (value === undefined || value === null || value === '') return '0,00';
     const num = parseFloat(value);
-    if (isNaN(num)) return '0';
+    if (isNaN(num)) return '0,00';
 
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
-        currency: currency
+        currency: currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
     }).format(num);
 };

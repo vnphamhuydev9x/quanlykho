@@ -176,7 +176,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         const getVal = (field) => {
             const val = allValues[field];
             if (typeof val === 'string') {
-                return parseFloat(val.replace(/,/g, '')) || 0;
+                return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
             }
             return parseFloat(val) || 0;
         };
@@ -318,7 +318,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 5. [E] Số Kiện */}
                         <Col3>
                             <Form.Item name="packageCount" label={t('productCode.packageCount')} rules={[{ required: true, message: t('productCode.packageCountRequired') }]}>
-                                <Input />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    precision={2}
+                                    step={0.01}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
+                                />
                             </Form.Item>
                         </Col3>
 
@@ -338,9 +351,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
+                                    precision={2}
                                     step={0.01}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -351,9 +371,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
-                                    step={0.001}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    precision={2}
+                                    step={0.01}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -364,9 +391,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
+                                    precision={2}
                                     step={0.01}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -377,9 +411,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
+                                    precision={2}
                                     step={0.01}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -390,9 +431,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
+                                    precision={2}
                                     step={0.01}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -404,9 +452,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     <InputNumber
                                         style={{ width: '100%' }}
                                         min={0}
+                                        precision={2}
                                         step={0.01}
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        formatter={value => {
+                                            if (value === null || value === undefined || value === '') return '';
+                                            const parts = value.toString().split('.');
+                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                            const decimalPart = parts[1] || '00';
+                                            return `${integerPart},${decimalPart}`;
+                                        }}
+                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -419,9 +474,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     <InputNumber
                                         style={{ width: '100%' }}
                                         min={0}
+                                        precision={2}
                                         step={0.01}
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        formatter={value => {
+                                            if (value === null || value === undefined || value === '') return '';
+                                            const parts = value.toString().split('.');
+                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                            const decimalPart = parts[1] || '00';
+                                            return `${integerPart},${decimalPart}`;
+                                        }}
+                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -433,11 +495,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <Form.Item name="totalTransportFeeEstimate" noStyle>
                                     <InputNumber
                                         style={{ width: '100%' }}
+                                        precision={2}
                                         step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        formatter={value => {
+                                            if (value === null || value === undefined || value === '') return '';
+                                            const parts = value.toString().split('.');
+                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                            const decimalPart = parts[1] || '00';
+                                            return `${integerPart},${decimalPart}`;
+                                        }}
+                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -449,9 +518,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
+                                    precision={2}
                                     step={0.01}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -525,8 +601,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    precision={2}
+                                    step={0.01}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -579,8 +663,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    precision={2}
+                                    step={0.01}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -591,9 +683,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
+                                    precision={2}
                                     step={0.01}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -604,11 +703,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <Form.Item name="totalValueExport" noStyle>
                                     <InputNumber
                                         style={{ width: '100%' }}
+                                        precision={2}
                                         step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        formatter={value => {
+                                            if (value === null || value === undefined || value === '') return '';
+                                            const parts = value.toString().split('.');
+                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                            const decimalPart = parts[1] || '00';
+                                            return `${integerPart},${decimalPart}`;
+                                        }}
+                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -627,9 +733,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
+                                    precision={2}
                                     step={0.01}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -647,11 +760,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <Form.Item name="vatImportTax" noStyle>
                                     <InputNumber
                                         style={{ width: '100%' }}
+                                        precision={2}
                                         step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        formatter={value => {
+                                            if (value === null || value === undefined || value === '') return '';
+                                            const parts = value.toString().split('.');
+                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                            const decimalPart = parts[1] || '00';
+                                            return `${integerPart},${decimalPart}`;
+                                        }}
+                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -663,9 +783,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <InputNumber
                                     style={{ width: '100%' }}
                                     min={0}
+                                    precision={2}
                                     step={0.01}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }}
+                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -676,11 +803,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <Form.Item name="trustFee" noStyle>
                                     <InputNumber
                                         style={{ width: '100%' }}
+                                        precision={2}
                                         step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        formatter={value => {
+                                            if (value === null || value === undefined || value === '') return '';
+                                            const parts = value.toString().split('.');
+                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                            const decimalPart = parts[1] || '00';
+                                            return `${integerPart},${decimalPart}`;
+                                        }}
+                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -692,11 +826,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <Form.Item name="totalImportCost" noStyle>
                                     <InputNumber
                                         style={{ width: '100%' }}
+                                        precision={2}
                                         step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                        formatter={value => {
+                                            if (value === null || value === undefined || value === '') return '';
+                                            const parts = value.toString().split('.');
+                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                            const decimalPart = parts[1] || '00';
+                                            return `${integerPart},${decimalPart}`;
+                                        }}
+                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>

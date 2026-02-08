@@ -95,17 +95,24 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
     const handleValuesChange = (changedValues, allValues) => {
         // [L] Tổng cước vận chuyển = Max( [D]*[J], [E]*[K] )
         // Inputs: weight, volume, transportRate, transportRateVolume
+        const getVal = (field) => {
+            const val = allValues[field];
+            if (typeof val === 'string') {
+                return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
+            }
+            return parseFloat(val) || 0;
+        };
+
         if (
             'weight' in changedValues ||
             'volume' in changedValues ||
             'transportRate' in changedValues ||
             'transportRateVolume' in changedValues
         ) {
-            const w = parseFloat(allValues.weight) || 0; // [D]
-            const v = parseFloat(allValues.volume) || 0; // [E]
-            const rateW = parseFloat(allValues.transportRate) || 0; // [J]
-            // [K] is transportRateVolume (New field)
-            const rateV = parseFloat(allValues.transportRateVolume) || 0;
+            const w = getVal('weight'); // [D]
+            const v = getVal('volume'); // [E]
+            const rateW = getVal('transportRate'); // [J]
+            const rateV = getVal('transportRateVolume'); // [K]
 
             const feeByWeight = w * rateW;
             const feeByVolume = v * rateV;
@@ -114,10 +121,9 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
         }
 
         // [AD] Trị giá = [AA] * [AC]
-        // Inputs: declarationQuantityDeclared, declarationPrice
         if ('declarationQuantityDeclared' in changedValues || 'declarationPrice' in changedValues) {
-            const qty = parseFloat(allValues.declarationQuantityDeclared) || 0;
-            const price = parseFloat(allValues.declarationPrice) || 0;
+            const qty = getVal('declarationQuantityDeclared');
+            const price = getVal('declarationPrice');
             const val = qty * price;
             form.setFieldsValue({ value: val });
         }
@@ -206,13 +212,25 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         </Form.Item>
                         {/* [E] Số Kiện -> 3. [C] */}
                         <Form.Item name="packageCount" label="3. [C] Số Kiện">
-                            <InputNumber style={{ width: '100%' }} disabled={isViewMode} />
+                            <InputNumber style={{ width: '100%' }} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                         </Form.Item>
                         {/* [F] Trọng lượng -> 4. [D] */}
                         <Form.Item label="4. [D] Trọng lượng (Kg)">
                             <Space.Compact block>
                                 <Form.Item name="weight" noStyle>
-                                    <InputNumber style={{ width: 'calc(100% - 40px)' }} min={0} step={0.01} disabled={isViewMode} />
+                                    <InputNumber style={{ width: 'calc(100% - 40px)' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                                 </Form.Item>
                                 <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kg" disabled />
                             </Space.Compact>
@@ -221,7 +239,13 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         <Form.Item label="5. [E] Khối lượng (m3)">
                             <Space.Compact block>
                                 <Form.Item name="volume" noStyle>
-                                    <InputNumber style={{ width: 'calc(100% - 40px)' }} min={0} step={0.001} disabled={isViewMode} />
+                                    <InputNumber style={{ width: 'calc(100% - 40px)' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                        if (value === null || value === undefined || value === '') return '';
+                                        const parts = value.toString().split('.');
+                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        const decimalPart = parts[1] || '00';
+                                        return `${integerPart},${decimalPart}`;
+                                    }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                                 </Form.Item>
                                 <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="m³" disabled />
                             </Space.Compact>
@@ -236,43 +260,78 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         </Form.Item>
                     </Col>
                     <Col span={12}>
-                        {/* [I] Phí nội địa (RMB) -> 7. [G] */}
                         <Form.Item label="7. [G] Phí nội địa (RMB)">
                             <Form.Item name="domesticFeeRMB" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} step={0.01} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} parser={value => value.replace(/\$\s?|(,*)/g, '')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [J] Phí kéo hàng (RMB) -> 8. [H] */}
                         <Form.Item label="8. [H] Phí kéo hàng (RMB)">
                             <Form.Item name="haulingFeeRMB" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} step={0.01} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [K] Phí dỡ hàng (RMB) -> 9. [I] */}
                         <Form.Item label="9. [I] Phí dỡ hàng (RMB)">
                             <Form.Item name="unloadingFeeRMB" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} step={0.01} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
 
                         {/* [L] Đơn giá cước (Kg) -> 10. [J] */}
                         <Form.Item label="10. [J] Đơn giá cước TQ_HN (Theo Kg)">
                             <Form.Item name="transportRate" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
 
                         {/* [M] Đơn giá cước (m3) -> 11. [K] */}
                         <Form.Item label="11. [K] Đơn giá cước TQ_HN (Theo m3)">
                             <Form.Item name="transportRateVolume" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
 
                         {/* [N] Tổng cước (Formula) -> 12. [L] */}
                         <Form.Item label="12. [L] Tổng cước TQ_HN (Tạm tính)">
                             <Form.Item name="totalTransportFeeEstimate" noStyle>
-                                <InputNumber style={{ width: '100%' }} disabled className="bg-gray-100" formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} precision={2} step={0.01} disabled className="bg-gray-100" formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
 
@@ -310,7 +369,13 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         </Form.Item>
                         {/* [Q] Số lượng SP -> 17. [Q] */}
                         <Form.Item name="productQuantity" label="17. [Q] Số lượng SP">
-                            <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} />
+                            <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                         </Form.Item>
                         {/* [R] Quy cách -> 18. [R] */}
                         <Form.Item name="specification" label="18. [R] Quy cách">
@@ -341,7 +406,13 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         {/* [X] Giá xuất hóa đơn -> 24. [X] */}
                         <Form.Item label="24. [X] Giá xuất hóa đơn (Trước VAT)">
                             <Form.Item name="invoicePrice" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [Y] Thông tin bổ sung -> 25. [Y] */}
@@ -364,7 +435,13 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         </Form.Item>
                         {/* [AA] SL khai báo -> 27. [AA] */}
                         <Form.Item name="declarationQuantityDeclared" label="27. [AA] Số lượng khai báo (Chính thức)">
-                            <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} />
+                            <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                         </Form.Item>
                         {/* [AB] Đơn vị tính -> 28. [AB] */}
                         <Form.Item name="unit" label="28. [AB] Đơn vị tính">
@@ -373,32 +450,68 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         {/* [AC] Giá khai báo -> 29. [AC] */}
                         <Form.Item label="29. [AC] Giá khai báo">
                             <Form.Item name="declarationPrice" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [AD] Trị giá (Formula) -> 30. [AD] */}
                         <Form.Item label="30. [AD] Trị giá (=AA*AC)">
                             <Form.Item name="value" noStyle>
-                                <InputNumber style={{ width: '100%' }} disabled className="bg-gray-100" formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} precision={2} step={0.01} disabled className="bg-gray-100" formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [AE] Số kiện -> 31. [AE] */}
                         <Form.Item name="packageCountDeclared" label="31. [AE] Số kiện">
-                            <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} />
+                            <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                         </Form.Item>
                     </Col>
                     <Col span={8}>
                         {/* [AF] Net weight -> 32. [AF] */}
                         <Form.Item name="netWeight" label="32. [AF] Net weight">
-                            <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} />
+                            <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                         </Form.Item>
                         {/* [AG] Gross weight -> 33. [AG] */}
                         <Form.Item name="grossWeight" label="33. [AG] Gross weight">
-                            <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} />
+                            <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                         </Form.Item>
                         {/* [AH] CBM -> 34. [AH] */}
                         <Form.Item name="cbm" label="34. [AH] CBM">
-                            <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} />
+                            <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                         </Form.Item>
                         {/* [AI] HS Code -> 35. [AI] */}
                         <Form.Item name="hsCode" label="35. [AI] HS CODE">
@@ -406,42 +519,84 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         </Form.Item>
                         {/* [AJ] % Thuế VAT -> 36. [AJ] */}
                         <Form.Item name="vatPercent" label="36. [AJ] % Thuế VAT">
-                            <InputNumber style={{ width: '100%' }} min={0} max={100} disabled={isViewMode} suffix="%" />
+                            <InputNumber style={{ width: '100%' }} min={0} max={100} precision={2} step={0.01} disabled={isViewMode} suffix="%" formatter={value => {
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                         </Form.Item>
                         {/* [AK] Thuế VAT phải nộp -> 37. [AK] */}
                         <Form.Item label="37. [AK] Thuế VAT phải nộp">
                             <Form.Item name="vatAmount" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                     </Col>
                     <Col span={8}>
                         {/* [AL] % Thuế NK -> 38. [AL] */}
                         <Form.Item name="importTaxPercent" label="38. [AL] % Thuế NK">
-                            <InputNumber style={{ width: '100%' }} min={0} max={100} disabled={isViewMode} suffix="%" />
+                            <InputNumber style={{ width: '100%' }} min={0} max={100} precision={2} step={0.01} disabled={isViewMode} suffix="%" formatter={value => {
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                         </Form.Item>
                         {/* [AM] Thuế NK USD -> 39. [AM] */}
                         <Form.Item label="39. [AM] Thuế NK (USD)">
                             <Form.Item name="importTaxUSD" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [AN] Thuế NK VNĐ -> 40. [AN] */}
                         <Form.Item label="40. [AN] Thuế NK (VNĐ)">
                             <Form.Item name="importTaxVND" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [AO] Tỷ giá HQ -> 41. [AO] */}
                         <Form.Item label="41. [AO] Tỷ giá Hải Quan">
                             <Form.Item name="customsExchangeRate" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [AP] Phí KTCL -> 42. [AP] */}
                         <Form.Item label="42. [AP] Phí KTCL">
                             <Form.Item name="qualityControlFee" noStyle>
-                                <InputNumber style={{ width: '100%' }} min={0} disabled={isViewMode} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} min={0} precision={2} step={0.01} disabled={isViewMode} formatter={value => {
+                                    if (value === null || value === undefined || value === '') return '';
+                                    const parts = value.toString().split('.');
+                                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                    const decimalPart = parts[1] || '00';
+                                    return `${integerPart},${decimalPart}`;
+                                }} parser={value => value.replace(/\./g, '').replace(',', '.')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [AQ] Xác nhận PKT -> 43. [AQ] */}

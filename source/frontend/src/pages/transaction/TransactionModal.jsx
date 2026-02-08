@@ -109,8 +109,16 @@ const TransactionModal = ({ visible, onCancel, onSuccess }) => {
                 >
                     <InputNumber
                         style={{ width: '100%' }}
-                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                        parser={value => value.replace(/\$\s?|(\.\*)/g, '')}
+                        precision={2}
+                        step={0.01}
+                        formatter={value => {
+                            if (value === null || value === undefined || value === '') return '';
+                            const parts = value.toString().split('.');
+                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                            const decimalPart = parts[1] || '00';
+                            return `${integerPart},${decimalPart}`;
+                        }}
+                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                         addonAfter="VND"
                         min={0}
                     />

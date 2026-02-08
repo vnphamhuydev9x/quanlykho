@@ -234,7 +234,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 1. [A] Ngày nhập kho */}
                         <Col3>
                             <Form.Item name="entryDate" label="1. [A] Ngày nhập kho" rules={[{ required: true }]}>
-                                <DatePicker showTime format="DD/MM/YYYY HH:mm" style={{ width: '100%' }} />
+                                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
                             </Form.Item>
                         </Col3>
                         {/* 2. [B] NVKD - Derived from Customer */}
@@ -259,7 +259,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 6. [F] Số Kiện */}
                         <Col3>
                             <Form.Item name="packageCount" label="6. [F] Số Kiện">
-                                <CustomNumberInput style={{ width: '100%' }} min={0} />
+                                <CustomNumberInput style={{ width: '100%' }} min={0} isInteger={true} />
                             </Form.Item>
                         </Col3>
                         {/* 7. [G] Đóng gói */}

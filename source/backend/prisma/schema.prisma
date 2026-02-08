@@ -167,7 +167,7 @@ model Declaration {
 
   // 5. [E] Số Kiện
   // 5. [E] Số Kiện
-  packageCount         Decimal?  @db.Decimal(15, 2) // NUMBER - Changed from Int to Decimal for flexibility
+  packageCount         Int?      // NUMBER
 
   // 6. [F] Trọng lượng (Kg)
   weight               Decimal?  @db.Decimal(15, 2) // NUMBER
@@ -245,7 +245,8 @@ model Declaration {
   value                Decimal?  @db.Decimal(15, 2) // FORMULA/NUMBER
 
   // 31. [AE] số kiện (Declared)
-  packageCountDeclared Decimal?  @db.Decimal(15, 2) // NUMBER
+  // 31. [AE] số kiện (Declared)
+  packageCountDeclared Int?      // NUMBER
 
   // 32. [AF] net weight
   netWeight            Decimal?  @db.Decimal(15, 2) // NUMBER
@@ -331,7 +332,7 @@ model ProductCode {
   orderCode            String?   // STRING
 
   // 6. [F] Số Kiện
-  packageCount         Decimal?  @db.Decimal(15, 2) // NUMBER - Changed to Decimal
+  packageCount         Int?      // NUMBER - Changed to Int
 
   // 7. [G] Đóng gói - NEW
   packing              String?   // STRING

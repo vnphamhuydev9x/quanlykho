@@ -213,7 +213,7 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         </Form.Item>
                         {/* [E] Số Kiện -> 3. [C] */}
                         <Form.Item name="packageCount" label="3. [C] Số Kiện">
-                            <CustomNumberInput style={{ width: '100%' }} precision={2} step={0.01} disabled={isViewMode} />
+                            <CustomNumberInput style={{ width: '100%' }} disabled={isViewMode} isInteger={true} />
                         </Form.Item>
                         {/* [F] Trọng lượng -> 4. [D] */}
                         <Form.Item label="4. [D] Trọng lượng (Kg)">
@@ -390,7 +390,7 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         </Form.Item>
                         {/* [AE] Số kiện -> 31. [AE] */}
                         <Form.Item name="packageCountDeclared" label="31. [AE] Số kiện">
-                            <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
+                            <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} isInteger={true} />
                         </Form.Item>
                     </Col>
                     <Col span={8}>

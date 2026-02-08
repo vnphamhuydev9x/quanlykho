@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, Row, Col, message, Spin, Upload, DatePicker, Divider, Space } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, message, Spin, Upload, DatePicker, Divider, Space, Tooltip } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../utils/axios';
 import { formatFloat } from '../../utils/format';
 import dayjs from 'dayjs';
 import productCodeService from '../../services/productCodeService';
-import customerService from '../../services/customerService';
-import warehouseService from '../../services/warehouseService';
-import categoryService from '../../services/categoryService';
-import declarationService from '../../services/declarationService';
+
 import CustomNumberInput from '../../components/CustomNumberInput';
 
 const { Option } = Select;
@@ -26,10 +23,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
     const [submitting, setSubmitting] = useState(false);
 
     // Dropdown data
-    const [customers, setCustomers] = useState([]);
-    const [warehouses, setWarehouses] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [declarations, setDeclarations] = useState([]);
+
 
     // Upload
     const [fileList, setFileList] = useState([]);
@@ -42,7 +36,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
     useEffect(() => {
         if (visible) {
-            fetchDropdownData();
             if (editingRecord) {
                 loadEditData();
             } else {
@@ -56,26 +49,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         }
     }, [visible, editingRecord]);
 
-    const fetchDropdownData = async () => {
-        setLoading(true);
-        try {
-            const [customersRes, warehousesRes, categoriesRes, declarationsRes] = await Promise.all([
-                customerService.getAll({ page: 1, limit: 1000 }),
-                warehouseService.getAll({ page: 1, limit: 1000 }),
-                categoryService.getAll({ page: 1, limit: 1000 }),
-                declarationService.getAll({ page: 1, limit: 1000 })
-            ]);
 
-            setCustomers(customersRes.data?.customers || customersRes.customers || []);
-            setWarehouses(warehousesRes.data || warehousesRes || []);
-            setCategories(categoriesRes.data?.items || categoriesRes.items || []);
-            setDeclarations(declarationsRes.data?.items || declarationsRes.items || []);
-        } catch (error) {
-            message.error(t('common.loadError'));
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const loadEditData = async () => {
         try {
@@ -86,10 +60,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             form.setFieldsValue({
                 ...data,
                 entryDate: data.entryDate ? dayjs(data.entryDate) : null,
-                customerId: data.customerId, // System field
-                warehouseId: data.warehouseId, // System field
-                categoryId: data.categoryId, // System field
-                declarationId: data.declarationId, // System field
             });
             setTotalAmount(data.totalImportCost || 0); // Set total amount on load
         } catch (error) {
@@ -187,14 +157,12 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         };
 
         // 1. [M] Total Transport Fee TQ_HN = Max( [L] transportRate * [G] weight, [L1] transportRateVolume * [H] volume )
-        const transportRate = getVal('transportRate'); // [L] (Kg)
-        const transportRateVolume = getVal('transportRateVolume'); // [L1] (m3)
-        const weight = getVal('weight'); // [G]
+        // 1. [M] Total Transport Fee TQ_HN = [L] transportRate * [H] volume
+        // Formula in spec: =L2*H2
+        const transportRate = getVal('transportRate'); // [L]
         const volume = getVal('volume'); // [H]
 
-        const feeByWeight = weight * transportRate;
-        const feeByVolume = volume * transportRateVolume;
-        const val_M = Math.max(feeByWeight, feeByVolume);
+        const val_M = transportRate * volume;
 
         if (allValues.totalTransportFeeEstimate !== val_M) {
             updates.totalTransportFeeEstimate = val_M;
@@ -262,31 +230,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             <Spin spinning={loading}>
                 <Form form={form} layout="vertical" onValuesChange={handleValuesChange}>
 
-                    {/* SYSTEM FIELDS (Required for functioning but not in strict excel order list, kept at top/minimized) */}
-                    <Divider orientation="left" style={{ borderColor: '#d9d9d9', color: '#666', fontSize: '12px' }}>{t('productCode.systemInfo')}</Divider>
-                    <Row gutter={16}>
-                        <Col3>
-                            <Form.Item name="customerId" label={t('productCode.customerSystem')} rules={[{ required: true }]}>
-                                <Select showSearch placeholder={t('productCode.selectCustomer')} filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
-                                    {customers.map(c => <Option key={c.id} value={c.id}>{`${c.fullName} (${c.username})`}</Option>)}
-                                </Select>
-                            </Form.Item>
-                        </Col3>
-                        <Col3>
-                            <Form.Item name="warehouseId" label={t('productCode.warehouseSystem')}>
-                                <Select showSearch placeholder={t('productCode.selectWarehouse')} filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
-                                    {warehouses.map(w => <Option key={w.id} value={w.id}>{w.name}</Option>)}
-                                </Select>
-                            </Form.Item>
-                        </Col3>
-                        <Col3>
-                            <Form.Item name="categoryId" label={t('productCode.categorySystem')}>
-                                <Select showSearch placeholder={t('productCode.selectCategory')} filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
-                                    {categories.map(c => <Option key={c.id} value={c.id}>{c.name}</Option>)}
-                                </Select>
-                            </Form.Item>
-                        </Col3>
-                    </Row>
+
 
                     {/* EXCEL ORDER FIELDS A -> AM */}
                     <Divider orientation="left">{t('productCode.detailInfo')}</Divider>
@@ -295,7 +239,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 1. [A] Ngày nhập kho */}
                         <Col3>
                             <Form.Item name="entryDate" label={t('productCode.entryDate')} rules={[{ required: true, message: t('productCode.entryDateRequired') }]}>
-                                <DatePicker showTime format="DD/MM/YYYY HH:mm" style={{ width: '100%' }} />
+                                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
                             </Form.Item>
                         </Col3>
 
@@ -326,6 +270,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                 <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
+                                    isInteger={true}
                                 />
                             </Form.Item>
                         </Col3>
@@ -390,9 +335,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                             </Form.Item>
                         </Col3>
 
-                        {/* 12. [L] Đơn giá cước TQ_HN (Kg) */}
+                        {/* 12. [L] Đơn giá cước TQ_HN */}
                         <Col3>
-                            <Form.Item label={t('productCode.transportRate') + " (Kg)"}>
+                            <Form.Item label={t('productCode.transportRate')}>
                                 <Form.Item name="transportRate" noStyle rules={[{ required: true, message: t('productCode.transportRateRequired') }]}>
                                     <CustomNumberInput
                                         style={{ width: '100%' }}
@@ -402,21 +347,20 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                             </Form.Item>
                         </Col3>
 
-                        {/* 12.1. [L1] Đơn giá cước TQ_HN (m3) */}
-                        <Col3>
-                            <Form.Item label={t('productCode.transportRate') + " (m3)"}>
-                                <Form.Item name="transportRateVolume" noStyle>
-                                    <CustomNumberInput
-                                        style={{ width: '100%' }}
-                                        min={0}
-                                    />
-                                </Form.Item>
-                            </Form.Item>
-                        </Col3>
+
 
                         {/* 13. [M] Tổng cước TQ_HN */}
                         <Col3>
-                            <Form.Item label={t('productCode.totalTransportFeeEstimate')}>
+                            <Form.Item
+                                label={
+                                    <Space>
+                                        {t('productCode.totalTransportFeeEstimate')}
+                                        <Tooltip title="Tổng cước TQ_HN = Đơn giá cước TQ_HN [L] * Khối lượng [H]">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                }
+                            >
                                 <Form.Item name="totalTransportFeeEstimate" noStyle>
                                     <CustomNumberInput
                                         style={{ width: '100%' }}
@@ -574,7 +518,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                         {/* 30. [AE] Tổng giá trị lô hàng */}
                         <Col3>
-                            <Form.Item label={t('productCode.totalValueExport')}>
+                            <Form.Item
+                                label={
+                                    <Space>
+                                        {t('productCode.totalValueExport')}
+                                        <Tooltip title="Tổng giá trị = Giá xuất hoá đơn [AD] * Số lượng khai báo [AC]">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                }
+                            >
                                 <Form.Item name="totalValueExport" noStyle>
                                     <CustomNumberInput
                                         style={{ width: '100%' }}
@@ -611,7 +564,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                         {/* 34. [AI] Thuế VAT nhập khẩu */}
                         <Col3>
-                            <Form.Item label={t('productCode.vatImportTax')}>
+                            <Form.Item
+                                label={
+                                    <Space>
+                                        {t('productCode.vatImportTax')}
+                                        <Tooltip title="Thuế VAT NK = Tổng giá trị [AE] * 8%">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                }
+                            >
                                 <Form.Item name="vatImportTax" noStyle>
                                     <CustomNumberInput
                                         style={{ width: '100%' }}
@@ -634,7 +596,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                         {/* 36. [AK] Phí uỷ thác */}
                         <Col3>
-                            <Form.Item label={t('productCode.trustFee')}>
+                            <Form.Item
+                                label={
+                                    <Space>
+                                        {t('productCode.trustFee')}
+                                        <Tooltip title="Phí uỷ thác = Tổng giá trị [AE] * 1%">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                }
+                            >
                                 <Form.Item name="trustFee" noStyle>
                                     <CustomNumberInput
                                         style={{ width: '100%' }}
@@ -647,7 +618,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                         {/* 37. [AL] Tổng chi phí nhập khẩu */}
                         <Col3>
-                            <Form.Item label={t('productCode.totalImportCost')}>
+                            <Form.Item
+                                label={
+                                    <Space>
+                                        {t('productCode.totalImportCost')}
+                                        <Tooltip title="Tổng chi phí = Thuế NK [AJ] + VAT NK [AI] + Phí nộp [AG] + Phí nội VN [N] + Cước TQ_HN [M] + Phí uỷ thác [AK] + (([I] + [J]) * [K])">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                }
+                            >
                                 <Form.Item name="totalImportCost" noStyle>
                                     <CustomNumberInput
                                         style={{ width: '100%' }}

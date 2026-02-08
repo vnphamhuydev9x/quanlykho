@@ -282,7 +282,7 @@ const productCodeController = {
                     customerCodeInput,
                     productName,
                     orderCode,
-                    packageCount: packageCount ? parseFloat(packageCount) : null,
+                    packageCount: packageCount ? parseInt(packageCount) : null,
                     packing,
                     weight: weight ? parseFloat(weight) : null,
                     volume: volume ? parseFloat(volume) : null,
@@ -416,7 +416,7 @@ const productCodeController = {
                     } else if (['images', 'taggedImages'].includes(field)) {
                         dataToUpdate[field] = updateData[field];
                     } else if ([
-                        'packageCount', 'weight', 'volume',
+                        'weight', 'volume',
                         'domesticFeeRMB', 'haulingFeeRMB', 'unloadingFeeRMB',
                         'transportRate', 'transportRateVolume', 'totalTransportFeeEstimate',
                         'productQuantity', 'declarationQuantity', 'invoicePriceExport',
@@ -425,6 +425,8 @@ const productCodeController = {
                         'domesticFeeVN', 'exchangeRate'
                     ].includes(field)) {
                         dataToUpdate[field] = updateData[field] ? parseFloat(updateData[field]) : null;
+                    } else if (field === 'packageCount') {
+                        dataToUpdate[field] = updateData[field] ? parseInt(updateData[field]) : null;
                     } else {
                         dataToUpdate[field] = updateData[field];
                     }

@@ -433,7 +433,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 </Upload>
                                                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                                                     {existingImages.map((img, idx) => (
-                                                        <img key={idx} src={`${import.meta.env.VITE_API_URL}${img} `} alt="existing" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                                                        <img key={idx} src={img} alt="existing" style={{ width: 80, height: 80, objectFit: 'cover' }} />
                                                     ))}
                                                 </div>
                                             </Form.Item>
@@ -466,7 +466,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 </Upload>
                                                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                                                     {existingTaggedImages.map((img, idx) => (
-                                                        <img key={idx} src={`${import.meta.env.VITE_API_URL}${img} `} alt="existing" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                                                        <img key={idx} src={img} alt="existing" style={{ width: 80, height: 80, objectFit: 'cover' }} />
                                                     ))}
                                                 </div>
                                             </Form.Item>
@@ -478,6 +478,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    isInteger={true}
                                                 />
                                             </Form.Item>
                                         </Col3>

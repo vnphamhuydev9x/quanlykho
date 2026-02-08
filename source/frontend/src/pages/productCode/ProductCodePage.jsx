@@ -18,6 +18,21 @@ const ProductCodePage = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
     const [statusFilter, setStatusFilter] = useState('');
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+
+    const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+        selections: [
+            Table.SELECTION_ALL,
+            Table.SELECTION_INVERT,
+            Table.SELECTION_NONE,
+        ],
+    };
 
 
     // Get status from URL
@@ -40,6 +55,7 @@ const ProductCodePage = () => {
 
     useEffect(() => {
         fetchData();
+        setSelectedRowKeys([]);
     }, [pagination.current, pagination.pageSize, searchText, statusFilter]);
 
     const fetchData = async () => {
@@ -308,12 +324,12 @@ const ProductCodePage = () => {
                 if (record.images && record.images.length > 0) {
                     return (
                         <Image.PreviewGroup>
-                            <Image width={50} src={`${import.meta.env.VITE_API_URL}${record.images[0]}`} />
+                            <Image width={50} src={record.images[0]} />
                             {record.images.length > 1 && <span style={{ marginLeft: 5 }}>+{record.images.length - 1}</span>}
                             {/* Hidden images for preview group */}
                             <div style={{ display: 'none' }}>
                                 {record.images.slice(1).map((img, idx) => (
-                                    <Image key={idx} src={`${import.meta.env.VITE_API_URL}${img}`} />
+                                    <Image key={idx} src={img} />
                                 ))}
                             </div>
                         </Image.PreviewGroup>
@@ -345,11 +361,11 @@ const ProductCodePage = () => {
                 if (record.taggedImages && record.taggedImages.length > 0) {
                     return (
                         <Image.PreviewGroup>
-                            <Image width={50} src={`${import.meta.env.VITE_API_URL}${record.taggedImages[0]}`} />
+                            <Image width={50} src={record.taggedImages[0]} />
                             {record.taggedImages.length > 1 && <span style={{ marginLeft: 5 }}>+{record.taggedImages.length - 1}</span>}
                             <div style={{ display: 'none' }}>
                                 {record.taggedImages.slice(1).map((img, idx) => (
-                                    <Image key={idx} src={`${import.meta.env.VITE_API_URL}${img}`} />
+                                    <Image key={idx} src={img} />
                                 ))}
                             </div>
                         </Image.PreviewGroup>
@@ -588,7 +604,42 @@ const ProductCodePage = () => {
                 </Card>
             </div>
 
+            {selectedRowKeys.length > 0 && (
+                <div style={{
+                    marginBottom: 16,
+                    padding: '12px 24px',
+                    background: '#e6f7ff',
+                    border: '1px solid #91d5ff',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                }}>
+                    <Space size="middle">
+                        <span style={{ fontSize: '16px', fontWeight: 500, color: '#096dd9' }}>
+                            {t('productCode.selectedCount', { count: selectedRowKeys.length }) || `Đã chọn ${selectedRowKeys.length} dòng`}
+                        </span>
+                        <span style={{ color: '#8c8c8c' }}>|</span>
+                        <Space>
+                            <span style={{ color: '#595959' }}>
+                                Tổng kiện: {data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.packageCount || 0), 0)}
+                            </span>
+                            <span style={{ color: '#595959' }}>
+                                Tổng cân: {new Intl.NumberFormat('vi-VN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.weight || 0), 0))} kg
+                            </span>
+                        </Space>
+                    </Space>
+                    <Space>
+                        <Button onClick={() => setSelectedRowKeys([])}>
+                            {t('common.clearSelection') || 'Bỏ chọn'}
+                        </Button>
+                    </Space>
+                </div>
+            )}
+
             <Table
+                rowSelection={rowSelection}
                 columns={columns}
                 dataSource={data}
                 rowKey="id"

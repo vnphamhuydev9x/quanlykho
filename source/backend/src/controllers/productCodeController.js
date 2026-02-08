@@ -3,6 +3,16 @@ const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
 
 const CACHE_KEY = 'product_codes:list';
+const APP_URL = process.env.APP_URL || 'http://localhost:3000';
+
+const formatImages = (images) => {
+    if (!images || !Array.isArray(images)) return [];
+    return images.map(img => {
+        if (img.startsWith('http')) return img;
+        const cleanPath = img.startsWith('/') ? img : `/${img}`;
+        return `${APP_URL}${cleanPath}`;
+    });
+};
 
 const productCodeController = {
     getAllProductCodes: async (req, res) => {
@@ -104,11 +114,18 @@ const productCodeController = {
                 prisma.productCode.count({ where })
             ]);
 
+            // Map images with full URL
+            const mappedItems = productCodes.map(item => ({
+                ...item,
+                images: formatImages(item.images),
+                taggedImages: formatImages(item.taggedImages)
+            }));
+
             const responseData = {
                 code: 200,
                 message: "Success",
                 data: {
-                    items: productCodes,
+                    items: mappedItems,
                     total,
                     page: parseInt(page),
                     totalPages: Math.ceil(total / parseInt(limit))
@@ -178,7 +195,11 @@ const productCodeController = {
             return res.status(200).json({
                 code: 200,
                 message: "Success",
-                data: productCode
+                data: {
+                    ...productCode,
+                    images: formatImages(productCode.images),
+                    taggedImages: formatImages(productCode.taggedImages)
+                }
             });
 
         } catch (error) {
@@ -233,8 +254,10 @@ const productCodeController = {
                 trustFee, // [AH]
                 declarationName, // [AI] New
                 feeAmount, // [AJ] "Phí phải nộp"
+                otherNotes, // [AH]
                 importTax, // [AK]
                 vatImportTax, // [AL]
+                totalImportCost, // [AL]
                 purchaseFee, // [AM] New
                 accountingConfirmation, // [AN] New
 
@@ -313,8 +336,10 @@ const productCodeController = {
                     trustFee: trustFee ? parseFloat(trustFee) : null,
                     declarationName,
                     feeAmount: feeAmount ? parseFloat(feeAmount) : null,
+                    otherNotes,
                     importTax: importTax ? parseFloat(importTax) : null,
                     vatImportTax: vatImportTax ? parseFloat(vatImportTax) : null,
+                    totalImportCost: totalImportCost ? parseFloat(totalImportCost) : null,
                     purchaseFee: purchaseFee ? parseFloat(purchaseFee) : null,
                     accountingConfirmation,
 
@@ -398,14 +423,13 @@ const productCodeController = {
                 'notes', 'images', 'mainTag', 'subTag', 'pctConfirmation',
                 'productQuantity', 'specification', 'productDescription',
                 'brand', 'supplierTaxCode', 'supplierName',
-                'declarationNeed', 'declarationPolicy', 'declarationQuantity',
                 'invoicePriceExport', 'declarationPrice', 'trustFee',
-                'declarationName', 'feeAmount', 'importTax', 'vatImportTax',
+                'declarationName', 'feeAmount', 'otherNotes', 'importTax', 'vatImportTax', 'totalImportCost',
                 'purchaseFee', 'accountingConfirmation',
 
                 // Extra/Legacy
                 'taggedImages', 'domesticFeeVN', 'status', 'exchangeRate', 'vatExportStatus',
-                'partnerName'
+                'partnerName', 'otherNotes'
             ];
 
             // Special handling for Types
@@ -421,7 +445,7 @@ const productCodeController = {
                         'transportRate', 'transportRateVolume', 'totalTransportFeeEstimate',
                         'productQuantity', 'declarationQuantity', 'invoicePriceExport',
                         'declarationPrice', 'trustFee', 'feeAmount', 'importTax',
-                        'vatImportTax', 'purchaseFee',
+                        'vatImportTax', 'totalImportCost', 'purchaseFee',
                         'domesticFeeVN', 'exchangeRate'
                     ].includes(field)) {
                         dataToUpdate[field] = updateData[field] ? parseFloat(updateData[field]) : null;
@@ -588,8 +612,8 @@ const productCodeController = {
                     productCodeId: updated.id,
                     uploadedImages: newImagePaths,
                     totalImages: updatedImages.length,
-                    images: updatedImages, // For backward compatibility
-                    [field]: updatedImages // Dynamic field return
+                    images: formatImages(updatedImages), // For backward compatibility
+                    [field]: formatImages(updatedImages) // Dynamic field return
                 }
             });
 

@@ -403,25 +403,39 @@ const productCodeController = {
 
     updateProductCode: async (req, res) => {
         try {
-            // ADMIN only
             const { id } = req.params;
-            const updateData = req.body;
+            let updateData = req.body;
 
             const productCode = await prisma.productCode.findFirst({ where: { id: parseInt(id), deletedAt: null } });
             if (!productCode) return res.status(404).json({ code: 99006, message: "Product code not found" });
 
-            // Validate relations if updated
-            if (updateData.customerId) {
-                const customer = await prisma.user.findFirst({ where: { id: parseInt(updateData.customerId), type: 'CUSTOMER', deletedAt: null } });
-                if (!customer) return res.status(404).json({ code: 99006, message: "Customer not found" });
-            }
-            if (updateData.warehouseId) {
-                const warehouse = await prisma.warehouse.findFirst({ where: { id: parseInt(updateData.warehouseId), deletedAt: null } });
-                if (!warehouse) return res.status(404).json({ code: 99006, message: "Warehouse not found" });
-            }
-            if (updateData.categoryId) {
-                const category = await prisma.category.findFirst({ where: { id: parseInt(updateData.categoryId), deletedAt: null } });
-                if (!category) return res.status(404).json({ code: 99006, message: "Category not found" });
+            // RBAC: If CUSTOMER, check ownership and restrict fields
+            if (req.user && req.user.type === 'CUSTOMER') {
+                if (productCode.customerId !== req.user.userId) {
+                    return res.status(403).json({ code: 99008, message: "Forbidden" });
+                }
+                // Only allow updating 'otherNotes'
+                updateData = {};
+                if (req.body.otherNotes !== undefined) {
+                    updateData.otherNotes = req.body.otherNotes;
+                } else {
+                    return res.status(200).json({ code: 200, message: "Nothing to update for Customer", data: productCode });
+                }
+            } else {
+                // ADMIN/Employee Logic
+                // Validate relations if updated
+                if (updateData.customerId) {
+                    const customer = await prisma.user.findFirst({ where: { id: parseInt(updateData.customerId), type: 'CUSTOMER', deletedAt: null } });
+                    if (!customer) return res.status(404).json({ code: 99006, message: "Customer not found" });
+                }
+                if (updateData.warehouseId) {
+                    const warehouse = await prisma.warehouse.findFirst({ where: { id: parseInt(updateData.warehouseId), deletedAt: null } });
+                    if (!warehouse) return res.status(404).json({ code: 99006, message: "Warehouse not found" });
+                }
+                if (updateData.categoryId) {
+                    const category = await prisma.category.findFirst({ where: { id: parseInt(updateData.categoryId), deletedAt: null } });
+                    if (!category) return res.status(404).json({ code: 99006, message: "Category not found" });
+                }
             }
 
             // Build update object

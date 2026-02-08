@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Input, Space, message, Popconfirm, Tag, Typography, Row, Col, Card, Image, Tooltip } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ExportOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ExportOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import productCodeService from '../../services/productCodeService';
@@ -17,9 +17,22 @@ const ProductCodePage = () => {
     const [searchText, setSearchText] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
+    const [viewOnly, setViewOnly] = useState(false);
     const [statusFilter, setStatusFilter] = useState('');
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [userType, setUserType] = useState('USER');
 
+    useEffect(() => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                setUserType(payload.type);
+            } catch (e) {
+                console.error("Invalid token");
+            }
+        }
+    }, []);
     const onSelectChange = (newSelectedRowKeys) => {
         setSelectedRowKeys(newSelectedRowKeys);
     };
@@ -92,13 +105,21 @@ const ProductCodePage = () => {
         setPagination(prev => ({ ...prev, current: 1 }));
     };
 
-    const handleAdd = () => {
-        setEditingRecord(null);
+    const handleView = (record) => {
+        setEditingRecord(record);
+        setViewOnly(true);
         setModalVisible(true);
     };
 
     const handleEdit = (record) => {
         setEditingRecord(record);
+        setViewOnly(false);
+        setModalVisible(true);
+    };
+
+    const handleAdd = () => {
+        setEditingRecord(null);
+        setViewOnly(false);
         setModalVisible(true);
     };
 
@@ -525,17 +546,22 @@ const ProductCodePage = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             width: 120,
-            key: 'createdAt',
-            width: 120,
             render: (date) => new Date(date).toLocaleDateString(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN')
         },
         {
             title: t('productCode.actions'),
             key: 'actions',
-            width: 100,
+            width: 120,
             fixed: 'right',
             render: (_, record) => (
-                <Space size="middle">
+                <Space size="small">
+                    <Tooltip title={t('common.view') || "Xem"}>
+                        <Button
+                            type="text"
+                            icon={<EyeOutlined />}
+                            onClick={() => handleView(record)}
+                        />
+                    </Tooltip>
                     <Tooltip title={t('productCode.edit')}>
                         <Button
                             type="text"
@@ -543,16 +569,18 @@ const ProductCodePage = () => {
                             onClick={() => handleEdit(record)}
                         />
                     </Tooltip>
-                    <Popconfirm
-                        title={t('productCode.confirmDelete')}
-                        onConfirm={() => handleDelete(record.id)}
-                        okText={t('productCode.yes')}
-                        cancelText={t('productCode.no')}
-                    >
-                        <Tooltip title={t('productCode.delete')}>
-                            <Button type="text" danger icon={<DeleteOutlined />} />
-                        </Tooltip>
-                    </Popconfirm>
+                    {userType !== 'CUSTOMER' && (
+                        <Popconfirm
+                            title={t('productCode.confirmDelete')}
+                            onConfirm={() => handleDelete(record.id)}
+                            okText={t('productCode.yes')}
+                            cancelText={t('productCode.no')}
+                        >
+                            <Tooltip title={t('productCode.delete')}>
+                                <Button type="text" danger icon={<DeleteOutlined />} />
+                            </Tooltip>
+                        </Popconfirm>
+                    )}
                 </Space>
             )
         }
@@ -582,13 +610,15 @@ const ProductCodePage = () => {
                             >
                                 {t('productCode.export') || 'Xuất Excel'}
                             </Button>
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={handleAdd}
-                            >
-                                {t('productCode.add') || 'Thêm Mã hàng'}
-                            </Button>
+                            {userType !== 'CUSTOMER' && (
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={handleAdd}
+                                >
+                                    {t('productCode.add') || 'Thêm Mã hàng'}
+                                </Button>
+                            )}
                         </Space>
                     </Col>
                 </Row>
@@ -663,6 +693,8 @@ const ProductCodePage = () => {
                     visible={modalVisible}
                     onClose={handleModalClose}
                     editingRecord={editingRecord}
+                    viewOnly={viewOnly}
+                    userType={userType}
                 />
             )}
         </div>

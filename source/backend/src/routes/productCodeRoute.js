@@ -17,9 +17,9 @@ router.get('/export/all', authMiddleware, roleMiddleware(['ADMIN']), productCode
 // Upload Images: ADMIN only
 router.post('/:id/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.array('images', 10), productCodeController.uploadImages);
 
-// Create/Update/Delete: ADMIN only
+// Create/Update/Delete: ADMIN only (Update allowed for SALE/USER with restrictions in controller)
 router.post('/', authMiddleware, roleMiddleware(['ADMIN']), productCodeController.createProductCode);
-router.put('/:id', authMiddleware, roleMiddleware(['ADMIN']), productCodeController.updateProductCode);
+router.put('/:id', authMiddleware, roleMiddleware(['ADMIN', 'SALE', 'USER']), productCodeController.updateProductCode);
 router.delete('/:id', authMiddleware, roleMiddleware(['ADMIN']), productCodeController.deleteProductCode);
 
 module.exports = router;

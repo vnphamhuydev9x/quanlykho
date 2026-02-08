@@ -17,7 +17,7 @@ const { TextArea } = Input;
 const Col3 = ({ children }) => <Col xs={24} md={8}>{children}</Col>;
 const Col2 = ({ children }) => <Col xs={24} md={12}>{children}</Col>;
 
-const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
+const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType }) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
@@ -66,6 +66,8 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
     // Total amount for display
     const [totalAmount, setTotalAmount] = useState(0);
+
+    const disabledGeneral = viewOnly || (userType === 'CUSTOMER');
 
     useEffect(() => {
         if (visible) {
@@ -170,7 +172,8 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         fileList,
         onChange: ({ fileList: newFileList }) => setFileList(newFileList),
         listType: 'picture-card',
-        multiple: true
+        multiple: true,
+        disabled: disabledGeneral
     };
 
     const taggedUploadProps = {
@@ -181,7 +184,8 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         fileList: taggedFileList,
         onChange: ({ fileList: newFileList }) => setTaggedFileList(newFileList),
         listType: 'picture-card',
-        multiple: true
+        multiple: true,
+        disabled: disabledGeneral
     };
 
 
@@ -286,13 +290,15 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {t('common.next')}
                     </Button>
                 ),
-                <Button key="submit" type="primary" loading={submitting} onClick={handleSubmit}>
-                    {t('common.save')}
-                </Button>
+                !viewOnly && (
+                    <Button key="submit" type="primary" loading={submitting} onClick={handleSubmit}>
+                        {t('common.save')}
+                    </Button>
+                )
             ]}
         >
             <Spin spinning={loading}>
-                <Form form={form} layout="vertical" onValuesChange={handleValuesChange}>
+                <Form form={form} layout="vertical" onValuesChange={handleValuesChange} disabled={viewOnly}>
 
 
 
@@ -309,7 +315,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 1. [A] Ngày nhập kho */}
                                         <Col3>
                                             <Form.Item name="entryDate" label={t('productCode.entryDate')} rules={[{ required: true, message: t('productCode.entryDateRequired') }]}>
-                                                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+                                                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
@@ -347,14 +353,14 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 3. [C] Mã đơn hàng */}
                                         <Col3>
                                             <Form.Item name="orderCode" label={t('productCode.orderCode')} rules={[{ required: true, message: t('productCode.orderCodeRequired') }]}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 4. [D] Tên mặt hàng */}
                                         <Col3>
                                             <Form.Item name="productName" label={t('productCode.productNameLabel')} rules={[{ required: true, message: t('productCode.productNameRequired') }]}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
@@ -365,6 +371,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                     style={{ width: '100%' }}
                                                     min={0}
                                                     isInteger={true}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -372,7 +379,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 6. [F] Đơn vị kiện */}
                                         <Col3>
                                             <Form.Item name="packing" label={t('productCode.packageUnit')} rules={[{ required: true, message: t('productCode.packageUnitRequired') }]}>
-                                                <Select placeholder={t('productCode.selectUnit')}>
+                                                <Select placeholder={t('productCode.selectUnit')} disabled={disabledGeneral}>
                                                     <Option value="Thùng cotton">{t('productCode.unitThungCotton')}</Option>
                                                     <Option value="Pallet">{t('productCode.unitPallet')}</Option>
                                                     <Option value="Chiếc">{t('productCode.unitChiec')}</Option>
@@ -386,6 +393,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -396,6 +404,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -406,6 +415,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -416,6 +426,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -426,6 +437,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -437,6 +449,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                     <CustomNumberInput
                                                         style={{ width: '100%' }}
                                                         min={0}
+                                                        disabled={disabledGeneral}
                                                     />
                                                 </Form.Item>
                                             </Form.Item>
@@ -472,6 +485,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -479,14 +493,14 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 15. [O] Ghi chú */}
                                         <Col3>
                                             <Form.Item name="notes" label={t('productCode.notesLabel')}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 16. [P] Tình trạng hàng hoá */}
                                         <Col3>
                                             <Form.Item name="status" label={t('productCode.statusLabel')}>
-                                                <Select placeholder={t('productCode.selectStatus')}>
+                                                <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
                                                     <Option value="Kho TQ">{t('productCode.statusNhapKhoTQ')}</Option>
                                                     <Option value="Đã xếp xe">{t('productCode.statusDaXepXe')}</Option>
                                                     <Option value="Kho VN">{t('productCode.statusNhapKhoVN')}</Option>
@@ -526,14 +540,14 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 18. [S] Tem chính */}
                                         <Col3>
                                             <Form.Item name="mainTag" label={t('productCode.mainTag')}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 19. [T] Tem phụ */}
                                         <Col3>
                                             <Form.Item name="subTag" label={t('productCode.subTag')}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
@@ -563,6 +577,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                     style={{ width: '100%' }}
                                                     min={0}
                                                     isInteger={true}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -570,35 +585,35 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 22. [W] Quy cách */}
                                         <Col3>
                                             <Form.Item name="specification" label={t('productCode.specification')}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 23. [X] Mô Tả sản phẩm */}
                                         <Col3>
                                             <Form.Item name="productDescription" label={t('productCode.productDescription')}>
-                                                <TextArea rows={4} />
+                                                <TextArea rows={4} disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 24. [Y] Nhãn Hiệu */}
                                         <Col3>
                                             <Form.Item name="brand" label={t('productCode.brand')}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 25. [Z] Mã Số Thuế */}
                                         <Col3>
                                             <Form.Item name="supplierTaxCode" label={t('productCode.supplierTaxCode')}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 26. [AA] Tên Công Ty bán hàng */}
                                         <Col3>
                                             <Form.Item name="supplierName" label={t('productCode.supplierName')}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
                                     </Row>
@@ -612,7 +627,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 27. [AB] Nhu cầu khai báo */}
                                         <Col3>
                                             <Form.Item name="declarationNeed" label={t('productCode.declarationNeed')}>
-                                                <TextArea rows={4} />
+                                                <TextArea rows={4} disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
@@ -622,6 +637,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -632,6 +648,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -662,7 +679,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 31. [AF] Chính sách NK */}
                                         <Col3>
                                             <Form.Item name="declarationPolicy" label={t('productCode.importPolicy')}>
-                                                <Input />
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 
@@ -672,6 +689,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -679,7 +697,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 33. [AH] Ghi chú */}
                                         <Col3>
                                             <Form.Item name="otherNotes" label={t('productCode.otherNotes')}>
-                                                <Input />
+                                                <Input disabled={viewOnly} />
                                             </Form.Item>
                                         </Col3>
 
@@ -711,6 +729,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    disabled={disabledGeneral}
                                                 />
                                             </Form.Item>
                                         </Col3>
@@ -762,7 +781,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         {/* 38. [AM] Tình trạng xuất VAT */}
                                         <Col3>
                                             <Form.Item name="vatExportStatus" label={t('productCode.vatExportStatus')}>
-                                                <Select placeholder={t('productCode.selectStatus')}>
+                                                <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
                                                     <Option value="Chưa xuất VAT">{t('productCode.vatChuaXuat')}</Option>
                                                     <Option value="đã xuất VAT , chưa đóng gói hs">{t('productCode.vatDaXuatChuaDongGoi')}</Option>
                                                     <Option value="đã xuất VAT. đã đóng gói hồ sơ">{t('productCode.vatDaXuatDaDongGoi')}</Option>

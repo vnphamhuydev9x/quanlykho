@@ -381,7 +381,8 @@
         "headerTotalImportCost": "[AL] Tổng chi phí NK",
         "headerVatExportStatus": "[AM] Tình trạng VAT",
         "summaryTotalPackages": "Tổng kiện",
-        "summaryTotalWeight": "Tổng cân"
+        "summaryTotalWeight": "Tổng cân",
+        "summaryTotalVolume": "Tổng khối"
     },
     "validation": {
         "required": "Trường này là bắt buộc!",

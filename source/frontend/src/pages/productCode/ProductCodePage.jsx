@@ -657,10 +657,13 @@ const ProductCodePage = () => {
                         <span style={{ color: '#8c8c8c' }}>|</span>
                         <Space>
                             <span style={{ color: '#595959' }}>
-                                {t('productCode.summaryTotalPackages')}: {data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.packageCount || 0), 0)}
+                                {t('productCode.summaryTotalPackages')}: <strong>{data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.packageCount || 0), 0)}</strong>
                             </span>
                             <span style={{ color: '#595959' }}>
-                                {t('productCode.summaryTotalWeight')}: {new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.weight || 0), 0))} kg
+                                {t('productCode.summaryTotalWeight')}: <strong>{new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.weight || 0), 0))}</strong> kg
+                            </span>
+                            <span style={{ color: '#595959' }}>
+                                {t('productCode.summaryTotalVolume')}: <strong>{new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.volume || 0), 0))}</strong> m³
                             </span>
                         </Space>
                     </Space>

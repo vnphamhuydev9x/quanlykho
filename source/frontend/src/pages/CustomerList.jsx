@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, EyeOutlined, DownloadOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SyncOutlined, EyeOutlined, DownloadOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../utils/axios';
 import * as XLSX from 'xlsx';
@@ -291,7 +291,7 @@ const CustomerList = () => {
                     <Button icon={<EyeOutlined />} onClick={() => handleView(record)} title={t('common.view')} />
                     <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} title={t('customer.edit')} />
                     <Popconfirm title={t('common.confirmResetPassword')} onConfirm={() => handleResetPassword(record.id)}>
-                        <Button icon={<KeyOutlined />} style={{ color: 'orange', borderColor: 'orange' }} title={t('customer.resetPassword')} />
+                        <Button icon={<SyncOutlined />} style={{ color: '#fa541c', borderColor: '#fa541c' }} title={t('customer.resetPassword')} />
                     </Popconfirm>
                     <Popconfirm title={t('common.confirmDelete')} onConfirm={() => handleDelete(record.id)}>
                         <Button icon={<DeleteOutlined />} danger title={t('common.delete')} />
@@ -332,7 +332,7 @@ const CustomerList = () => {
                         <Col xs={24} sm={24} md={24} lg={24}>
                             <Input
                                 placeholder={t('common.searchPlaceholder')}
-                                prefix={<EyeOutlined />}
+                                prefix={<SearchOutlined />}
                                 value={filters.search}
                                 onChange={e => handleFilterChange('search', e.target.value)}
                                 onPressEnter={handleSearch}

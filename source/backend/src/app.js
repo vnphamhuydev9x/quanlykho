@@ -33,7 +33,9 @@ app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/declarations', declarationRoutes);
 app.use('/api/product-codes', productCodeRoutes);
+app.use('/api/product-codes', productCodeRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/manifests', require('./routes/manifestRoutes'));
 
 app.get('/', (req, res) => {
     res.send('Kho Manager Backend is running');

@@ -151,21 +151,52 @@ const DeclarationPage = () => {
 
             // Format data for Excel
             const excelData = data.map(item => ({
-                [t('common.id')]: item.id,
-                [t('declaration.entryDate')]: item.entryDate ? moment(item.entryDate).format('DD/MM/YYYY') : '',
-                [t('declaration.customer')]: item.customer?.fullName,
-                [t('declaration.customerCodeInput')]: item.customerCodeInput,
-                [t('declaration.orderCode')]: item.orderCode,
-                [t('declaration.productName')]: item.productName,
-                [t('declaration.declarationName')]: item.declarationName,
-                [t('declaration.packageCount')]: item.packageCount,
-                [t('declaration.weight')]: item.weight,
-                [t('declaration.volume')]: item.volume,
-                [t('declaration.domesticFeeRMB')]: item.domesticFeeRMB,
-                [t('declaration.totalTransportFeeEstimate')]: item.totalTransportFeeEstimate,
-                [t('declaration.declarationQuantity')]: item.declarationQuantity,
-                [t('declaration.declarationPrice')]: item.declarationPrice,
-                [t('declaration.note')]: item.note,
+                'ID': item.id,
+                'Ngày nhập': item.entryDate ? moment(item.entryDate).format('DD/MM/YYYY') : '',
+                'Mã đơn': item.orderCode,
+                '1. [A] Mã khách hàng': item.customer?.fullName,
+                '2. [B] Tên mặt hàng': item.productName,
+                '3. [C] Số Kiện': item.packageCount,
+                '4. [D] Trọng lượng (Kg)': item.weight,
+                '5. [E] Khối lượng (m3)': item.volume,
+                '6. [F] Nguồn tin': item.infoSource,
+                '7. [G] Phí nội địa (RMB)': item.domesticFeeRMB,
+                '8. [H] Phí kéo hàng (RMB)': item.haulingFeeRMB,
+                '9. [I] Phí dỡ hàng (RMB)': item.unloadingFeeRMB,
+                '10. [J] Đơn giá cước (Kg)': item.transportRate,
+                '11. [K] Đơn giá cước (m3)': item.transportRateVolume,
+                '12. [L] Tổng cước TQ_HN': item.totalTransportFeeEstimate,
+                '13. [M] Ghi chú': item.note,
+                '14. [N] Ảnh hàng hóa': item.productImage,
+                // [O] Deleted
+                '16. [P] Tem phụ': item.subTag,
+                '17. [Q] Số lượng SP': item.productQuantity,
+                '18. [R] Quy cách': item.specification,
+                '19. [S] Mô Tả SP': item.productDescription,
+                '20. [T] Nhãn Hiệu': item.brand,
+                '21. [U] Nhu cầu khai báo': item.declarationNeed,
+                '22. [V] Chính sách khai báo': item.declarationPolicy,
+                '23. [W] Số lượng khai báo': item.declarationQuantity,
+                '24. [X] Giá xuất hóa đơn': item.invoicePrice,
+                '25. [Y] TT bổ sung': item.additionalInfo,
+                '26. [Z] Tên khai báo': item.declarationName,
+                '27. [AA] SL Khai báo (CT)': item.declarationQuantityDeclared,
+                '28. [AB] Đơn vị tính': item.unit,
+                '29. [AC] Giá khai báo': item.declarationPrice,
+                '30. [AD] Trị giá': item.value,
+                '31. [AE] Số kiện (CT)': item.packageCountDeclared,
+                '32. [AF] Net weight': item.netWeight,
+                '33. [AG] Gross weight': item.grossWeight,
+                '34. [AH] CBM': item.cbm,
+                '35. [AI] HS Code': item.hsCode,
+                '36. [AJ] % Thuế VAT': item.vatPercent,
+                '37. [AK] Thuế VAT': item.vatAmount,
+                '38. [AL] % Thuế NK': item.importTaxPercent,
+                '39. [AM] Thuế NK USD': item.importTaxUSD,
+                '40. [AN] Thuế NK VNĐ': item.importTaxVND,
+                '41. [AO] Tỷ giá HQ': item.customsExchangeRate,
+                '42. [AP] Phí KTCL': item.qualityControlFee,
+                '43. [AQ] Xác nhận PKT': item.accountingConfirmation,
                 [t('common.createdAt')]: moment(item.createdAt).format('DD/MM/YYYY HH:mm')
             }));
 
@@ -183,21 +214,27 @@ const DeclarationPage = () => {
 
     const columns = [
         {
-            title: t('common.id'),
+            title: 'ID',
             dataIndex: 'id',
             key: 'id',
             width: 60,
             fixed: 'left',
         },
         {
-            title: t('declaration.entryDate'),
+            title: 'Ngày nhập',
             dataIndex: 'entryDate',
             key: 'entryDate',
-            width: 110,
+            width: 100,
             render: (value) => value ? moment(value).format('DD/MM/YYYY') : '-'
         },
         {
-            title: t('declaration.customer'),
+            title: 'Mã đơn',
+            dataIndex: 'orderCode',
+            key: 'orderCode',
+            width: 120,
+        },
+        {
+            title: '1. [A] Mã KH',
             key: 'customer',
             width: 180,
             render: (_, record) => (
@@ -210,84 +247,83 @@ const DeclarationPage = () => {
             )
         },
         {
-            title: t('declaration.customerCodeInput'),
-            dataIndex: 'customerCodeInput',
-            key: 'customerCodeInput',
-            width: 120,
-        },
-        {
-            title: t('declaration.orderCode'),
-            dataIndex: 'orderCode',
-            key: 'orderCode',
-            width: 150,
-            render: (text) => <Typography.Text strong>{text || '-'}</Typography.Text>
-        },
-        {
-            title: t('declaration.productName'),
+            title: '2. [B] Tên hàng',
             dataIndex: 'productName',
             key: 'productName',
-            width: 180,
+            width: 150,
             ellipsis: true
         },
-        // {
-        //     title: t('declaration.declarationName'),
-        //     dataIndex: 'declarationName',
-        //     key: 'declarationName',
-        //     width: 180,
-        //     ellipsis: true
-        // },
         {
-            title: t('declaration.productImage'),
-            dataIndex: 'productImage',
-            key: 'productImage',
-            width: 80,
-            render: (image) => {
-                if (!image) return '-';
-                return (
-                    <Image
-                        width={40}
-                        height={40}
-                        src={image}
-                        style={{ objectFit: 'cover', cursor: 'pointer', border: '1px solid #f0f0f0' }}
-                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-                    />
-                );
-            }
-        },
-        {
-            title: t('declaration.packageCount'),
+            title: '3. [C] Số kiện',
             dataIndex: 'packageCount',
             key: 'packageCount',
             width: 80,
-            align: 'center',
-            render: (value) => value || '-'
+            align: 'right'
         },
         {
-            title: t('declaration.weight'),
+            title: '4. [D] Trọng lượng',
             dataIndex: 'weight',
             key: 'weight',
             width: 100,
             align: 'right',
-            render: (value) => value ? `${value} kg` : '-'
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
         },
         {
-            title: t('declaration.volume'),
+            title: '5. [E] Khối lượng',
             dataIndex: 'volume',
             key: 'volume',
             width: 100,
             align: 'right',
-            render: (value) => value ? `${value} m³` : '-'
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
         },
         {
-            title: t('declaration.domesticFeeRMB'),
+            title: '6. [F] Nguồn tin',
+            dataIndex: 'infoSource',
+            key: 'infoSource',
+            width: 100,
+        },
+        {
+            title: '7. [G] Phí nội địa',
             dataIndex: 'domesticFeeRMB',
             key: 'domesticFeeRMB',
             width: 120,
             align: 'right',
-            render: (value) => value ? `¥${value}` : '-'
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
         },
         {
-            title: t('declaration.totalTransportFeeEstimate'),
+            title: '8. [H] Phí kéo hàng',
+            dataIndex: 'haulingFeeRMB',
+            key: 'haulingFeeRMB',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '9. [I] Phí dỡ hàng',
+            dataIndex: 'unloadingFeeRMB',
+            key: 'unloadingFeeRMB',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '10. [J] Cước (Kg)',
+            dataIndex: 'transportRate',
+            key: 'transportRate',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '-'
+        },
+        {
+            title: '11. [K] Cước (m3)',
+            dataIndex: 'transportRateVolume',
+            key: 'transportRateVolume',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '-'
+        },
+        {
+            title: '12. [L] Tổng cước',
             dataIndex: 'totalTransportFeeEstimate',
             key: 'totalTransportFeeEstimate',
             width: 140,
@@ -299,28 +335,223 @@ const DeclarationPage = () => {
             )
         },
         {
-            title: t('declaration.declarationQuantity'),
-            dataIndex: 'declarationQuantity',
-            key: 'declarationQuantity',
+            title: '13. [M] Ghi chú',
+            dataIndex: 'note',
+            key: 'note',
+            width: 150,
+            ellipsis: true
+        },
+        {
+            title: '14. [N] Ảnh hàng',
+            dataIndex: 'productImage',
+            key: 'productImage',
+            width: 80,
+            render: (image) => image ? <Image width={40} src={image} /> : '-'
+        },
+        {
+            title: '16. [P] Tem phụ',
+            dataIndex: 'subTag',
+            key: 'subTag',
+            width: 100,
+        },
+        {
+            title: '17. [Q] SL SP',
+            dataIndex: 'productQuantity',
+            key: 'productQuantity',
+            align: 'right',
+            width: 100,
+        },
+        {
+            title: '18. [R] Quy cách',
+            dataIndex: 'specification',
+            key: 'specification',
             width: 120,
         },
         {
-            title: t('declaration.declarationPrice'),
+            title: '19. [S] Mô tả SP',
+            dataIndex: 'productDescription',
+            key: 'productDescription',
+            width: 120,
+            ellipsis: true
+        },
+        {
+            title: '20. [T] Nhãn hiệu',
+            dataIndex: 'brand',
+            key: 'brand',
+            width: 100,
+        },
+        {
+            title: '21. [U] Nhu cầu KB',
+            dataIndex: 'declarationNeed',
+            key: 'declarationNeed',
+            width: 120,
+        },
+        {
+            title: '22. [V] Chính sách KB',
+            dataIndex: 'declarationPolicy',
+            key: 'declarationPolicy',
+            width: 120,
+        },
+        {
+            title: '23. [W] SL KB (Nháp)',
+            dataIndex: 'declarationQuantity',
+            key: 'declarationQuantity',
+            width: 100,
+        },
+        {
+            title: '24. [X] Giá xuất HĐ',
+            dataIndex: 'invoicePrice',
+            key: 'invoicePrice',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '25. [Y] TT Bổ sung',
+            dataIndex: 'additionalInfo',
+            key: 'additionalInfo',
+            width: 120,
+        },
+        {
+            title: '26. [Z] Tên khai báo',
+            dataIndex: 'declarationName',
+            key: 'declarationName',
+            width: 120,
+        },
+        {
+            title: '27. [AA] SL KB (CT)',
+            dataIndex: 'declarationQuantityDeclared',
+            key: 'declarationQuantityDeclared',
+            width: 100,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '28. [AB] Đơn vị tính',
+            dataIndex: 'unit',
+            key: 'unit',
+            width: 80,
+        },
+        {
+            title: '29. [AC] Giá khai báo',
             dataIndex: 'declarationPrice',
             key: 'declarationPrice',
             width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
         },
         {
-            title: t('declaration.note'),
-            dataIndex: 'note',
-            key: 'note',
-            width: 200,
-            ellipsis: true
+            title: '30. [AD] Trị giá',
+            dataIndex: 'value',
+            key: 'value',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '31. [AE] Số kiện (CT)',
+            dataIndex: 'packageCountDeclared',
+            key: 'packageCountDeclared',
+            width: 100,
+            align: 'right'
+        },
+        {
+            title: '32. [AF] Net Weight',
+            dataIndex: 'netWeight',
+            key: 'netWeight',
+            width: 100,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '33. [AG] Gross Weight',
+            dataIndex: 'grossWeight',
+            key: 'grossWeight',
+            width: 100,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '34. [AH] CBM',
+            dataIndex: 'cbm',
+            key: 'cbm',
+            width: 100,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '35. [AI] HS Code',
+            dataIndex: 'hsCode',
+            key: 'hsCode',
+            width: 120,
+        },
+        {
+            title: '36. [AJ] % VAT',
+            dataIndex: 'vatPercent',
+            key: 'vatPercent',
+            width: 80,
+            align: 'right',
+            render: (value) => value ? `${value}%` : '-'
+        },
+        {
+            title: '37. [AK] Thuế VAT',
+            dataIndex: 'vatAmount',
+            key: 'vatAmount',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '38. [AL] % Thuế NK',
+            dataIndex: 'importTaxPercent',
+            key: 'importTaxPercent',
+            width: 80,
+            align: 'right',
+            render: (value) => value ? `${value}%` : '-'
+        },
+        {
+            title: '39. [AM] Thuế NK (USD)',
+            dataIndex: 'importTaxUSD',
+            key: 'importTaxUSD',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '40. [AN] Thuế NK (VNĐ)',
+            dataIndex: 'importTaxVND',
+            key: 'importTaxVND',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '41. [AO] Tỷ giá HQ',
+            dataIndex: 'customsExchangeRate',
+            key: 'customsExchangeRate',
+            width: 100,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '42. [AP] Phí KTCL',
+            dataIndex: 'qualityControlFee',
+            key: 'qualityControlFee',
+            width: 120,
+            align: 'right',
+            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+        },
+        {
+            title: '43. [AQ] Xác nhận PKT',
+            dataIndex: 'accountingConfirmation',
+            key: 'accountingConfirmation',
+            width: 150,
         },
         {
             title: t('common.action'),
             key: 'action',
-            width: 120,
+            width: 100,
+            fixed: 'right',
             render: (_, record) => (
                 <Space size="small">
                     <Button
@@ -337,7 +568,6 @@ const DeclarationPage = () => {
                                 onClick={() => handleEdit(record)}
                                 title={t('common.edit')}
                             />
-
                             <Popconfirm
                                 title={t('common.confirmDelete')}
                                 onConfirm={() => handleDelete(record.id)}

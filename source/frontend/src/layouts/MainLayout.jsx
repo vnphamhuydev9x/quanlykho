@@ -12,7 +12,9 @@ import {
     TeamOutlined, // Added TeamOutlined
     HomeOutlined, // Added HomeOutlined
     FileTextOutlined, // Added FileTextOutlined
+
     InboxOutlined,
+    ShoppingOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -136,6 +138,18 @@ const MainLayout = ({ children }) => {
             icon: <TeamOutlined />,
             label: t('menu.customers'),
             onClick: () => navigate('/customers'),
+        },
+        {
+            key: '/merchandise',
+            icon: <ShoppingOutlined />,
+            label: t('menu.merchandise') || 'Hàng hóa',
+            onClick: () => navigate('/merchandise'),
+        },
+        {
+            key: '/manifests',
+            icon: <FileTextOutlined />,
+            label: 'Xếp xe',
+            onClick: () => navigate('/manifests'),
         },
         {
             key: 'product-codes',

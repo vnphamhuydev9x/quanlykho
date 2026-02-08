@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Space, message, Popconfirm, Tag, Typography, Row, Col, Card } from 'antd';
+import { Table, Button, Input, Space, message, Popconfirm, Tag, Typography, Row, Col, Card, Image, Tooltip } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ExportOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -138,13 +138,15 @@ const ProductCodePage = () => {
             title: 'ID',
             dataIndex: 'id',
             key: 'id',
-            width: 80,
-            fixed: 'left'
+            width: 70,
+            fixed: 'left',
+            align: 'center',
+            sorter: (a, b) => a.id - b.id,
         },
         {
             title: t('productCode.customer') || 'Khách hàng',
             key: 'customer',
-            width: 250,
+            width: 200,
             fixed: 'left',
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
@@ -156,86 +158,369 @@ const ProductCodePage = () => {
             )
         },
         {
-            title: t('productCode.partnerName') || 'Tên đối tác',
+            title: 'Tên đối tác',
             dataIndex: 'partnerName',
             key: 'partnerName',
-            width: 150
+            width: 150,
+            ellipsis: true
         },
         {
-            title: t('productCode.warehouse') || 'Kho nhận',
+            title: 'Kho nhận',
             dataIndex: ['warehouse', 'name'],
             key: 'warehouse',
             width: 120
         },
         {
-            title: t('productCode.category') || 'Loại hàng',
+            title: 'Loại hàng',
             dataIndex: ['category', 'name'],
             key: 'category',
             width: 120
         },
+        // [A] Ngày nhập kho
         {
-            title: t('productCode.productName') || 'Tên sản phẩm',
+            title: '[A] Ngày nhập',
+            dataIndex: 'entryDate',
+            key: 'entryDate',
+            width: 110,
+            render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'
+        },
+        // [B] Mã khách hàng
+        {
+            title: '[B] Mã KH',
+            dataIndex: 'customerCodeInput',
+            key: 'customerCodeInput',
+            width: 120
+        },
+        // [C] Mã đơn hàng
+        {
+            title: '[C] Mã Đơn',
+            dataIndex: 'orderCode',
+            key: 'orderCode',
+            width: 120
+        },
+        // [D] Tên mặt hàng
+        {
+            title: '[D] Tên hàng',
             dataIndex: 'productName',
             key: 'productName',
-            width: 180
+            width: 180,
+            ellipsis: true
         },
+        // [E] Số Kiện + [F] Đơn vị
         {
-            title: t('productCode.totalWeight') || 'Tổng cân (kg)',
-            dataIndex: 'totalWeight',
-            key: 'totalWeight',
+            title: '[E+F] Số kiện',
+            key: 'package',
             width: 120,
-            render: (val) => new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)
-        },
-        {
-            title: t('productCode.totalVolume') || 'Tổng khối (m³)',
-            dataIndex: 'totalVolume',
-            key: 'totalVolume',
-            width: 120,
-            render: (val) => new Intl.NumberFormat('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(val)
-        },
-        {
-            title: t('productCode.totalPackages') || 'Tổng kiện',
-            dataIndex: 'totalPackages',
-            key: 'totalPackages',
-            width: 100
-        },
-        {
-            title: t('productCode.totalAmount') || 'Thành tiền',
-            dataIndex: 'totalAmount',
-            key: 'totalAmount',
-            width: 130,
-            render: (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
-        },
-        {
-            title: t('productCode.profit') || 'Lợi nhuận',
-            dataIndex: 'profit',
-            key: 'profit',
-            width: 130,
-            render: (val) => (
-                <Tag color={parseFloat(val) >= 0 ? 'green' : 'red'}>
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)}
-                </Tag>
+            align: 'right',
+            render: (_, record) => (
+                <span>
+                    {record.packageCount} <Typography.Text type="secondary" style={{ fontSize: '11px' }}>{record.packageUnit}</Typography.Text>
+                </span>
             )
         },
+        // [G] Trọng lượng
         {
-            title: t('productCode.status') || 'Trạng thái',
+            title: '[G] Trọng lượng (Kg)',
+            dataIndex: 'weight',
+            key: 'weight',
+            width: 120,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+        },
+        // [H] Khối lượng
+        {
+            title: '[H] Khối lượng (m3)',
+            dataIndex: 'volume',
+            key: 'volume',
+            width: 120,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+        },
+        // [I] Phí nội địa TQ
+        {
+            title: '[I] Phí nội địa TQ',
+            dataIndex: 'domesticFeeTQ',
+            key: 'domesticFeeTQ',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+        },
+        // [J] Phí kéo hàng TQ
+        {
+            title: '[J] Phí kéo TQ',
+            dataIndex: 'haulingFeeTQ',
+            key: 'haulingFeeTQ',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+        },
+        // [K] Tỷ giá
+        {
+            title: '[K] Tỷ giá',
+            dataIndex: 'exchangeRate',
+            key: 'exchangeRate',
+            width: 100,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+        },
+        // [L] Đơn giá cước
+        {
+            title: '[L] Đơn giá cước',
+            dataIndex: 'transportRate',
+            key: 'transportRate',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+        },
+        // [M] Tổng cước TQ_HN
+        {
+            title: '[M] Tổng cước',
+            dataIndex: 'totalTransportFeeEstimate',
+            key: 'totalTransportFeeEstimate',
+            width: 130,
+            align: 'right',
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'}</span>
+        },
+        // [N] Phí nội địa VN
+        {
+            title: '[N] Phí nội địa VN',
+            dataIndex: 'domesticFeeVN',
+            key: 'domesticFeeVN',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+        },
+        // [O] Ghi chú
+        {
+            title: '[O] Ghi chú',
+            dataIndex: 'notes',
+            key: 'notes',
+            width: 150,
+            ellipsis: true
+        },
+        // [P] Trạng thái
+        {
+            title: '[P] Trạng thái',
             dataIndex: 'status',
             key: 'status',
             width: 150,
             render: (status) => {
                 const statusConfig = {
-                    NHAP_KHO_TQ: { color: 'blue', label: t('productCode.statusNhapKhoTQ') || 'Nhập kho TQ' },
-                    CHO_XEP_XE: { color: 'orange', label: t('productCode.statusChoXepXe') || 'Chờ xếp xe' },
-                    DA_XEP_XE: { color: 'cyan', label: t('productCode.statusDaXepXe') || 'Đã xếp xe' },
-                    KIEM_HOA: { color: 'purple', label: t('productCode.statusKiemHoa') || 'Kiểm hóa' },
-                    CHO_THONG_QUAN_VN: { color: 'magenta', label: t('productCode.statusChoThongQuanVN') || 'Chờ thông quan VN' },
-                    NHAP_KHO_VN: { color: 'geekblue', label: t('productCode.statusNhapKhoVN') || 'Nhập kho VN' },
-                    XUAT_THIEU: { color: 'red', label: t('productCode.statusXuatThieu') || 'Hàng không tên' },
-                    XUAT_DU: { color: 'green', label: t('productCode.statusXuatDu') || 'Đã xuất kho' }
+                    NHAP_KHO_TQ: { color: 'blue', label: 'Nhập kho TQ' },
+                    CHO_XEP_XE: { color: 'orange', label: 'Chờ xếp xe' },
+                    DA_XEP_XE: { color: 'cyan', label: 'Đã xếp xe' },
+                    KIEM_HOA: { color: 'purple', label: 'Kiểm hóa' },
+                    CHO_THONG_QUAN_VN: { color: 'magenta', label: 'Chờ thông quan VN' },
+                    NHAP_KHO_VN: { color: 'geekblue', label: 'Nhập kho VN' },
+                    XUAT_THIEU: { color: 'red', label: 'Hàng không tên (Xuất thiếu)' },
+                    XUAT_DU: { color: 'green', label: 'Đã xuất kho' }
                 };
                 const config = statusConfig[status] || { color: 'default', label: status };
                 return <Tag color={config.color}>{config.label}</Tag>;
             }
+        },
+        // [Q] Ảnh hàng hóa
+        {
+            title: '[Q] Ảnh hàng hóa',
+            key: 'images',
+            width: 100,
+            render: (_, record) => {
+                if (record.images && record.images.length > 0) {
+                    return (
+                        <Image.PreviewGroup>
+                            <Image width={50} src={`${import.meta.env.VITE_API_URL}${record.images[0]}`} />
+                            {record.images.length > 1 && <span style={{ marginLeft: 5 }}>+{record.images.length - 1}</span>}
+                            {/* Hidden images for preview group */}
+                            <div style={{ display: 'none' }}>
+                                {record.images.slice(1).map((img, idx) => (
+                                    <Image key={idx} src={`${import.meta.env.VITE_API_URL}${img}`} />
+                                ))}
+                            </div>
+                        </Image.PreviewGroup>
+                    );
+                }
+                return '-';
+            }
+        },
+        // [S] Tem chính
+        {
+            title: '[S] Tem chính',
+            dataIndex: 'mainTag',
+            key: 'mainTag',
+            width: 120
+        },
+        // [T] Tem phụ
+        {
+            title: '[T] Tem phụ',
+            dataIndex: 'subTag',
+            key: 'subTag',
+            width: 120
+        },
+        // [U] Ảnh tem
+        {
+            title: '[U] Ảnh tem',
+            key: 'taggedImages',
+            width: 100,
+            render: (_, record) => {
+                if (record.taggedImages && record.taggedImages.length > 0) {
+                    return (
+                        <Image.PreviewGroup>
+                            <Image width={50} src={`${import.meta.env.VITE_API_URL}${record.taggedImages[0]}`} />
+                            {record.taggedImages.length > 1 && <span style={{ marginLeft: 5 }}>+{record.taggedImages.length - 1}</span>}
+                            <div style={{ display: 'none' }}>
+                                {record.taggedImages.slice(1).map((img, idx) => (
+                                    <Image key={idx} src={`${import.meta.env.VITE_API_URL}${img}`} />
+                                ))}
+                            </div>
+                        </Image.PreviewGroup>
+                    );
+                }
+                return '-';
+            }
+        },
+        // [V] Số lượng SP
+        {
+            title: '[V] SL SP',
+            dataIndex: 'productQuantity',
+            key: 'productQuantity',
+            width: 100,
+            align: 'right'
+        },
+        // [W] Quy cách
+        {
+            title: '[W] Quy cách',
+            dataIndex: 'specification',
+            key: 'specification',
+            width: 120
+        },
+        // [X] Mô tả SP
+        {
+            title: '[X] Mô tả',
+            dataIndex: 'productDescription',
+            key: 'productDescription',
+            width: 150,
+            ellipsis: true
+        },
+        // [Y] Nhãn hiệu
+        {
+            title: '[Y] Nhãn hiệu',
+            dataIndex: 'brand',
+            key: 'brand',
+            width: 120
+        },
+        // [Z] MST người bán
+        {
+            title: '[Z] MST Bán',
+            dataIndex: 'supplierTaxCode',
+            key: 'supplierTaxCode',
+            width: 120
+        },
+        // [AA] Tên cty bán
+        {
+            title: '[AA] Tên Cty Bán',
+            dataIndex: 'supplierName',
+            key: 'supplierName',
+            width: 150
+        },
+        // [AB] Nhu cầu khai báo
+        {
+            title: '[AB] Nhu cầu KB',
+            dataIndex: 'declarationNeed',
+            key: 'declarationNeed',
+            width: 120
+        },
+        // [AC] SL khai báo
+        {
+            title: '[AC] SL KB',
+            dataIndex: 'declarationQuantity',
+            key: 'declarationQuantity',
+            width: 100,
+            align: 'right'
+        },
+        // [AD] Giá xuất hóa đơn
+        {
+            title: '[AD] Giá xuất HĐ',
+            dataIndex: 'invoicePriceExport',
+            key: 'invoicePriceExport',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+        },
+        // [AE] Tổng giá trị
+        {
+            title: '[AE] Tổng giá trị',
+            dataIndex: 'totalValueExport',
+            key: 'totalValueExport',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+        },
+        // [AF] Chính sách NK
+        {
+            title: '[AF] Chính sách NK',
+            dataIndex: 'importPolicy',
+            key: 'importPolicy',
+            width: 150
+        },
+        // [AG] Phí phải nộp
+        {
+            title: '[AG] Phí khác',
+            dataIndex: 'otherFee',
+            key: 'otherFee',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+        },
+        // [AH] Ghi chú khác
+        {
+            title: '[AH] Ghi chú khác',
+            dataIndex: 'otherNotes',
+            key: 'otherNotes',
+            width: 150,
+            ellipsis: true
+        },
+        // [AI] Thuế VAT NK
+        {
+            title: '[AI] Thuế VAT NK',
+            dataIndex: 'vatImportTax',
+            key: 'vatImportTax',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+        },
+        // [AJ] Thuế NK
+        {
+            title: '[AJ] Thuế NK',
+            dataIndex: 'importTax',
+            key: 'importTax',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+        },
+        // [AK] Phí ủy thác
+        {
+            title: '[AK] Phí ủy thác',
+            dataIndex: 'trustFee',
+            key: 'trustFee',
+            width: 130,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+        },
+        // [AL] Tổng chi phí NK
+        {
+            title: '[AL] Tổng chi phí NK',
+            dataIndex: 'totalImportCost',
+            key: 'totalImportCost',
+            width: 130,
+            align: 'right',
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'}</span>
+        },
+        // [AM] Tình trạng xuất VAT
+        {
+            title: '[AM] Tình trạng VAT',
+            dataIndex: 'vatExportStatus',
+            key: 'vatExportStatus',
+            width: 150
         },
         {
             title: t('productCode.createdAt') || 'Ngày tạo',
@@ -247,22 +532,26 @@ const ProductCodePage = () => {
         {
             title: t('productCode.actions') || 'Thao tác',
             key: 'actions',
-            width: 120,
+            width: 100,
+            fixed: 'right',
             render: (_, record) => (
-                <Space>
-                    <Button
-                        type="link"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEdit(record)}
-                        title={t('productCode.edit') || 'Sửa Mã hàng'}
-                    />
+                <Space size="middle">
+                    <Tooltip title={t('productCode.edit') || 'Sửa'}>
+                        <Button
+                            type="text"
+                            icon={<EditOutlined />}
+                            onClick={() => handleEdit(record)}
+                        />
+                    </Tooltip>
                     <Popconfirm
                         title={t('productCode.confirmDelete') || 'Bạn có chắc muốn xóa?'}
                         onConfirm={() => handleDelete(record.id)}
                         okText={t('productCode.yes') || 'Có'}
                         cancelText={t('productCode.no') || 'Không'}
                     >
-                        <Button type="link" danger icon={<DeleteOutlined />} title={t('productCode.delete') || 'Xóa'} />
+                        <Tooltip title={t('productCode.delete') || 'Xóa'}>
+                            <Button type="text" danger icon={<DeleteOutlined />} />
+                        </Tooltip>
                     </Popconfirm>
                 </Space>
             )

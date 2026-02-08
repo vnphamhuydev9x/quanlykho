@@ -30,12 +30,13 @@ const productCodeService = {
         return response.data;
     },
 
-    uploadImages: async (id, files) => {
+    uploadImages: async (id, files, field = 'images') => {
         const formData = new FormData();
         files.forEach(file => {
             formData.append('images', file);
         });
         const response = await axiosInstance.post(`/product-codes/${id}/upload`, formData, {
+            params: { field },
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

@@ -13,7 +13,11 @@ import WarehousePage from './pages/warehouse/WarehousePage';
 import CategoryPage from './pages/category/CategoryPage';
 import DeclarationPage from './pages/declaration/DeclarationPage';
 import TransactionPage from './pages/transaction/TransactionPage';
+
 import ProductCodePage from './pages/productCode/ProductCodePage';
+import MerchandisePage from './pages/merchandise/MerchandisePage';
+import ManifestListPage from './pages/manifest/ManifestListPage';
+import ManifestDetailPage from './pages/manifest/ManifestDetailPage';
 import MainLayout from './layouts/MainLayout';
 
 // Set dayjs global locale to Vietnamese
@@ -100,6 +104,36 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <ProductCodePage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/merchandise"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <MerchandisePage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manifests"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ManifestListPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manifests/:id"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ManifestDetailPage />
                 </MainLayout>
               </ProtectedRoute>
             }

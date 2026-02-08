@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, InputNumber, Select, Checkbox, Row, Col, message, Spin, Button, Table, Space, Upload } from 'antd';
-import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, InputNumber, Select, Row, Col, message, Spin, Upload, DatePicker, Divider, Space } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import axiosInstance from '../../utils/axios';
+import { formatNumber } from '../../utils/format';
+import dayjs from 'dayjs';
 import productCodeService from '../../services/productCodeService';
 import customerService from '../../services/customerService';
 import warehouseService from '../../services/warehouseService';
@@ -23,15 +26,14 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
     const [categories, setCategories] = useState([]);
     const [declarations, setDeclarations] = useState([]);
 
-    const [separateTax, setSeparateTax] = useState(false);
-
-    // Nested data
-    const [warehouseCosts, setWarehouseCosts] = useState([]);
-    const [packageDetails, setPackageDetails] = useState([]);
-
     // Upload
     const [fileList, setFileList] = useState([]);
     const [existingImages, setExistingImages] = useState([]);
+    const [taggedFileList, setTaggedFileList] = useState([]);
+    const [existingTaggedImages, setExistingTaggedImages] = useState([]);
+
+    // Total amount for display
+    const [totalAmount, setTotalAmount] = useState(0);
 
     useEffect(() => {
         if (visible) {
@@ -39,11 +41,12 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             if (editingRecord) {
                 loadEditData();
             } else {
-                // Reset for new record
-                setWarehouseCosts([]);
-                setPackageDetails([]);
+                form.resetFields();
                 setFileList([]);
                 setExistingImages([]);
+                setTaggedFileList([]);
+                setExistingTaggedImages([]);
+                setTotalAmount(0); // Reset total amount
             }
         }
     }, [visible, editingRecord]);
@@ -58,21 +61,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                 declarationService.getAll({ page: 1, limit: 1000 })
             ]);
 
-
-            // Backend returns different structures:
-            // - customers: { customers: [...], total, page }
-            // - warehouses: array directly
-            // - categories: { items: [...], total, page }
-            // - declarations: { items: [...], total, page }
-            const customersData = customersRes.data?.customers || customersRes.customers || [];
-            const warehousesData = warehousesRes.data || warehousesRes || [];
-            const categoriesData = categoriesRes.data?.items || categoriesRes.items || [];
-            const declarationsData = declarationsRes.data?.items || declarationsRes.items || [];
-
-            setCustomers(Array.isArray(customersData) ? customersData : []);
-            setWarehouses(Array.isArray(warehousesData) ? warehousesData : []);
-            setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-            setDeclarations(Array.isArray(declarationsData) ? declarationsData : []);
+            setCustomers(customersRes.data?.customers || customersRes.customers || []);
+            setWarehouses(warehousesRes.data || warehousesRes || []);
+            setCategories(categoriesRes.data?.items || categoriesRes.items || []);
+            setDeclarations(declarationsRes.data?.items || declarationsRes.items || []);
         } catch (error) {
             message.error(t('common.loadError') || 'Lỗi khi tải dữ liệu');
         } finally {
@@ -84,39 +76,17 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         try {
             const response = await productCodeService.getById(editingRecord.id);
             const data = response.data;
-
-            setSeparateTax(data.separateTax);
-            setWarehouseCosts(data.warehouseCosts || []);
-            setPackageDetails(data.packageDetails || []);
             setExistingImages(data.images || []);
-
+            setExistingTaggedImages(data.taggedImages || []);
             form.setFieldsValue({
-                customerId: data.customerId,
-                partnerName: data.partnerName,
-                warehouseId: data.warehouseId,
-                categoryId: data.categoryId,
-                productName: data.productName,
-                exchangeRate: data.exchangeRate,
-                declarationId: data.declarationId,
-                notes: data.notes,
-                separateTax: data.separateTax,
-                originalWeightPrice: data.originalWeightPrice,
-                originalVolumePrice: data.originalVolumePrice,
-                serviceFee: data.serviceFee,
-                importTax: data.importTax,
-                vat: data.vat,
-                totalAmount: data.totalAmount,
-                incidentalFee: data.incidentalFee,
-                incidentalNotes: data.incidentalNotes,
-                profit: data.profit,
-                totalWeight: data.totalWeight,
-                totalVolume: data.totalVolume,
-                totalPackages: data.totalPackages,
-                costCalculationMethod: data.costCalculationMethod,
-                weightPrice: data.weightPrice,
-                volumePrice: data.volumePrice,
-                status: data.status || 'NHAP_KHO_TQ'
+                ...data,
+                entryDate: data.entryDate ? dayjs(data.entryDate) : null,
+                customerId: data.customerId, // System field
+                warehouseId: data.warehouseId, // System field
+                categoryId: data.categoryId, // System field
+                declarationId: data.declarationId, // System field
             });
+            setTotalAmount(data.totalImportCost || 0); // Set total amount on load
         } catch (error) {
             message.error(t('common.loadError') || 'Lỗi khi tải dữ liệu');
         }
@@ -127,11 +97,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             const values = await form.validateFields();
             setSubmitting(true);
 
-            // Merge nested data
             const submitData = {
                 ...values,
-                warehouseCosts: warehouseCosts,
-                packageDetails: packageDetails
+                entryDate: values.entryDate ? values.entryDate.toISOString() : null,
+                // Nested structures are preserved if backend needs them, but UI is flat
             };
 
             let productCodeId;
@@ -145,21 +114,25 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                 message.success(t('productCode.createSuccess') || 'Tạo mới thành công');
             }
 
-            // Upload images if any
             if (fileList.length > 0) {
                 const filesToUpload = fileList.filter(file => file.originFileObj);
                 if (filesToUpload.length > 0) {
-                    await productCodeService.uploadImages(
-                        productCodeId,
-                        filesToUpload.map(f => f.originFileObj)
-                    );
+                    await productCodeService.uploadImages(productCodeId, filesToUpload.map(f => f.originFileObj));
                 }
             }
 
+            if (taggedFileList.length > 0) {
+                const filesToUpload = taggedFileList.filter(file => file.originFileObj);
+                if (filesToUpload.length > 0) {
+                    await productCodeService.uploadImages(productCodeId, filesToUpload.map(f => f.originFileObj), 'taggedImages');
+                }
+            }
             onClose(true);
         } catch (error) {
             if (error.errorFields) {
                 message.error(t('common.validationError') || 'Vui lòng kiểm tra lại thông tin');
+            } else if (error.response && error.response.data && error.response.data.message) {
+                message.error(error.response.data.message);
             } else {
                 message.error(t('common.saveError') || 'Lỗi khi lưu dữ liệu');
             }
@@ -168,850 +141,446 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         }
     };
 
-    const handleCancel = () => {
-        form.resetFields();
-        setSeparateTax(false);
-        setWarehouseCosts([]);
-        setPackageDetails([]);
-        setFileList([]);
-        setExistingImages([]);
-        onClose(false);
-    };
-
-    // Warehouse Costs handlers
-    const addWarehouseCost = () => {
-        setWarehouseCosts([...warehouseCosts, {
-            id: Date.now(), // Temporary ID for UI
-            costType: 'SHIP_NOI_DIA',
-            currency: 'YUAN',
-            originalCost: 0,
-            otherFee: 0,
-            notes: ''
-        }]);
-    };
-
-    const removeWarehouseCost = (index) => {
-        setWarehouseCosts(warehouseCosts.filter((_, i) => i !== index));
-    };
-
-    const updateWarehouseCost = (index, field, value) => {
-        const updated = [...warehouseCosts];
-        updated[index][field] = value;
-        setWarehouseCosts(updated);
-    };
-
-    // Package Details handlers
-    const addPackageDetail = () => {
-        setPackageDetails([...packageDetails, {
-            id: Date.now(),
-            trackingCode: '',
-            length: 0,
-            width: 0,
-            height: 0,
-            totalWeight: 0,
-            totalPackages: 0
-        }]);
-    };
-
-    const removePackageDetail = (index) => {
-        setPackageDetails(packageDetails.filter((_, i) => i !== index));
-    };
-
-    const updatePackageDetail = (index, field, value) => {
-        const updated = [...packageDetails];
-        updated[index][field] = value;
-        setPackageDetails(updated);
-    };
-
-    // Upload handlers
     const uploadProps = {
         beforeUpload: (file) => {
             const isImage = file.type.startsWith('image/');
-            if (!isImage) {
-                message.error('Chỉ được upload file ảnh!');
-                return Upload.LIST_IGNORE;
-            }
-            const isLt5M = file.size / 1024 / 1024 < 5;
-            if (!isLt5M) {
-                message.error('Ảnh phải nhỏ hơn 5MB!');
-                return Upload.LIST_IGNORE;
-            }
-            return false; // Prevent auto upload
+            return isImage ? false : Upload.LIST_IGNORE;
         },
         fileList,
-        onChange: ({ fileList: newFileList }) => {
-            setFileList(newFileList);
-        },
+        onChange: ({ fileList: newFileList }) => setFileList(newFileList),
         listType: 'picture-card',
         multiple: true
     };
 
-    const costTypeOptions = [
-        { value: 'SHIP_NOI_DIA', label: 'Ship nội địa' },
-        { value: 'PHI_NANG_HANG', label: 'Phí nâng hàng' },
-        { value: 'PHI_HA_HANG', label: 'Phí hạ hàng' },
-        { value: 'PHI_KEO_HANG', label: 'Phí kéo hàng' },
-        { value: 'PHI_GIA_CO', label: 'Phí gia cố' },
-        { value: 'PHI_DONG_GO', label: 'Phí đóng gỗ' },
-        { value: 'PHI_KIEM_DEM', label: 'Phí kiểm đếm' },
-        { value: 'PHI_LUU_KHO', label: 'Phí lưu kho' },
-        { value: 'PHI_CAN', label: 'Phí cân' },
-        { value: 'PHI_KIEM_TRA_CHAT_LUONG', label: 'Phí kiểm tra chất lượng' },
-        { value: 'PHI_TU_CONG_BO', label: 'Phí tự công bố' },
-        { value: 'PHI_XU_LY_HAI_QUAN', label: 'Phí xử lý hải quan' },
-        { value: 'PHI_THUONG_KIEM', label: 'Phí thương kiểm' },
-        { value: 'PHI_KHAC', label: 'Phí khác' }
-    ];
+    const taggedUploadProps = {
+        beforeUpload: (file) => {
+            const isImage = file.type.startsWith('image/');
+            return isImage ? false : Upload.LIST_IGNORE;
+        },
+        fileList: taggedFileList,
+        onChange: ({ fileList: newFileList }) => setTaggedFileList(newFileList),
+        listType: 'picture-card',
+        multiple: true
+    };
 
-    const warehouseCostColumns = [
-        {
-            title: 'Tên chi phí',
-            dataIndex: 'costType',
-            width: 200,
-            render: (val, record, index) => (
-                <Select
-                    value={val}
-                    onChange={(v) => updateWarehouseCost(index, 'costType', v)}
-                    style={{ width: '100%' }}
-                >
-                    {costTypeOptions.map(opt => (
-                        <Option key={opt.value} value={opt.value}>{opt.label}</Option>
-                    ))}
-                </Select>
-            )
-        },
-        {
-            title: 'Tiền tệ',
-            dataIndex: 'currency',
-            width: 100,
-            render: (val, record, index) => (
-                <Select
-                    value={val}
-                    onChange={(v) => updateWarehouseCost(index, 'currency', v)}
-                    style={{ width: '100%' }}
-                >
-                    <Option value="YUAN">Yuan</Option>
-                    <Option value="VND">VND</Option>
-                </Select>
-            )
-        },
-        {
-            title: 'Chi phí gốc',
-            dataIndex: 'originalCost',
-            width: 120,
-            render: (val, record, index) => (
-                <InputNumber
-                    value={val}
-                    onChange={(v) => updateWarehouseCost(index, 'originalCost', v)}
-                    style={{ width: '100%' }}
-                    min={0}
-                    step={0.01}
-                />
-            )
-        },
-        {
-            title: 'Tiền thu khác',
-            dataIndex: 'otherFee',
-            width: 120,
-            render: (val, record, index) => (
-                <InputNumber
-                    value={val}
-                    onChange={(v) => updateWarehouseCost(index, 'otherFee', v)}
-                    style={{ width: '100%' }}
-                    min={0}
-                    step={0.01}
-                />
-            )
-        },
-        {
-            title: 'Ghi chú',
-            dataIndex: 'notes',
-            width: 150,
-            render: (val, record, index) => (
-                <Input
-                    value={val}
-                    onChange={(e) => updateWarehouseCost(index, 'notes', e.target.value)}
-                />
-            )
-        },
-        {
-            title: 'Thao tác',
-            width: 80,
-            render: (_, record, index) => (
-                <Button
-                    type="link"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => removeWarehouseCost(index)}
-                />
-            )
-        }
-    ];
+    // Helper for layout: 3 columns per row
+    const Col3 = ({ children }) => <Col xs={24} md={8}>{children}</Col>;
+    const Col2 = ({ children }) => <Col xs={24} md={12}>{children}</Col>;
 
-    const packageDetailColumns = [
-        {
-            title: 'Mã vận đơn',
-            dataIndex: 'trackingCode',
-            width: 150,
-            render: (val, record, index) => (
-                <Input
-                    value={val}
-                    onChange={(e) => updatePackageDetail(index, 'trackingCode', e.target.value)}
-                />
-            )
-        },
-        {
-            title: 'Dài (cm)',
-            dataIndex: 'length',
-            width: 100,
-            render: (val, record, index) => (
-                <InputNumber
-                    value={val}
-                    onChange={(v) => updatePackageDetail(index, 'length', v)}
-                    style={{ width: '100%' }}
-                    min={0}
-                    step={0.01}
-                />
-            )
-        },
-        {
-            title: 'Rộng (cm)',
-            dataIndex: 'width',
-            width: 100,
-            render: (val, record, index) => (
-                <InputNumber
-                    value={val}
-                    onChange={(v) => updatePackageDetail(index, 'width', v)}
-                    style={{ width: '100%' }}
-                    min={0}
-                    step={0.01}
-                />
-            )
-        },
-        {
-            title: 'Cao (cm)',
-            dataIndex: 'height',
-            width: 100,
-            render: (val, record, index) => (
-                <InputNumber
-                    value={val}
-                    onChange={(v) => updatePackageDetail(index, 'height', v)}
-                    style={{ width: '100%' }}
-                    min={0}
-                    step={0.01}
-                />
-            )
-        },
-        {
-            title: 'Tổng cân (kg)',
-            dataIndex: 'totalWeight',
-            width: 120,
-            render: (val, record, index) => (
-                <InputNumber
-                    value={val}
-                    onChange={(v) => updatePackageDetail(index, 'totalWeight', v)}
-                    style={{ width: '100%' }}
-                    min={0}
-                    step={0.01}
-                />
-            )
-        },
-        {
-            title: 'Tổng kiện',
-            dataIndex: 'totalPackages',
-            width: 100,
-            render: (val, record, index) => (
-                <InputNumber
-                    value={val}
-                    onChange={(v) => updatePackageDetail(index, 'totalPackages', v)}
-                    style={{ width: '100%' }}
-                    min={0}
-                    step={1}
-                />
-            )
-        },
-        {
-            title: 'Thao tác',
-            width: 80,
-            render: (_, record, index) => (
-                <Button
-                    type="link"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => removePackageDetail(index)}
-                />
-            )
+    // Calculation logic
+    const handleValuesChange = (changedValues, allValues) => {
+        const updates = {};
+        let shouldUpdate = false;
+
+        // Extract values (parse as float for safety)
+        const getVal = (field) => {
+            const val = allValues[field];
+            if (typeof val === 'string') {
+                return parseFloat(val.replace(/,/g, '')) || 0;
+            }
+            return parseFloat(val) || 0;
+        };
+
+        // 1. [M] Total Transport Fee TQ_HN = [L] Transport Rate * [H] Volume
+        // Note: Volume [H] is strictly defined as m3 in analysis, but input is defined as STRING. Parsing it.
+        const transportRate = getVal('transportRate'); // [L]
+        const volume = getVal('volume'); // [H]
+        const val_M = transportRate * volume;
+
+        if (allValues.totalTransportFeeEstimate !== val_M) {
+            updates.totalTransportFeeEstimate = val_M;
+            shouldUpdate = true;
         }
-    ];
+
+        // 2. [AE] Total Value Export = [AD] Invoice Price * [AC] Declaration Quantity
+        // Re-enabling [AD] for input is necessary for this chain.
+        const invoicePriceExport = getVal('invoicePriceExport'); // [AD]
+        const declarationQuantity = getVal('declarationQuantity'); // [AC]
+        const val_AE = invoicePriceExport * declarationQuantity;
+
+        if (allValues.totalValueExport !== val_AE) {
+            updates.totalValueExport = val_AE;
+            shouldUpdate = true;
+        }
+
+        // 3. [AI] VAT Import Tax = [AE] * 8%
+        const val_AI = val_AE * 0.08;
+        if (allValues.vatImportTax !== val_AI) {
+            updates.vatImportTax = val_AI;
+            shouldUpdate = true;
+        }
+
+        // 4. [AK] Trust Fee = [AE] * 1%
+        const val_AK = val_AE * 0.01;
+        if (allValues.trustFee !== val_AK) {
+            updates.trustFee = val_AK;
+            shouldUpdate = true;
+        }
+
+        // 5. [AL] Total Import Cost = [AJ] + [AI] + [AG] + [N] + [M] + [AK] + (([I] + [J]) * [K])
+        const importTax = getVal('importTax'); // [AJ]
+        const otherFee = getVal('otherFee'); // [AG]
+        const domesticFeeVN = getVal('domesticFeeVN'); // [N]
+        const domesticFeeTQ = getVal('domesticFeeTQ'); // [I]
+        const haulingFeeTQ = getVal('haulingFeeTQ'); // [J]
+        const exchangeRate = getVal('exchangeRate'); // [K]
+
+        const val_CostTQ_VND = (domesticFeeTQ + haulingFeeTQ) * exchangeRate;
+        const val_AL = importTax + val_AI + otherFee + domesticFeeVN + val_M + val_AK + val_CostTQ_VND;
+
+        if (allValues.totalImportCost !== val_AL) {
+            updates.totalImportCost = val_AL;
+            shouldUpdate = true;
+        }
+
+        if (shouldUpdate) {
+            form.setFieldsValue(updates);
+            setTotalAmount(val_AL); // Update total amount state
+        }
+    };
 
     return (
         <Modal
             title={editingRecord ? (t('productCode.edit') || 'Sửa Mã hàng') : (t('productCode.add') || 'Thêm Mã hàng')}
             open={visible}
             onOk={handleSubmit}
-            onCancel={handleCancel}
+            onCancel={onClose}
             confirmLoading={submitting}
-            width={1400}
-            okText={t('common.save') || 'Lưu'}
-            cancelText={t('common.cancel') || 'Hủy'}
+            width={1200}
             style={{ top: 20 }}
+            maskClosable={false}
         >
             <Spin spinning={loading}>
-                <div style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: 8 }}>
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        initialValues={{
-                            separateTax: false,
-                            incidentalFee: 0,
-                            profit: 0,
-                            costCalculationMethod: 'AUTO',
-                            status: 'NHAP_KHO_TQ'
-                        }}
-                    >
-                        <h4>{t('productCode.basicInfo') || 'Thông tin cơ bản'}</h4>
-                        <Row gutter={16}>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="customerId"
-                                    label={t('productCode.customer') || 'Khách hàng'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Select
-                                        showSearch
-                                        placeholder="Tìm theo Tên, Tên đăng nhập, SĐT"
-                                        optionFilterProp="children"
-                                        filterOption={(input, option) =>
-                                            option.children.toLowerCase().includes(input.toLowerCase())
-                                        }
-                                    >
-                                        {customers.map(c => (
-                                            <Option key={c.id} value={c.id}>
-                                                {`${c.fullName} (${c.username} - ${c.phone || 'N/A'})`}
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="partnerName"
-                                    label={t('productCode.partnerName') || 'Tên đối tác'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Input placeholder={t('productCode.partnerNamePlaceholder') || 'Nhập tên đối tác'} />
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                <Form form={form} layout="vertical" onValuesChange={handleValuesChange}>
 
-                        <Row gutter={16}>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="warehouseId"
-                                    label={t('productCode.warehouse') || 'Kho nhận'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Select showSearch placeholder="Tìm theo Tên kho" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
-                                        {warehouses.map(w => (
-                                            <Option key={w.id} value={w.id}>{w.name}</Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="categoryId"
-                                    label={t('productCode.category') || 'Loại hàng'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Select showSearch placeholder="Tìm theo Loại hàng" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
-                                        {categories.map(c => (
-                                            <Option key={c.id} value={c.id}>{c.name}</Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                    {/* SYSTEM FIELDS (Required for functioning but not in strict excel order list, kept at top/minimized) */}
+                    <Divider orientation="left" style={{ borderColor: '#d9d9d9', color: '#666', fontSize: '12px' }}>{t('productCode.systemInfo')}</Divider>
+                    <Row gutter={16}>
+                        <Col3>
+                            <Form.Item name="customerId" label="Khách hàng (System)" rules={[{ required: true }]}>
+                                <Select showSearch placeholder="Chọn khách hàng" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
+                                    {customers.map(c => <Option key={c.id} value={c.id}>{`${c.fullName} (${c.username})`}</Option>)}
+                                </Select>
+                            </Form.Item>
+                        </Col3>
+                        <Col3>
+                            <Form.Item name="warehouseId" label="Kho nhận (System)">
+                                <Select showSearch placeholder="Chọn kho" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
+                                    {warehouses.map(w => <Option key={w.id} value={w.id}>{w.name}</Option>)}
+                                </Select>
+                            </Form.Item>
+                        </Col3>
+                        <Col3>
+                            <Form.Item name="categoryId" label="Loại hàng (System)">
+                                <Select showSearch placeholder="Chọn loại hàng" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
+                                    {categories.map(c => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+                                </Select>
+                            </Form.Item>
+                        </Col3>
+                    </Row>
 
-                        <Row gutter={16}>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="productName"
-                                    label={t('productCode.productName') || 'Tên sản phẩm'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Input placeholder={t('productCode.productNamePlaceholder') || 'Nhập tên sản phẩm'} />
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="exchangeRate"
-                                    label={t('productCode.exchangeRate') || 'Tỷ giá'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 70px)' }}
-                                            min={0}
-                                            step={0.0001}
-                                            placeholder="0.0000"
-                                            decimalSeparator=","
-                                        />
-                                        <Input
-                                            style={{ width: '70px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="VND/¥"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                    {/* EXCEL ORDER FIELDS A -> AM */}
+                    <Divider orientation="left">{t('productCode.detailInfo')}</Divider>
 
-                        <Row gutter={16}>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="declarationId"
-                                    label={t('productCode.declaration') || 'Khai báo'}
-                                >
-                                    <Select
-                                        allowClear
-                                        showSearch
-                                        placeholder="Tìm theo ID, Tên khai báo (tùy chọn)"
-                                        optionFilterProp="children"
-                                        filterOption={(input, option) =>
-                                            option.children.toString().toLowerCase().includes(input.toLowerCase())
-                                        }
-                                    >
-                                        {declarations.map(d => (
-                                            <Option key={d.id} value={d.id}>
-                                                ID: {d.id} - {d.invoiceRequestName}
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="notes"
-                                    label={t('productCode.notes') || 'Ghi chú'}
-                                >
-                                    <TextArea rows={1} placeholder={t('productCode.notesPlaceholder') || 'Nhập ghi chú'} />
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                    <Row gutter={16}>
+                        {/* 1. [A] Ngày nhập kho */}
+                        <Col3>
+                            <Form.Item name="entryDate" label={t('productCode.entryDate')} rules={[{ required: true, message: t('productCode.entryDateRequired') }]}>
+                                <DatePicker showTime format="DD/MM/YYYY HH:mm" style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col3>
 
-                        <Row gutter={16}>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="status"
-                                    label={t('productCode.status') || 'Trạng thái'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Select placeholder={t('productCode.selectStatus') || 'Chọn trạng thái'}>
-                                        <Option value="NHAP_KHO_TQ">{t('productCode.statusNhapKhoTQ') || 'Nhập kho TQ'}</Option>
-                                        <Option value="CHO_XEP_XE">{t('productCode.statusChoXepXe') || 'Chờ xếp xe'}</Option>
-                                        <Option value="DA_XEP_XE">{t('productCode.statusDaXepXe') || 'Đã xếp xe'}</Option>
-                                        <Option value="KIEM_HOA">{t('productCode.statusKiemHoa') || 'Kiểm hóa'}</Option>
-                                        <Option value="CHO_THONG_QUAN_VN">{t('productCode.statusChoThongQuanVN') || 'Chờ thông quan VN'}</Option>
-                                        <Option value="NHAP_KHO_VN">{t('productCode.statusNhapKhoVN') || 'Nhập kho VN'}</Option>
-                                        <Option value="XUAT_THIEU">{t('productCode.statusXuatThieu') || 'Hàng không tên'}</Option>
-                                        <Option value="XUAT_DU">{t('productCode.statusXuatDu') || 'Đã xuất kho'}</Option>
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                        {/* 2. [B] Mã khách hàng */}
+                        <Col3>
+                            <Form.Item name="customerCodeInput" label={t('productCode.customerCode')} rules={[{ required: true, message: t('productCode.customerCodeRequired') }]}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
 
-                        <h4 style={{ marginTop: 24 }}>{t('productCode.costTaxInfo') || 'Thông tin chi phí & thuế'}</h4>
-                        <Row gutter={16}>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="originalWeightPrice"
-                                    label={t('productCode.originalWeightPrice') || 'Giá cân gốc'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 60px)' }}
-                                            min={0}
-                                            step={0.01}
-                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                        />
-                                        <Input
-                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="VND"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="originalVolumePrice"
-                                    label={t('productCode.originalVolumePrice') || 'Giá khối gốc'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 60px)' }}
-                                            min={0}
-                                            step={0.01}
-                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                        />
-                                        <Input
-                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="VND"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="serviceFee"
-                                    label={t('productCode.serviceFee') || 'Phí dịch vụ'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 60px)' }}
-                                            min={0}
-                                            step={0.01}
-                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                        />
-                                        <Input
-                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="VND"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                        {/* 3. [C] Mã đơn hàng */}
+                        <Col3>
+                            <Form.Item name="orderCode" label={t('productCode.orderCode')} rules={[{ required: true, message: t('productCode.orderCodeRequired') }]}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
 
-                        <Row gutter={16}>
-                            <Col xs={24} md={24}>
-                                <Form.Item name="separateTax" valuePropName="checked">
-                                    <Checkbox onChange={(e) => setSeparateTax(e.target.checked)}>
-                                        {t('productCode.separateTax') || 'Tách thuế'}
-                                    </Checkbox>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                        {/* 4. [D] Tên mặt hàng */}
+                        <Col3>
+                            <Form.Item name="productName" label={t('productCode.productNameLabel')} rules={[{ required: true, message: t('productCode.productNameRequired') }]}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
 
-                        {separateTax && (
-                            <Row gutter={16}>
-                                <Col xs={24} md={12}>
-                                    <Form.Item
-                                        name="importTax"
-                                        label={t('productCode.importTax') || 'Thuế nhập khẩu'}
-                                    >
-                                        <Space.Compact block>
-                                            <InputNumber
-                                                style={{ width: 'calc(100% - 60px)' }}
-                                                min={0}
-                                                step={1}
-                                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                                parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                            />
-                                            <Input
-                                                style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                                placeholder="VND"
-                                                disabled
-                                            />
-                                        </Space.Compact>
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} md={12}>
-                                    <Form.Item
-                                        name="vat"
-                                        label={t('productCode.vat') || 'Thuế VAT'}
-                                    >
-                                        <Space.Compact block>
-                                            <InputNumber
-                                                style={{ width: 'calc(100% - 60px)' }}
-                                                min={0}
-                                                step={1}
-                                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                                parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                            />
-                                            <Input
-                                                style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                                placeholder="VND"
-                                                disabled
-                                            />
-                                        </Space.Compact>
-                                    </Form.Item>
-                                </Col>
-                            </Row>
-                        )}
+                        {/* 5. [E] Số Kiện */}
+                        <Col3>
+                            <Form.Item name="packageCount" label={t('productCode.packageCount')} rules={[{ required: true, message: t('productCode.packageCountRequired') }]}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
 
-                        <Row gutter={16}>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="totalAmount"
-                                    label={t('productCode.totalAmount') || 'Thành tiền'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 60px)' }}
-                                            min={0}
-                                            step={0.01}
-                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                        />
-                                        <Input
-                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="VND"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="incidentalFee"
-                                    label={t('productCode.incidentalFee') || 'Phí phát sinh'}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 60px)' }}
-                                            min={0}
-                                            step={0.01}
-                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                        />
-                                        <Input
-                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="VND"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="profit"
-                                    label={t('productCode.profit') || 'Lợi nhuận'}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 60px)' }}
-                                            step={0.01}
-                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                        />
-                                        <Input
-                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="VND"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                        {/* 6. [F] Đơn vị kiện */}
+                        <Col3>
+                            <Form.Item name="packageUnit" label={t('productCode.packageUnit')} rules={[{ required: true, message: t('productCode.packageUnitRequired') }]}>
+                                <Select placeholder={t('productCode.selectUnit')}>
+                                    <Option value="Thùng cotton">Thùng cotton</Option>
+                                    <Option value="Pallet">Pallet</Option>
+                                </Select>
+                            </Form.Item>
+                        </Col3>
 
-                        <Row gutter={16}>
-                            <Col xs={24} md={24}>
-                                <Form.Item
-                                    name="incidentalNotes"
-                                    label={t('productCode.incidentalNotes') || 'Ghi chú phát sinh'}
-                                >
-                                    <TextArea rows={2} />
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                        {/* 7. [G] Trọng lượng */}
+                        <Col3>
+                            <Form.Item name="weight" label={t('productCode.weight')} rules={[{ required: true, message: t('productCode.weightRequired') }]}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
 
-                        <h4 style={{ marginTop: 24 }}>Thông tin chi kho</h4>
-                        <Button
-                            type="dashed"
-                            onClick={addWarehouseCost}
-                            icon={<PlusOutlined />}
-                            style={{ marginBottom: 16 }}
-                        >
-                            Thêm chi phí
-                        </Button>
-                        <Table
-                            dataSource={warehouseCosts}
-                            columns={warehouseCostColumns}
-                            pagination={false}
-                            rowKey="id"
-                            scroll={{ x: 800 }}
-                            size="small"
-                        />
+                        {/* 8. [H] Khối lượng */}
+                        <Col3>
+                            <Form.Item name="volume" label={t('productCode.volume')} rules={[{ required: true, message: t('productCode.volumeRequired') }]}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
 
-                        <h4 style={{ marginTop: 24 }}>Chi tiết kiện hàng</h4>
-                        <Button
-                            type="dashed"
-                            onClick={addPackageDetail}
-                            icon={<PlusOutlined />}
-                            style={{ marginBottom: 16 }}
-                        >
-                            Thêm kiện hàng
-                        </Button>
-                        <Table
-                            dataSource={packageDetails}
-                            columns={packageDetailColumns}
-                            pagination={false}
-                            rowKey="id"
-                            scroll={{ x: 700 }}
-                            size="small"
-                        />
+                        {/* 9. [I] Phí nội địa TQ */}
+                        <Col3>
+                            <Form.Item name="domesticFeeTQ" label={t('productCode.domesticFeeTQ')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                            </Form.Item>
+                        </Col3>
 
-                        <h4 style={{ marginTop: 24 }}>{t('productCode.productSpecs') || 'Thông số sản phẩm'}</h4>
-                        <Row gutter={16}>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="totalWeight"
-                                    label={t('productCode.totalWeight') || 'Tổng cân'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 40px)' }}
-                                            min={0}
-                                            step={0.01}
-                                            decimalSeparator=","
-                                        />
-                                        <Input
-                                            style={{ width: '40px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="kg"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="totalVolume"
-                                    label={t('productCode.totalVolume') || 'Tổng khối'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 40px)' }}
-                                            min={0}
-                                            step={0.001}
-                                            decimalSeparator=","
-                                        />
-                                        <Input
-                                            style={{ width: '40px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="m³"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="totalPackages"
-                                    label={t('productCode.totalPackages') || 'Tổng kiện'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 50px)' }}
-                                            min={0}
-                                            step={1}
-                                        />
-                                        <Input
-                                            style={{ width: '50px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="kiện"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                        {/* 10. [J] Phí kéo hàng TQ */}
+                        <Col3>
+                            <Form.Item name="haulingFeeTQ" label={t('productCode.haulingFeeTQ')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                            </Form.Item>
+                        </Col3>
 
-                        <h4 style={{ marginTop: 24 }}>{t('productCode.freightInfo') || 'Thông tin giá cước'}</h4>
-                        <Row gutter={16}>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="costCalculationMethod"
-                                    label={t('productCode.costCalculationMethod') || 'Cách tính chi phí'}
-                                >
-                                    <Select>
-                                        <Option value="AUTO">{t('productCode.auto') || 'Tự động'}</Option>
-                                        <Option value="BY_WEIGHT">{t('productCode.byWeight') || 'Theo cân'}</Option>
-                                        <Option value="BY_VOLUME">{t('productCode.byVolume') || 'Theo khối'}</Option>
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="weightPrice"
-                                    label={t('productCode.weightPrice') || 'Giá cân'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 60px)' }}
-                                            min={0}
-                                            step={0.01}
-                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                        />
-                                        <Input
-                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="VND"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="volumePrice"
-                                    label={t('productCode.volumePrice') || 'Giá khối'}
-                                    rules={[{ required: true, message: t('common.required') || 'Bắt buộc' }]}
-                                >
-                                    <Space.Compact block>
-                                        <InputNumber
-                                            style={{ width: 'calc(100% - 60px)' }}
-                                            min={0}
-                                            step={0.01}
-                                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                            parser={value => value.replace(/\$\s?|(\.*)/g, '')}
-                                        />
-                                        <Input
-                                            style={{ width: '60px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa', color: 'rgba(0, 0, 0, 0.45)' }}
-                                            placeholder="VND"
-                                            disabled
-                                        />
-                                    </Space.Compact>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                        {/* 11. [K] Tỷ giá */}
+                        <Col3>
+                            <Form.Item name="exchangeRate" label={t('productCode.exchangeRateLabel')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                            </Form.Item>
+                        </Col3>
 
-                        <h4 style={{ marginTop: 24 }}>Hình ảnh</h4>
-                        {existingImages.length > 0 && (
-                            <div style={{ marginBottom: 16 }}>
-                                <p>Ảnh hiện có:</p>
-                                <Space>
+                        {/* 12. [L] Đơn giá cước TQ_HN */}
+                        <Col3>
+                            <Form.Item name="transportRate" label={t('productCode.transportRate')} rules={[{ required: true, message: t('productCode.transportRateRequired') }]}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 13. [M] Tổng cước TQ_HN */}
+                        <Col3>
+                            <Form.Item name="totalTransportFeeEstimate" label={t('productCode.totalTransportFeeEstimate')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 14. [N] Phí nội địa VN */}
+                        <Col3>
+                            <Form.Item name="domesticFeeVN" label={t('productCode.domesticFeeVN')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 15. [O] Ghi chú */}
+                        <Col3>
+                            <Form.Item name="notes" label={t('productCode.notesLabel')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 16. [P] Tình trạng hàng hoá */}
+                        <Col3>
+                            <Form.Item name="status" label={t('productCode.statusLabel')}>
+                                <Select placeholder={t('productCode.selectStatus')}>
+                                    <Option value="Kho TQ">{t('productCode.statusNhapKhoTQ')}</Option>
+                                    <Option value="Đã xếp xe">{t('productCode.statusDaXepXe')}</Option>
+                                    <Option value="Kho VN">{t('productCode.statusNhapKhoVN')}</Option>
+                                    <Option value="Kiểm hoá">{t('productCode.statusKiemHoa')}</Option>
+                                    <Option value="Đã giao, chưa thanh toán">Đã giao, chưa thanh toán</Option>
+                                    <Option value="đã giao, đã thanh toán">đã giao, đã thanh toán</Option>
+                                </Select>
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 17. [Q] Ảnh hàng hóa - Upload */}
+                        <Col xs={24}>
+                            <Form.Item label={t('productCode.productImage')}>
+                                <Upload {...uploadProps}>
+                                    <div><PlusOutlined /><div style={{ marginTop: 8 }}>Upload</div></div>
+                                </Upload>
+                                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                                     {existingImages.map((img, idx) => (
-                                        <img
-                                            key={idx}
-                                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${img}`}
-                                            alt={`Image ${idx + 1}`}
-                                            style={{ width: 100, height: 100, objectFit: 'cover' }}
-                                        />
+                                        <img key={idx} src={`${import.meta.env.VITE_API_URL}${img} `} alt="existing" style={{ width: 80, height: 80, objectFit: 'cover' }} />
                                     ))}
-                                </Space>
-                            </div>
-                        )}
-                        <Upload {...uploadProps}>
-                            <div>
-                                <PlusOutlined />
-                                <div style={{ marginTop: 8 }}>Upload</div>
-                            </div>
-                        </Upload>
-                    </Form>
-                </div>
+                                </div>
+                            </Form.Item>
+                        </Col>
+
+                        {/* 18. [S] Tem chính */}
+                        <Col3>
+                            <Form.Item name="mainTag" label={t('productCode.mainTag')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 19. [T] Tem phụ */}
+                        <Col3>
+                            <Form.Item name="subTag" label={t('productCode.subTag')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 20. [U] Ảnh hàng dán tem */}
+                        <Col xs={24}>
+                            <Form.Item label={t('productCode.taggedImage')}>
+                                <Upload {...taggedUploadProps}>
+                                    <div><PlusOutlined /><div style={{ marginTop: 8 }}>Upload</div></div>
+                                </Upload>
+                                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                                    {existingTaggedImages.map((img, idx) => (
+                                        <img key={idx} src={`${import.meta.env.VITE_API_URL}${img} `} alt="existing" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                                    ))}
+                                </div>
+                            </Form.Item>
+                        </Col>
+
+                        {/* 21. [V] Số Lượng sản phẩm */}
+                        <Col3>
+                            <Form.Item name="productQuantity" label={t('productCode.productQuantity')}>
+                                <InputNumber style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 22. [W] Quy cách */}
+                        <Col3>
+                            <Form.Item name="specification" label={t('productCode.specification')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 23. [X] Mô Tả sản phẩm */}
+                        <Col3>
+                            <Form.Item name="productDescription" label={t('productCode.productDescription')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 24. [Y] Nhãn Hiệu */}
+                        <Col3>
+                            <Form.Item name="brand" label={t('productCode.brand')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 25. [Z] Mã Số Thuế */}
+                        <Col3>
+                            <Form.Item name="supplierTaxCode" label={t('productCode.supplierTaxCode')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 26. [AA] Tên Công Ty bán hàng */}
+                        <Col3>
+                            <Form.Item name="supplierName" label={t('productCode.supplierName')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 27. [AB] Nhu cầu khai báo */}
+                        <Col3>
+                            <Form.Item name="declarationNeed" label={t('productCode.declarationNeed')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 28. [AC] Số lượng khai báo */}
+                        <Col3>
+                            <Form.Item name="declarationQuantity" label={t('productCode.declarationQuantity')}>
+                                <InputNumber style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 29. [AD] Giá xuất hoá đơn */}
+                        <Col3>
+                            <Form.Item name="invoicePriceExport" label={t('productCode.invoicePriceExport')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 30. [AE] Tổng giá trị lô hàng */}
+                        <Col3>
+                            <Form.Item name="totalValueExport" label={t('productCode.totalValueExport')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 31. [AF] Chính sách NK */}
+                        <Col3>
+                            <Form.Item name="importPolicy" label={t('productCode.importPolicy')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 32. [AG] Phí phải nộp */}
+                        <Col3>
+                            <Form.Item name="otherFee" label={t('productCode.otherFeeLabel')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 33. [AH] Ghi chú */}
+                        <Col3>
+                            <Form.Item name="otherNotes" label={t('productCode.otherNotes')}>
+                                <Input />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 34. [AI] Thuế VAT nhập khẩu */}
+                        <Col3>
+                            <Form.Item name="vatImportTax" label={t('productCode.vatImportTax')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 35. [AJ] Thuế NK phải nộp */}
+                        <Col3>
+                            <Form.Item name="importTax" label={t('productCode.importTaxLabel')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 36. [AK] Phí uỷ thác */}
+                        <Col3>
+                            <Form.Item name="trustFee" label={t('productCode.trustFee')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 37. [AL] Tổng chi phí nhập khẩu */}
+                        <Col3>
+                            <Form.Item name="totalImportCost" label={t('productCode.totalImportCost')}>
+                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 38. [AM] Tình trạng xuất VAT */}
+                        <Col3>
+                            <Form.Item name="vatExportStatus" label={t('productCode.vatExportStatus')}>
+                                <Select placeholder={t('productCode.selectStatus')}>
+                                    <Option value="Chưa xuất VAT">Chưa xuất VAT</Option>
+                                    <Option value="đã xuất VAT , chưa đóng gói hs">đã xuất VAT, chưa đóng gói hs</Option>
+                                    <Option value="đã xuất VAT. đã đóng gói hồ sơ">đã xuất VAT. đã đóng gói hồ sơ</Option>
+                                </Select>
+                            </Form.Item>
+                        </Col3>
+                    </Row>
+                </Form>
             </Spin>
+            <Divider />
+            <h3 style={{ textAlign: 'right', color: '#1890ff' }}>{t('productCode.total')}: {formatNumber(totalAmount)}</h3>
         </Modal>
     );
 };

@@ -16,6 +16,7 @@ import employeeService from '../../services/employeeService'; // Import Service
 import transactionService from '../../services/transactionService';
 import TransactionModal from './TransactionModal';
 import moment from 'moment';
+import { formatFloat } from '../../utils/format';
 
 const { Option } = Select;
 
@@ -191,12 +192,7 @@ const TransactionPage = () => {
             align: 'right',
             render: (amount) => (
                 <Typography.Text strong style={{ color: '#52c41a' }}>
-                    {new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', {
-                        style: 'currency',
-                        currency: t('common.id') === 'ID' ? 'VND' : 'CNY',
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }).format(amount)}
+                    {formatFloat(amount, t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN')} {t('common.id') === 'ID' ? 'VND' : 'CNY'}
                 </Typography.Text>
             )
         },

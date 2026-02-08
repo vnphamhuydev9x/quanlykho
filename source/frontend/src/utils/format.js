@@ -1,34 +1,33 @@
 /**
- * Format a number to currency string
+ * Format a number to a float string (fixed 2 decimal places)
  * @param {number|string} value - The number to format
- * @param {string} locale - The locale to use (default: 'vi-VN')
- * @returns {string} The formatted string
+ * @param {string} locale - Locale for formatting (default: 'vi-VN')
+ * @returns {string} The formatted string (e.g., 1.234,56)
  */
-export const formatNumber = (value) => {
+export const formatFloat = (value, locale = 'vi-VN') => {
     if (value === undefined || value === null || value === '') return '0,00';
     const num = parseFloat(value);
     if (isNaN(num)) return '0,00';
 
-    return new Intl.NumberFormat('vi-VN', {
+    return new Intl.NumberFormat(locale, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(num);
 };
 
 /**
- * Format currency with symbol
- * @param {number|string} value 
- * @param {string} currency - 'VND' | 'USD' | 'CNY'
+ * Format a number to an integer string (0 decimal places)
+ * @param {number|string} value - The number to format
+ * @param {string} locale - Locale for formatting (default: 'vi-VN')
+ * @returns {string} The formatted string (e.g., 1.234)
  */
-export const formatCurrency = (value, currency = 'VND') => {
-    if (value === undefined || value === null || value === '') return '0,00';
+export const formatInteger = (value, locale = 'vi-VN') => {
+    if (value === undefined || value === null || value === '') return '0';
     const num = parseFloat(value);
-    if (isNaN(num)) return '0,00';
+    if (isNaN(num)) return '0';
 
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+    return new Intl.NumberFormat(locale, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
     }).format(num);
 };

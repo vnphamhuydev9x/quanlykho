@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, InputNumber, Select, Row, Col, message, Spin, Upload, DatePicker, Divider, Space } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, message, Spin, Upload, DatePicker, Divider, Space } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../utils/axios';
-import { formatNumber } from '../../utils/format';
+import { formatFloat } from '../../utils/format';
 import dayjs from 'dayjs';
 import productCodeService from '../../services/productCodeService';
 import customerService from '../../services/customerService';
 import warehouseService from '../../services/warehouseService';
 import categoryService from '../../services/categoryService';
 import declarationService from '../../services/declarationService';
+import CustomNumberInput from '../../components/CustomNumberInput';
 
 const { Option } = Select;
 const { TextArea } = Input;
+
+// Helper for layout: 3 columns per row
+const Col3 = ({ children }) => <Col xs={24} md={8}>{children}</Col>;
+const Col2 = ({ children }) => <Col xs={24} md={12}>{children}</Col>;
 
 const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
     const { t } = useTranslation();
@@ -163,9 +168,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         multiple: true
     };
 
-    // Helper for layout: 3 columns per row
-    const Col3 = ({ children }) => <Col xs={24} md={8}>{children}</Col>;
-    const Col2 = ({ children }) => <Col xs={24} md={12}>{children}</Col>;
 
     // Calculation logic
     const handleValuesChange = (changedValues, allValues) => {
@@ -176,7 +178,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
         const getVal = (field) => {
             const val = allValues[field];
             if (typeof val === 'string') {
-                return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
+                if (val.includes(',')) return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
+                const dotCount = (val.match(/\./g) || []).length;
+                if (dotCount > 1) return parseFloat(val.replace(/\./g, '')) || 0;
+                return parseFloat(val) || 0;
             }
             return parseFloat(val) || 0;
         };
@@ -318,19 +323,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 5. [E] Số Kiện */}
                         <Col3>
                             <Form.Item name="packageCount" label={t('productCode.packageCount')} rules={[{ required: true, message: t('productCode.packageCountRequired') }]}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -348,19 +343,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 7. [G] Trọng lượng */}
                         <Col3>
                             <Form.Item name="weight" label={t('productCode.weight')} rules={[{ required: true, message: t('productCode.weightRequired') }]}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -368,19 +353,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 8. [H] Khối lượng */}
                         <Col3>
                             <Form.Item name="volume" label={t('productCode.volume')} rules={[{ required: true, message: t('productCode.volumeRequired') }]}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -388,19 +363,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 9. [I] Phí nội địa TQ */}
                         <Col3>
                             <Form.Item name="domesticFeeTQ" label={t('productCode.domesticFeeTQ')}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -408,19 +373,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 10. [J] Phí kéo hàng TQ */}
                         <Col3>
                             <Form.Item name="haulingFeeTQ" label={t('productCode.haulingFeeTQ')}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -428,19 +383,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 11. [K] Tỷ giá */}
                         <Col3>
                             <Form.Item name="exchangeRate" label={t('productCode.exchangeRateLabel')}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -449,19 +394,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         <Col3>
                             <Form.Item label={t('productCode.transportRate') + " (Kg)"}>
                                 <Form.Item name="transportRate" noStyle rules={[{ required: true, message: t('productCode.transportRateRequired') }]}>
-                                    <InputNumber
+                                    <CustomNumberInput
                                         style={{ width: '100%' }}
                                         min={0}
-                                        precision={2}
-                                        step={0.01}
-                                        formatter={value => {
-                                            if (value === null || value === undefined || value === '') return '';
-                                            const parts = value.toString().split('.');
-                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                            const decimalPart = parts[1] || '00';
-                                            return `${integerPart},${decimalPart}`;
-                                        }}
-                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -471,19 +406,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         <Col3>
                             <Form.Item label={t('productCode.transportRate') + " (m3)"}>
                                 <Form.Item name="transportRateVolume" noStyle>
-                                    <InputNumber
+                                    <CustomNumberInput
                                         style={{ width: '100%' }}
                                         min={0}
-                                        precision={2}
-                                        step={0.01}
-                                        formatter={value => {
-                                            if (value === null || value === undefined || value === '') return '';
-                                            const parts = value.toString().split('.');
-                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                            const decimalPart = parts[1] || '00';
-                                            return `${integerPart},${decimalPart}`;
-                                        }}
-                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -493,20 +418,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         <Col3>
                             <Form.Item label={t('productCode.totalTransportFeeEstimate')}>
                                 <Form.Item name="totalTransportFeeEstimate" noStyle>
-                                    <InputNumber
+                                    <CustomNumberInput
                                         style={{ width: '100%' }}
-                                        precision={2}
-                                        step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => {
-                                            if (value === null || value === undefined || value === '') return '';
-                                            const parts = value.toString().split('.');
-                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                            const decimalPart = parts[1] || '00';
-                                            return `${integerPart},${decimalPart}`;
-                                        }}
-                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -515,19 +430,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 14. [N] Phí nội địa VN */}
                         <Col3>
                             <Form.Item name="domesticFeeVN" label={t('productCode.domesticFeeVN')}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -598,19 +503,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 21. [V] Số Lượng sản phẩm */}
                         <Col3>
                             <Form.Item name="productQuantity" label={t('productCode.productQuantity')}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -660,19 +555,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 28. [AC] Số lượng khai báo */}
                         <Col3>
                             <Form.Item name="declarationQuantity" label={t('productCode.declarationQuantity')}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -680,19 +565,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 29. [AD] Giá xuất hoá đơn */}
                         <Col3>
                             <Form.Item name="invoicePriceExport" label={t('productCode.invoicePriceExport')}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -701,20 +576,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         <Col3>
                             <Form.Item label={t('productCode.totalValueExport')}>
                                 <Form.Item name="totalValueExport" noStyle>
-                                    <InputNumber
+                                    <CustomNumberInput
                                         style={{ width: '100%' }}
-                                        precision={2}
-                                        step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => {
-                                            if (value === null || value === undefined || value === '') return '';
-                                            const parts = value.toString().split('.');
-                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                            const decimalPart = parts[1] || '00';
-                                            return `${integerPart},${decimalPart}`;
-                                        }}
-                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -730,19 +595,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 32. [AG] Phí phải nộp */}
                         <Col3>
                             <Form.Item name="otherFee" label={t('productCode.otherFeeLabel')}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -758,20 +613,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         <Col3>
                             <Form.Item label={t('productCode.vatImportTax')}>
                                 <Form.Item name="vatImportTax" noStyle>
-                                    <InputNumber
+                                    <CustomNumberInput
                                         style={{ width: '100%' }}
-                                        precision={2}
-                                        step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => {
-                                            if (value === null || value === undefined || value === '') return '';
-                                            const parts = value.toString().split('.');
-                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                            const decimalPart = parts[1] || '00';
-                                            return `${integerPart},${decimalPart}`;
-                                        }}
-                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -780,19 +625,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 35. [AJ] Thuế NK phải nộp */}
                         <Col3>
                             <Form.Item name="importTax" label={t('productCode.importTaxLabel')}>
-                                <InputNumber
+                                <CustomNumberInput
                                     style={{ width: '100%' }}
                                     min={0}
-                                    precision={2}
-                                    step={0.01}
-                                    formatter={value => {
-                                        if (value === null || value === undefined || value === '') return '';
-                                        const parts = value.toString().split('.');
-                                        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                        const decimalPart = parts[1] || '00';
-                                        return `${integerPart},${decimalPart}`;
-                                    }}
-                                    parser={value => value.replace(/\./g, '').replace(',', '.')}
                                 />
                             </Form.Item>
                         </Col3>
@@ -801,20 +636,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         <Col3>
                             <Form.Item label={t('productCode.trustFee')}>
                                 <Form.Item name="trustFee" noStyle>
-                                    <InputNumber
+                                    <CustomNumberInput
                                         style={{ width: '100%' }}
-                                        precision={2}
-                                        step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => {
-                                            if (value === null || value === undefined || value === '') return '';
-                                            const parts = value.toString().split('.');
-                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                            const decimalPart = parts[1] || '00';
-                                            return `${integerPart},${decimalPart}`;
-                                        }}
-                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -824,20 +649,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         <Col3>
                             <Form.Item label={t('productCode.totalImportCost')}>
                                 <Form.Item name="totalImportCost" noStyle>
-                                    <InputNumber
+                                    <CustomNumberInput
                                         style={{ width: '100%' }}
-                                        precision={2}
-                                        step={0.01}
                                         disabled
                                         className="bg-gray-100"
-                                        formatter={value => {
-                                            if (value === null || value === undefined || value === '') return '';
-                                            const parts = value.toString().split('.');
-                                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                                            const decimalPart = parts[1] || '00';
-                                            return `${integerPart},${decimalPart}`;
-                                        }}
-                                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                                     />
                                 </Form.Item>
                             </Form.Item>
@@ -857,7 +672,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                 </Form>
             </Spin>
             <Divider />
-            <h3 style={{ textAlign: 'right', color: '#1890ff' }}>{t('productCode.total')}: {formatNumber(totalAmount)}</h3>
+            <h3 style={{ textAlign: 'right', color: '#1890ff' }}>{t('productCode.total')}: {formatFloat(totalAmount)}</h3>
         </Modal>
     );
 };

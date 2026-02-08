@@ -373,31 +373,58 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
                     *   Sử dụng locale `'de-DE'` cho số thông thường (vì de-DE dùng dấu chấm/phẩy giống Việt Nam)
                     *   Sử dụng locale `'vi-VN'` cho tiền tệ VND
 
-            *   **Number Format Standard (Chuẩn số duy nhất - Standardized Application-wide)**:
-                *   **Mục tiêu**: Đồng nhất cách nhập và hiển thị số cho toàn bộ ứng dụng (Tiền tệ, Trọng lượng, Khối lượng, Số lượng...). 
-                *   **Quy chuẩn**: Phân cách đối với hàng nghìn bằng dấu chấm (`.`), phân cách thập phân bằng dấu phẩy (`,`) và **luôn hiển thị 2 số thập phân**.
-                *   **Cấu hình InputNumber (Edit Mode)**: Bắt buộc dùng cấu hình sau:
-                    ```jsx
-                    <InputNumber
-                        precision={2}
-                        step={0.01}
-                        formatter={value => {
-                            if (value === null || value === undefined || value === '') return '';
-                            const parts = value.toString().split('.');
-                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                            const decimalPart = parts[1] || '00';
-                            return `${integerPart},${decimalPart}`;
-                        }}
-                        parser={value => value.replace(/\./g, '').replace(',', '.')}
-                    />
-                    ```
-                *   **Hiển thị (Display Mode / Table)**: Sử dụng `Intl.NumberFormat` với cấu hình:
-                    ```javascript
-                    new Intl.NumberFormat('vi-VN', { 
-                        minimumFractionDigits: 2, 
-                        maximumFractionDigits: 2 
-                    }).format(amount)
-                    ```
+            *   **Number Format Standard (Chuẩn định dạng số)**:
+                *   **Loại 1: Float Format (Số thực - 2 số lẻ)**:
+                    *   **Mục tiêu**: Dùng cho Tiền tệ, Trọng lượng, Khối lượng... Luôn hiển thị 2 số thập phân.
+                    *   **Quy chuẩn**: Hàng nghìn dấu chấm (.), thập phân dấu phẩy (,).
+                    *   **Cấu hình InputNumber (Edit Mode)**:
+                        ```jsx
+                        <InputNumber
+                            precision={2}
+                            step={0.01}
+                            formatter={(value, { userTyping }) => {
+                                if (userTyping) return value;
+                                if (value === null || value === undefined || value === '') return '';
+                                const parts = value.toString().split('.');
+                                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                const decimalPart = parts[1] || '00';
+                                return `${integerPart},${decimalPart}`;
+                            }}
+                            parser={value => {
+                                if (!value) return '';
+                                // Nếu có dấu phẩy, coi đó là dấu thập phân (chuẩn VN: 1.234,56)
+                                if (value.includes(',')) {
+                                    return value.replace(/\./g, '').replace(',', '.');
+                                }
+                                // Nếu không có dấu phẩy nhưng có nhiều dấu chấm, coi đó là phân cách hàng nghìn (1.234.567)
+                                const dotCount = (value.match(/\./g) || []).length;
+                                if (dotCount > 1) {
+                                    return value.replace(/\./g, '');
+                                }
+                                // Còn lại (không có dấu phẩy, 0 hoặc 1 dấu chấm) thì giữ nguyên để parseFloat xử lý (2.1 hoặc 1234)
+                                return value;
+                            }}
+                        />
+                        ```
+                    *   **Hiển thị (Display Mode / Table)**: Sử dụng hàm `formatFloat(amount)` từ `utils/format.js`.
+                *   **Loại 2: Integer Format (Số nguyên - 0 số lẻ)**:
+                    *   **Mục tiêu**: Dùng cho Số kiện, Số lượng sản phẩm (nếu không có lẻ)...
+                    *   **Quy chuẩn**: Hàng nghìn dấu chấm (.), không có phần thập phân.
+                    *   **Cấu hình InputNumber (Edit Mode)**:
+                        ```jsx
+                        <InputNumber
+                            precision={0}
+                            step={1}
+                            formatter={(value, { userTyping }) => {
+                                if (userTyping) return value;
+                                if (value === null || value === undefined || value === '') return '';
+                                return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                            }}
+                            parser={value => value.replace(/\./g, '')}
+                        />
+                        ```
+                    *   **Hiển thị (Display Mode / Table)**: Sử dụng hàm `formatInteger(amount)` từ `utils/format.js`.
+                *   **Lưu ý quan trọng**: BẮT BUỘC giữ tính đồng nhất giữa chế độ chỉnh sửa (Edit Mode) và hiển thị (Display Mode). Nếu một trường đã được định nghĩa là Float, thì cả khi nhập liệu và khi xem trong bảng/báo cáo đều phải hiển thị đúng 2 số thập phân.
                 *   **Lưu ý chung**: 
                     *   Luôn disable `InputNumber` khi ở chế độ `isViewMode` và thêm `className="bg-gray-100"`.
                     *   Luôn để `min={0}` trừ khi có yêu cầu đặc biệt.

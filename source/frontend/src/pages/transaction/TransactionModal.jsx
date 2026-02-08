@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, InputNumber, Input, Spin, message } from 'antd';
+import { Modal, Form, Select, Input, Spin, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import transactionService from '../../services/transactionService';
 import customerService from '../../services/customerService';
+import CustomNumberInput from '../../components/CustomNumberInput';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -107,18 +108,8 @@ const TransactionModal = ({ visible, onCancel, onSuccess }) => {
                     label={t('transaction.amount')}
                     rules={[{ required: true, message: t('validation.required') }]}
                 >
-                    <InputNumber
+                    <CustomNumberInput
                         style={{ width: '100%' }}
-                        precision={2}
-                        step={0.01}
-                        formatter={value => {
-                            if (value === null || value === undefined || value === '') return '';
-                            const parts = value.toString().split('.');
-                            const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                            const decimalPart = parts[1] || '00';
-                            return `${integerPart},${decimalPart}`;
-                        }}
-                        parser={value => value.replace(/\./g, '').replace(',', '.')}
                         addonAfter="VND"
                         min={0}
                     />

@@ -143,169 +143,148 @@ const ProductCodePage = () => {
             align: 'center',
             sorter: (a, b) => a.id - b.id,
         },
+        // 1. [A] Ngày nhập kho
         {
-            title: t('productCode.customer'),
-            key: 'customer',
-            width: 200,
-            fixed: 'left',
-            render: (_, record) => (
-                <Space direction="vertical" size={0}>
-                    <Typography.Text strong>{record.customer?.fullName}</Typography.Text>
-                    <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                        {record.customer?.username} - {record.customer?.phone}
-                    </Typography.Text>
-                </Space>
-            )
-        },
-        {
-            title: t('productCode.headerPartner'),
-            dataIndex: 'partnerName',
-            key: 'partnerName',
-            width: 150,
-            ellipsis: true
-        },
-        {
-            title: t('productCode.headerWarehouse'),
-            dataIndex: ['warehouse', 'name'],
-            key: 'warehouse',
-            width: 120
-        },
-        {
-            title: t('productCode.headerCategory'),
-            dataIndex: ['category', 'name'],
-            key: 'category',
-            width: 120
-        },
-        // [A] Ngày nhập kho
-        {
-            title: t('productCode.headerEntryDate'),
+            title: t('productCode.entryDate'),
             dataIndex: 'entryDate',
             key: 'entryDate',
-            width: 110,
+            width: 150,
             render: (date) => date ? new Date(date).toLocaleDateString(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN') : '-'
         },
-        // [B] Mã khách hàng
+        // 2. [B] Mã khách hàng
         {
-            title: t('productCode.headerCustomerCode'),
+            title: t('productCode.customerCode'),
             dataIndex: 'customerCodeInput',
             key: 'customerCodeInput',
-            width: 120
+            width: 150
         },
-        // [C] Mã đơn hàng
+        // 3. [C] Mã đơn hàng
         {
-            title: t('productCode.headerOrderCode'),
+            title: t('productCode.orderCode'),
             dataIndex: 'orderCode',
             key: 'orderCode',
-            width: 120
+            width: 150
         },
-        // [D] Tên mặt hàng
+        // 4. [D] Tên mặt hàng
         {
-            title: t('productCode.headerProductName'),
+            title: t('productCode.productNameLabel'),
             dataIndex: 'productName',
             key: 'productName',
-            width: 180,
+            width: 200,
             ellipsis: true
         },
-        // [E] Số Kiện + [F] Đơn vị
+        // 5. [E] Số Kiện
         {
-            title: t('productCode.headerPackage'),
-            key: 'package',
+            title: t('productCode.packageCount'),
+            dataIndex: 'packageCount',
+            key: 'packageCount',
             width: 120,
-            align: 'right',
-            render: (_, record) => (
-                <span>
-                    {record.packageCount} <Typography.Text type="secondary" style={{ fontSize: '11px' }}>{record.packageUnit}</Typography.Text>
-                </span>
-            )
+            align: 'right'
         },
-        // [G] Trọng lượng
+        // 6. [F] Đơn vị kiện
         {
-            title: t('productCode.headerWeight'),
+            title: t('productCode.packageUnit'),
+            dataIndex: 'packageUnit',
+            key: 'packageUnit',
+            width: 120
+        },
+        // 7. [G] Trọng lượng
+        {
+            title: t('productCode.weight'),
             dataIndex: 'weight',
             key: 'weight',
             width: 120,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
-        // [H] Khối lượng
+        // 8. [H] Khối lượng
         {
-            title: t('productCode.headerVolume'),
+            title: t('productCode.volume'),
             dataIndex: 'volume',
             key: 'volume',
             width: 120,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
-        // [I] Phí nội địa TQ
+        // 9. [I] Phí nội địa TQ
         {
-            title: t('productCode.headerDomesticFeeTQ'),
+            title: t('productCode.domesticFeeTQ'),
             dataIndex: 'domesticFeeTQ',
             key: 'domesticFeeTQ',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
-        // [J] Phí kéo hàng TQ
+        // 10. [J] Phí kéo hàng TQ
         {
-            title: t('productCode.headerHaulingFeeTQ'),
+            title: t('productCode.haulingFeeTQ'),
             dataIndex: 'haulingFeeTQ',
             key: 'haulingFeeTQ',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
-        // [K] Tỷ giá
+        // 11. [K] Tỷ giá
         {
-            title: t('productCode.headerExchangeRate'),
+            title: t('productCode.exchangeRateLabel'),
             dataIndex: 'exchangeRate',
             key: 'exchangeRate',
-            width: 100,
+            width: 120,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
-        // [L] Đơn giá cước
+        // 12. [L] Đơn giá cước TQ_HN
         {
-            title: t('productCode.headerTransportRate'),
+            title: t('productCode.transportRate'),
             dataIndex: 'transportRate',
             key: 'transportRate',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
-        // [M] Tổng cước TQ_HN
+        // 13. [M] Tổng cước TQ_HN
         {
-            title: t('productCode.headerTotalTransportFee'),
+            title: t('productCode.totalTransportFeeEstimate'),
             dataIndex: 'totalTransportFeeEstimate',
             key: 'totalTransportFeeEstimate',
-            width: 130,
+            width: 180,
             align: 'right',
             render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'}</span>
         },
-        // [N] Phí nội địa VN
+        // 14. [N] Phí nội địa VN
         {
-            title: t('productCode.headerDomesticFeeVN'),
+            title: t('productCode.domesticFeeVN'),
             dataIndex: 'domesticFeeVN',
             key: 'domesticFeeVN',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
-        // [O] Ghi chú
+        // 15. [O] Ghi chú
         {
-            title: t('productCode.headerNotes'),
+            title: t('productCode.notesLabel'),
             dataIndex: 'notes',
             key: 'notes',
             width: 150,
             ellipsis: true
         },
-        // [P] Trạng thái
+        // 16. [P] Tình trạng hàng hoá
         {
-            title: t('productCode.headerStatus'),
+            title: t('productCode.statusLabel'),
             dataIndex: 'status',
             key: 'status',
-            width: 150,
+            width: 180,
             render: (status) => {
                 const statusConfig = {
+                    'Kho TQ': { color: 'blue', label: t('productCode.statusNhapKhoTQ') },
+                    'Đã xếp xe': { color: 'cyan', label: t('productCode.statusDaXepXe') },
+                    'Kho VN': { color: 'geekblue', label: t('productCode.statusNhapKhoVN') },
+                    'Kiểm hoá': { color: 'purple', label: t('productCode.statusKiemHoa') },
+                    'Đã giao, chưa thanh toán': { color: 'orange', label: t('productCode.statusGiaoChuaThanhToan') },
+                    'đã giao, đã thanh toán': { color: 'green', label: t('productCode.statusGiaoDaThanhToan') },
+                };
+                // Fallback for old codes if any
+                const legacyConfig = {
                     NHAP_KHO_TQ: { color: 'blue', label: t('productCode.statusNhapKhoTQ') },
                     CHO_XEP_XE: { color: 'orange', label: t('productCode.statusChoXepXe') },
                     DA_XEP_XE: { color: 'cyan', label: t('productCode.statusDaXepXe') },
@@ -315,15 +294,16 @@ const ProductCodePage = () => {
                     XUAT_THIEU: { color: 'red', label: t('productCode.statusXuatThieu') },
                     XUAT_DU: { color: 'green', label: t('productCode.statusXuatDu') }
                 };
-                const config = statusConfig[status] || { color: 'default', label: status };
+
+                const config = statusConfig[status] || legacyConfig[status] || { color: 'default', label: status };
                 return <Tag color={config.color}>{config.label}</Tag>;
             }
         },
-        // [Q] Ảnh hàng hóa
+        // 17. [Q] Ảnh hàng hóa
         {
-            title: t('productCode.headerImages'),
+            title: t('productCode.productImage'),
             key: 'images',
-            width: 100,
+            width: 120,
             render: (_, record) => {
                 if (record.images && record.images.length > 0) {
                     return (
@@ -342,25 +322,25 @@ const ProductCodePage = () => {
                 return '-';
             }
         },
-        // [S] Tem chính
+        // 18. [S] Tem chính
         {
-            title: t('productCode.headerMainTag'),
+            title: t('productCode.mainTag'),
             dataIndex: 'mainTag',
             key: 'mainTag',
-            width: 120
+            width: 150
         },
-        // [T] Tem phụ
+        // 19. [T] Tem phụ
         {
-            title: t('productCode.headerSubTag'),
+            title: t('productCode.subTag'),
             dataIndex: 'subTag',
             key: 'subTag',
-            width: 120
+            width: 150
         },
-        // [U] Ảnh tem
+        // 20. [U] Ảnh hàng dán tem
         {
-            title: t('productCode.headerTaggedImages'),
+            title: t('productCode.taggedImage'),
             key: 'taggedImages',
-            width: 100,
+            width: 120,
             render: (_, record) => {
                 if (record.taggedImages && record.taggedImages.length > 0) {
                     return (
@@ -378,149 +358,149 @@ const ProductCodePage = () => {
                 return '-';
             }
         },
-        // [V] Số lượng SP
+        // 21. [V] Số Lượng sản phẩm
         {
-            title: t('productCode.headerProductQuantity'),
+            title: t('productCode.productQuantity'),
             dataIndex: 'productQuantity',
             key: 'productQuantity',
-            width: 100,
+            width: 120,
             align: 'right'
         },
-        // [W] Quy cách
+        // 22. [W] Quy cách
         {
-            title: t('productCode.headerSpecification'),
+            title: t('productCode.specification'),
             dataIndex: 'specification',
             key: 'specification',
-            width: 120
-        },
-        // [X] Mô tả SP
-        {
-            title: t('productCode.headerProductDescription'),
-            dataIndex: 'productDescription',
-            key: 'productDescription',
-            width: 150,
-            ellipsis: true
-        },
-        // [Y] Nhãn hiệu
-        {
-            title: t('productCode.headerBrand'),
-            dataIndex: 'brand',
-            key: 'brand',
-            width: 120
-        },
-        // [Z] MST người bán
-        {
-            title: t('productCode.headerSupplierTaxCode'),
-            dataIndex: 'supplierTaxCode',
-            key: 'supplierTaxCode',
-            width: 120
-        },
-        // [AA] Tên cty bán
-        {
-            title: t('productCode.headerSupplierName'),
-            dataIndex: 'supplierName',
-            key: 'supplierName',
             width: 150
         },
-        // [AB] Nhu cầu khai báo
+        // 23. [X] Mô Tả sản phẩm
         {
-            title: t('productCode.headerDeclarationNeed'),
+            title: t('productCode.productDescription'),
+            dataIndex: 'productDescription',
+            key: 'productDescription',
+            width: 200,
+            ellipsis: true
+        },
+        // 24. [Y] Nhãn Hiệu
+        {
+            title: t('productCode.brand'),
+            dataIndex: 'brand',
+            key: 'brand',
+            width: 150
+        },
+        // 25. [Z] Mã Số Thuế
+        {
+            title: t('productCode.supplierTaxCode'),
+            dataIndex: 'supplierTaxCode',
+            key: 'supplierTaxCode',
+            width: 150
+        },
+        // 26. [AA] Tên Công Ty bán hàng
+        {
+            title: t('productCode.supplierName'),
+            dataIndex: 'supplierName',
+            key: 'supplierName',
+            width: 200
+        },
+        // 27. [AB] Nhu cầu khai báo
+        {
+            title: t('productCode.declarationNeed'),
             dataIndex: 'declarationNeed',
             key: 'declarationNeed',
-            width: 120
+            width: 150
         },
-        // [AC] SL khai báo
+        // 28. [AC] Số lượng khai báo
         {
-            title: t('productCode.headerDeclarationQuantity'),
+            title: t('productCode.declarationQuantity'),
             dataIndex: 'declarationQuantity',
             key: 'declarationQuantity',
-            width: 100,
+            width: 120,
             align: 'right'
         },
-        // [AD] Giá xuất hóa đơn
+        // 29. [AD] Giá xuất hoá đơn
         {
-            title: t('productCode.headerInvoicePrice'),
+            title: t('productCode.invoicePriceExport'),
             dataIndex: 'invoicePriceExport',
             key: 'invoicePriceExport',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
-        // [AE] Tổng giá trị
+        // 30. [AE] Tổng giá trị lô hàng
         {
-            title: t('productCode.headerTotalValue'),
+            title: t('productCode.totalValueExport'),
             dataIndex: 'totalValueExport',
             key: 'totalValueExport',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
-        // [AF] Chính sách NK
+        // 31. [AF] Chính sách NK
         {
-            title: t('productCode.headerImportPolicy'),
+            title: t('productCode.importPolicy'),
             dataIndex: 'importPolicy',
             key: 'importPolicy',
             width: 150
         },
-        // [AG] Phí phải nộp
+        // 32. [AG] Phí phải nộp
         {
-            title: t('productCode.headerOtherFee'),
+            title: t('productCode.otherFeeLabel'),
             dataIndex: 'otherFee',
             key: 'otherFee',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
-        // [AH] Ghi chú khác
+        // 33. [AH] Ghi chú
         {
-            title: t('productCode.headerOtherNotes'),
+            title: t('productCode.otherNotes'),
             dataIndex: 'otherNotes',
             key: 'otherNotes',
             width: 150,
             ellipsis: true
         },
-        // [AI] Thuế VAT NK
+        // 34. [AI] Thuế VAT nhập khẩu
         {
-            title: t('productCode.headerVatImportTax'),
+            title: t('productCode.vatImportTax'),
             dataIndex: 'vatImportTax',
             key: 'vatImportTax',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
-        // [AJ] Thuế NK
+        // 35. [AJ] Thuế NK phải nộp
         {
-            title: t('productCode.headerImportTax'),
+            title: t('productCode.importTaxLabel'),
             dataIndex: 'importTax',
             key: 'importTax',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
-        // [AK] Phí ủy thác
+        // 36. [AK] Phí uỷ thác
         {
-            title: t('productCode.headerTrustFee'),
+            title: t('productCode.trustFee'),
             dataIndex: 'trustFee',
             key: 'trustFee',
-            width: 130,
+            width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
-        // [AL] Tổng chi phí NK
+        // 37. [AL] Tổng chi phí nhập khẩu
         {
-            title: t('productCode.headerTotalImportCost'),
+            title: t('productCode.totalImportCost'),
             dataIndex: 'totalImportCost',
             key: 'totalImportCost',
-            width: 130,
+            width: 180,
             align: 'right',
             render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'}</span>
         },
-        // [AM] Tình trạng xuất VAT
+        // 38. [AM] Tình trạng xuất VAT
         {
-            title: t('productCode.headerVatExportStatus'),
+            title: t('productCode.vatExportStatus'),
             dataIndex: 'vatExportStatus',
             key: 'vatExportStatus',
-            width: 150
+            width: 180
         },
         {
             title: t('productCode.createdAt'),

@@ -335,8 +335,13 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 18. [R] Ảnh hàng hóa 1 */}
                         <Col xs={24}>
                             <Form.Item label="18. [R] Ảnh hàng hóa">
-                                <Upload {...uploadProps}>
-                                    <div><PlusOutlined /><div style={{ marginTop: 8 }}>Upload</div></div>
+                                <Upload
+                                    {...uploadProps}
+                                    maxCount={3 - existingImages.length}
+                                >
+                                    {fileList.length + existingImages.length < 3 && (
+                                        <div><PlusOutlined /><div style={{ marginTop: 8 }}>Upload</div></div>
+                                    )}
                                 </Upload>
                                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                                     {existingImages.map((img, idx) => (

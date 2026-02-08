@@ -75,6 +75,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                 loadEditData();
             } else {
                 form.resetFields();
+                form.setFieldsValue({ entryDate: dayjs() });
                 setFileList([]);
                 setExistingImages([]);
                 setTaggedFileList([]);

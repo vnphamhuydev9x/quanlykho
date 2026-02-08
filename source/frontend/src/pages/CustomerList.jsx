@@ -4,6 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, SyncOutlined, EyeOutlined, 
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../utils/axios';
 import * as XLSX from 'xlsx';
+import { useLocation } from 'react-router-dom';
 
 const { Option } = Select;
 
@@ -18,6 +19,7 @@ const CustomerList = () => {
     const [isViewMode, setIsViewMode] = useState(false);
     const [form] = Form.useForm();
     const [userRole, setUserRole] = useState('');
+    const location = useLocation();
 
     useEffect(() => {
         const userStr = localStorage.getItem('user_info');
@@ -96,6 +98,16 @@ const CustomerList = () => {
         fetchCustomers(pagination.current, pagination.pageSize, filters);
         fetchEmployees();
     }, []);
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        if (queryParams.get('action') === 'add') {
+            setEditingCustomer(null);
+            setIsViewMode(false);
+            form.resetFields();
+            setIsModalVisible(true);
+        }
+    }, [location.search]);
 
     const handleTableChange = (newPagination) => {
         fetchCustomers(newPagination.current, newPagination.pageSize, filters);

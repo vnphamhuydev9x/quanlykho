@@ -12,6 +12,7 @@ import CustomNumberInput from '../../components/CustomNumberInput';
 
 const { Option } = Select;
 const { TextArea } = Input;
+import { ReloadOutlined } from '@ant-design/icons';
 
 // Helper for layout: 3 columns per row
 const Col3 = ({ children }) => <Col xs={24} md={8}>{children}</Col>;
@@ -54,6 +55,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
             console.error("Failed to fetch customers");
         }
     };
+
+    // Auto-refresh when user returns to this tab
+    useEffect(() => {
+        const handleFocus = () => {
+            if (visible && currentUser && currentUser.type !== 'CUSTOMER') {
+                fetchCustomers();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [visible, currentUser]);
 
     // Upload
 
@@ -323,7 +336,23 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         {/* 2. [B] Mã khách hàng */}
                                         <Col3>
                                             <Form.Item name="customerId" hidden><Input /></Form.Item>
-                                            <Form.Item name="customerCodeInput" label={t('productCode.customerCode')} rules={[{ required: true, message: t('productCode.customerCodeRequired') }]}>
+                                            <Form.Item name="customerCodeInput" label={
+                                                <Space>
+                                                    {t('productCode.customerCode')}
+                                                    {currentUser && currentUser.type !== 'CUSTOMER' && (
+                                                        <Tooltip title={t('common.reload')}>
+                                                            <ReloadOutlined
+                                                                style={{ cursor: 'pointer', color: '#1890ff' }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    fetchCustomers();
+                                                                    message.success(t('common.reloaded'));
+                                                                }}
+                                                            />
+                                                        </Tooltip>
+                                                    )}
+                                                </Space>
+                                            } rules={[{ required: true, message: t('productCode.customerCodeRequired') }]}>
                                                 {currentUser && currentUser.type === 'CUSTOMER' ? (
                                                     <Input disabled />
                                                 ) : (
@@ -332,9 +361,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                         placeholder={t('productCode.selectCustomer')}
                                                         optionFilterProp="children"
                                                         filterOption={(input, option) =>
-                                                            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                                            (option?.labelProp ?? '').toLowerCase().includes(input.toLowerCase())
                                                         }
-                                                        onChange={(value) => {
+                                                        onSelect={(value) => {
+                                                            if (value === 'ADD_NEW_CUSTOMER') {
+                                                                window.open('/customers?action=add', '_blank');
+                                                                // Immediately reset the field to previous value or undefined
+                                                                // to prevent it from appearing in the input
+                                                                setTimeout(() => {
+                                                                    form.setFieldsValue({ customerCodeInput: undefined });
+                                                                }, 0);
+                                                                return;
+                                                            }
                                                             const cust = customers.find(c => c.username === value);
                                                             if (cust) {
                                                                 form.setFieldsValue({ customerId: cust.id });
@@ -342,10 +380,22 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                                 form.setFieldsValue({ customerId: null });
                                                             }
                                                         }}
-                                                        options={customers.map(c => ({
-                                                            value: c.username,
-                                                            label: `${c.username} - ${c.fullName}`,
-                                                        }))}
+                                                        options={[
+                                                            {
+                                                                value: 'ADD_NEW_CUSTOMER',
+                                                                label: (
+                                                                    <div style={{ color: '#1890ff', fontWeight: 'bold', borderBottom: '1px solid #f0f0f0', paddingBottom: '4px' }}>
+                                                                        <PlusOutlined /> {t('productCode.addNewCustomer')}
+                                                                    </div>
+                                                                ),
+                                                                labelProp: t('productCode.addNewCustomer') // For filtering
+                                                            },
+                                                            ...customers.map(c => ({
+                                                                value: c.username,
+                                                                label: `${c.username} - ${c.fullName}`,
+                                                                labelProp: `${c.username} ${c.fullName}`
+                                                            }))
+                                                        ]}
                                                     />
                                                 )}
                                             </Form.Item>

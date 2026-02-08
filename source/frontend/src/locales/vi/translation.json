@@ -187,7 +187,9 @@
         "add": "Thêm mới",
         "upload": "Tải lên",
         "prev": "Trước",
-        "next": "Tiếp"
+        "next": "Tiếp",
+        "reload": "Tải lại",
+        "reloaded": "Đã cập nhật dữ liệu mới nhất"
     },
     "productCode": {
         "title": "Quản lý Mã hàng",
@@ -291,6 +293,7 @@
         "entryDate": "1. [A] Ngày nhập kho",
         "entryDateRequired": "Vui lòng chọn ngày nhập kho",
         "customerCode": "2. [B] Mã khách hàng",
+        "addNewCustomer": "Thêm mới khách hàng",
         "customerCodeRequired": "Vui lòng nhập mã khách hàng",
         "orderCode": "3. [C] Mã đơn hàng",
         "orderCodeRequired": "Vui lòng nhập mã đơn hàng",

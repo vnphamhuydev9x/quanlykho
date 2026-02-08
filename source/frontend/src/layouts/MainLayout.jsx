@@ -265,8 +265,11 @@ const MainLayout = ({ children }) => {
 
     let menuItems = items;
     if (userType === 'CUSTOMER') {
-        menuItems = items.filter(item => item.key === 'product-codes');
+        menuItems = items.filter(item => item.key === '/' || item.key === 'product-codes');
     }
+
+    const currentKey = location.pathname + location.search;
+    const defaultOpenKeys = userType === 'CUSTOMER' ? ['product-codes'] : [];
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
@@ -303,7 +306,8 @@ const MainLayout = ({ children }) => {
                 <Menu
                     theme="light"
                     mode="inline"
-                    selectedKeys={[location.pathname]}
+                    selectedKeys={[currentKey]}
+                    defaultOpenKeys={defaultOpenKeys}
                     items={menuItems}
                 />
             </Sider>
@@ -328,7 +332,8 @@ const MainLayout = ({ children }) => {
                 <Menu
                     theme="light"
                     mode="inline"
-                    selectedKeys={[location.pathname]}
+                    selectedKeys={[currentKey]}
+                    defaultOpenKeys={defaultOpenKeys}
                     items={menuItems}
                     onClick={onClose}
                 />

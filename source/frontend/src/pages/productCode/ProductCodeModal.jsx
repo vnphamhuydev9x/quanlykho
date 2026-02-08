@@ -498,19 +498,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             </Form.Item>
                                         </Col3>
 
-                                        {/* 16. [P] Tình trạng hàng hoá */}
-                                        <Col3>
-                                            <Form.Item name="status" label={t('productCode.statusLabel')}>
-                                                <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
-                                                    <Option value="Kho TQ">{t('productCode.statusNhapKhoTQ')}</Option>
-                                                    <Option value="Đã xếp xe">{t('productCode.statusDaXepXe')}</Option>
-                                                    <Option value="Kho VN">{t('productCode.statusNhapKhoVN')}</Option>
-                                                    <Option value="Kiểm hoá">{t('productCode.statusKiemHoa')}</Option>
-                                                    <Option value="Đã giao, chưa thanh toán">{t('productCode.statusGiaoChuaThanhToan')}</Option>
-                                                    <Option value="đã giao, đã thanh toán">{t('productCode.statusGiaoDaThanhToan')}</Option>
-                                                </Select>
-                                            </Form.Item>
-                                        </Col3>
+
                                     </Row>
                                 ),
                             },
@@ -786,6 +774,28 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                     <Option value="Chưa xuất VAT">{t('productCode.vatChuaXuat')}</Option>
                                                     <Option value="đã xuất VAT , chưa đóng gói hs">{t('productCode.vatDaXuatChuaDongGoi')}</Option>
                                                     <Option value="đã xuất VAT. đã đóng gói hồ sơ">{t('productCode.vatDaXuatDaDongGoi')}</Option>
+                                                </Select>
+                                            </Form.Item>
+                                        </Col3>
+                                    </Row>
+                                ),
+                            },
+                            {
+                                key: '4',
+                                label: t('productCode.tabStatus'),
+                                children: (
+                                    <Row gutter={16}>
+                                        {/* 16. [P] Tình trạng hàng hoá */}
+                                        <Col3>
+                                            <Form.Item name="status" label={t('productCode.statusLabel')}>
+                                                <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
+                                                    <Option value="Nhập kho">{t('productCode.statusNhapKho')}</Option>
+                                                    <Option value="Chờ xếp xe">{t('productCode.statusChoXepXe')}</Option>
+                                                    <Option value="Xếp xe Trung Quốc">{t('productCode.statusXepXeTQ')}</Option>
+                                                    <Option value="Kiểm hóa">{t('productCode.statusKiemHoa')}</Option>
+                                                    <Option value="Chờ thông quan VN">{t('productCode.statusChoThongQuanVN')}</Option>
+                                                    <Option value="Đã thông quan">{t('productCode.statusDaThongQuan')}</Option>
+                                                    <Option value="Đã xếp xe">{t('productCode.statusDaXepXe')}</Option>
                                                 </Select>
                                             </Form.Item>
                                         </Col3>

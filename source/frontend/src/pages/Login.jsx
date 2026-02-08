@@ -46,7 +46,11 @@ const Login = () => {
             localStorage.setItem('access_token', token);
             localStorage.setItem('user_info', JSON.stringify(user));
 
-            navigate('/'); // Redirect to Dashboard
+            if (user && user.type === 'CUSTOMER') {
+                navigate('/product-codes');
+            } else {
+                navigate('/'); // Redirect to Dashboard
+            }
         } catch (error) {
             console.error('Login error:', error);
             if (error.response && error.response.data && error.response.data.code) {

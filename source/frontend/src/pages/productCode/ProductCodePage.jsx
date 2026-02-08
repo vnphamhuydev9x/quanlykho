@@ -279,7 +279,7 @@ const ProductCodePage = () => {
             key: 'transportRate',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
         },
         // 13. [M] Tổng cước TQ_HN
         {
@@ -288,7 +288,7 @@ const ProductCodePage = () => {
             key: 'totalTransportFeeEstimate',
             width: 180,
             align: 'right',
-            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'}</span>
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'}</span>
         },
         // 14. [N] Phí nội địa VN
         {
@@ -297,7 +297,7 @@ const ProductCodePage = () => {
             key: 'domesticFeeVN',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
         },
         // 15. [O] Ghi chú
         {
@@ -463,7 +463,7 @@ const ProductCodePage = () => {
             key: 'invoicePriceExport',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
         },
         // 30. [AE] Tổng giá trị lô hàng
         {
@@ -472,7 +472,7 @@ const ProductCodePage = () => {
             key: 'totalValueExport',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
         },
         // 31. [AF] Chính sách NK
         {
@@ -488,7 +488,7 @@ const ProductCodePage = () => {
             key: 'feeAmount',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
         },
         // 33. [AH] Ghi chú
         {
@@ -505,7 +505,7 @@ const ProductCodePage = () => {
             key: 'vatImportTax',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
         },
         // 35. [AJ] Thuế NK phải nộp
         {
@@ -514,7 +514,7 @@ const ProductCodePage = () => {
             key: 'importTax',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
         },
         // 36. [AK] Phí uỷ thác
         {
@@ -523,7 +523,7 @@ const ProductCodePage = () => {
             key: 'trustFee',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
         },
         // 37. [AL] Tổng chi phí nhập khẩu
         {
@@ -532,7 +532,7 @@ const ProductCodePage = () => {
             key: 'totalImportCost',
             width: 180,
             align: 'right',
-            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'}</span>
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'}</span>
         },
         // 38. [AM] Tình trạng xuất VAT
         {

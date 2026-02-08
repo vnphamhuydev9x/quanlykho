@@ -107,7 +107,7 @@ const MainLayout = ({ children }) => {
     useEffect(() => {
         if (userType === 'CUSTOMER') {
             fetchNotifications();
-            const interval = setInterval(fetchNotifications, 10000); // Poll every 10s
+            const interval = setInterval(fetchNotifications, 5000); // Poll every 5s
             return () => clearInterval(interval);
         }
     }, [userType]);

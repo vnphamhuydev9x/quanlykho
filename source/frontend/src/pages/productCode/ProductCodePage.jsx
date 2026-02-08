@@ -135,7 +135,7 @@ const ProductCodePage = () => {
 
     const columns = [
         {
-            title: 'ID',
+            title: t('productCode.headerID'),
             dataIndex: 'id',
             key: 'id',
             width: 70,
@@ -144,7 +144,7 @@ const ProductCodePage = () => {
             sorter: (a, b) => a.id - b.id,
         },
         {
-            title: t('productCode.customer') || 'Khách hàng',
+            title: t('productCode.customer'),
             key: 'customer',
             width: 200,
             fixed: 'left',
@@ -158,49 +158,49 @@ const ProductCodePage = () => {
             )
         },
         {
-            title: 'Tên đối tác',
+            title: t('productCode.headerPartner'),
             dataIndex: 'partnerName',
             key: 'partnerName',
             width: 150,
             ellipsis: true
         },
         {
-            title: 'Kho nhận',
+            title: t('productCode.headerWarehouse'),
             dataIndex: ['warehouse', 'name'],
             key: 'warehouse',
             width: 120
         },
         {
-            title: 'Loại hàng',
+            title: t('productCode.headerCategory'),
             dataIndex: ['category', 'name'],
             key: 'category',
             width: 120
         },
         // [A] Ngày nhập kho
         {
-            title: '[A] Ngày nhập',
+            title: t('productCode.headerEntryDate'),
             dataIndex: 'entryDate',
             key: 'entryDate',
             width: 110,
-            render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'
+            render: (date) => date ? new Date(date).toLocaleDateString(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN') : '-'
         },
         // [B] Mã khách hàng
         {
-            title: '[B] Mã KH',
+            title: t('productCode.headerCustomerCode'),
             dataIndex: 'customerCodeInput',
             key: 'customerCodeInput',
             width: 120
         },
         // [C] Mã đơn hàng
         {
-            title: '[C] Mã Đơn',
+            title: t('productCode.headerOrderCode'),
             dataIndex: 'orderCode',
             key: 'orderCode',
             width: 120
         },
         // [D] Tên mặt hàng
         {
-            title: '[D] Tên hàng',
+            title: t('productCode.headerProductName'),
             dataIndex: 'productName',
             key: 'productName',
             width: 180,
@@ -208,7 +208,7 @@ const ProductCodePage = () => {
         },
         // [E] Số Kiện + [F] Đơn vị
         {
-            title: '[E+F] Số kiện',
+            title: t('productCode.headerPackage'),
             key: 'package',
             width: 120,
             align: 'right',
@@ -220,79 +220,79 @@ const ProductCodePage = () => {
         },
         // [G] Trọng lượng
         {
-            title: '[G] Trọng lượng (Kg)',
+            title: t('productCode.headerWeight'),
             dataIndex: 'weight',
             key: 'weight',
             width: 120,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // [H] Khối lượng
         {
-            title: '[H] Khối lượng (m3)',
+            title: t('productCode.headerVolume'),
             dataIndex: 'volume',
             key: 'volume',
             width: 120,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // [I] Phí nội địa TQ
         {
-            title: '[I] Phí nội địa TQ',
+            title: t('productCode.headerDomesticFeeTQ'),
             dataIndex: 'domesticFeeTQ',
             key: 'domesticFeeTQ',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // [J] Phí kéo hàng TQ
         {
-            title: '[J] Phí kéo TQ',
+            title: t('productCode.headerHaulingFeeTQ'),
             dataIndex: 'haulingFeeTQ',
             key: 'haulingFeeTQ',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // [K] Tỷ giá
         {
-            title: '[K] Tỷ giá',
+            title: t('productCode.headerExchangeRate'),
             dataIndex: 'exchangeRate',
             key: 'exchangeRate',
             width: 100,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // [L] Đơn giá cước
         {
-            title: '[L] Đơn giá cước',
+            title: t('productCode.headerTransportRate'),
             dataIndex: 'transportRate',
             key: 'transportRate',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // [M] Tổng cước TQ_HN
         {
-            title: '[M] Tổng cước',
+            title: t('productCode.headerTotalTransportFee'),
             dataIndex: 'totalTransportFeeEstimate',
             key: 'totalTransportFeeEstimate',
             width: 130,
             align: 'right',
-            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'}</span>
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'}</span>
         },
         // [N] Phí nội địa VN
         {
-            title: '[N] Phí nội địa VN',
+            title: t('productCode.headerDomesticFeeVN'),
             dataIndex: 'domesticFeeVN',
             key: 'domesticFeeVN',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // [O] Ghi chú
         {
-            title: '[O] Ghi chú',
+            title: t('productCode.headerNotes'),
             dataIndex: 'notes',
             key: 'notes',
             width: 150,
@@ -300,20 +300,20 @@ const ProductCodePage = () => {
         },
         // [P] Trạng thái
         {
-            title: '[P] Trạng thái',
+            title: t('productCode.headerStatus'),
             dataIndex: 'status',
             key: 'status',
             width: 150,
             render: (status) => {
                 const statusConfig = {
-                    NHAP_KHO_TQ: { color: 'blue', label: 'Nhập kho TQ' },
-                    CHO_XEP_XE: { color: 'orange', label: 'Chờ xếp xe' },
-                    DA_XEP_XE: { color: 'cyan', label: 'Đã xếp xe' },
-                    KIEM_HOA: { color: 'purple', label: 'Kiểm hóa' },
-                    CHO_THONG_QUAN_VN: { color: 'magenta', label: 'Chờ thông quan VN' },
-                    NHAP_KHO_VN: { color: 'geekblue', label: 'Nhập kho VN' },
-                    XUAT_THIEU: { color: 'red', label: 'Hàng không tên (Xuất thiếu)' },
-                    XUAT_DU: { color: 'green', label: 'Đã xuất kho' }
+                    NHAP_KHO_TQ: { color: 'blue', label: t('productCode.statusNhapKhoTQ') },
+                    CHO_XEP_XE: { color: 'orange', label: t('productCode.statusChoXepXe') },
+                    DA_XEP_XE: { color: 'cyan', label: t('productCode.statusDaXepXe') },
+                    KIEM_HOA: { color: 'purple', label: t('productCode.statusKiemHoa') },
+                    CHO_THONG_QUAN_VN: { color: 'magenta', label: t('productCode.statusChoThongQuanVN') },
+                    NHAP_KHO_VN: { color: 'geekblue', label: t('productCode.statusNhapKhoVN') },
+                    XUAT_THIEU: { color: 'red', label: t('productCode.statusXuatThieu') },
+                    XUAT_DU: { color: 'green', label: t('productCode.statusXuatDu') }
                 };
                 const config = statusConfig[status] || { color: 'default', label: status };
                 return <Tag color={config.color}>{config.label}</Tag>;
@@ -321,7 +321,7 @@ const ProductCodePage = () => {
         },
         // [Q] Ảnh hàng hóa
         {
-            title: '[Q] Ảnh hàng hóa',
+            title: t('productCode.headerImages'),
             key: 'images',
             width: 100,
             render: (_, record) => {
@@ -344,21 +344,21 @@ const ProductCodePage = () => {
         },
         // [S] Tem chính
         {
-            title: '[S] Tem chính',
+            title: t('productCode.headerMainTag'),
             dataIndex: 'mainTag',
             key: 'mainTag',
             width: 120
         },
         // [T] Tem phụ
         {
-            title: '[T] Tem phụ',
+            title: t('productCode.headerSubTag'),
             dataIndex: 'subTag',
             key: 'subTag',
             width: 120
         },
         // [U] Ảnh tem
         {
-            title: '[U] Ảnh tem',
+            title: t('productCode.headerTaggedImages'),
             key: 'taggedImages',
             width: 100,
             render: (_, record) => {
@@ -380,7 +380,7 @@ const ProductCodePage = () => {
         },
         // [V] Số lượng SP
         {
-            title: '[V] SL SP',
+            title: t('productCode.headerProductQuantity'),
             dataIndex: 'productQuantity',
             key: 'productQuantity',
             width: 100,
@@ -388,14 +388,14 @@ const ProductCodePage = () => {
         },
         // [W] Quy cách
         {
-            title: '[W] Quy cách',
+            title: t('productCode.headerSpecification'),
             dataIndex: 'specification',
             key: 'specification',
             width: 120
         },
         // [X] Mô tả SP
         {
-            title: '[X] Mô tả',
+            title: t('productCode.headerProductDescription'),
             dataIndex: 'productDescription',
             key: 'productDescription',
             width: 150,
@@ -403,35 +403,35 @@ const ProductCodePage = () => {
         },
         // [Y] Nhãn hiệu
         {
-            title: '[Y] Nhãn hiệu',
+            title: t('productCode.headerBrand'),
             dataIndex: 'brand',
             key: 'brand',
             width: 120
         },
         // [Z] MST người bán
         {
-            title: '[Z] MST Bán',
+            title: t('productCode.headerSupplierTaxCode'),
             dataIndex: 'supplierTaxCode',
             key: 'supplierTaxCode',
             width: 120
         },
         // [AA] Tên cty bán
         {
-            title: '[AA] Tên Cty Bán',
+            title: t('productCode.headerSupplierName'),
             dataIndex: 'supplierName',
             key: 'supplierName',
             width: 150
         },
         // [AB] Nhu cầu khai báo
         {
-            title: '[AB] Nhu cầu KB',
+            title: t('productCode.headerDeclarationNeed'),
             dataIndex: 'declarationNeed',
             key: 'declarationNeed',
             width: 120
         },
         // [AC] SL khai báo
         {
-            title: '[AC] SL KB',
+            title: t('productCode.headerDeclarationQuantity'),
             dataIndex: 'declarationQuantity',
             key: 'declarationQuantity',
             width: 100,
@@ -439,41 +439,41 @@ const ProductCodePage = () => {
         },
         // [AD] Giá xuất hóa đơn
         {
-            title: '[AD] Giá xuất HĐ',
+            title: t('productCode.headerInvoicePrice'),
             dataIndex: 'invoicePriceExport',
             key: 'invoicePriceExport',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // [AE] Tổng giá trị
         {
-            title: '[AE] Tổng giá trị',
+            title: t('productCode.headerTotalValue'),
             dataIndex: 'totalValueExport',
             key: 'totalValueExport',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('de-DE').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // [AF] Chính sách NK
         {
-            title: '[AF] Chính sách NK',
+            title: t('productCode.headerImportPolicy'),
             dataIndex: 'importPolicy',
             key: 'importPolicy',
             width: 150
         },
         // [AG] Phí phải nộp
         {
-            title: '[AG] Phí khác',
+            title: t('productCode.headerOtherFee'),
             dataIndex: 'otherFee',
             key: 'otherFee',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // [AH] Ghi chú khác
         {
-            title: '[AH] Ghi chú khác',
+            title: t('productCode.headerOtherNotes'),
             dataIndex: 'otherNotes',
             key: 'otherNotes',
             width: 150,
@@ -481,62 +481,62 @@ const ProductCodePage = () => {
         },
         // [AI] Thuế VAT NK
         {
-            title: '[AI] Thuế VAT NK',
+            title: t('productCode.headerVatImportTax'),
             dataIndex: 'vatImportTax',
             key: 'vatImportTax',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // [AJ] Thuế NK
         {
-            title: '[AJ] Thuế NK',
+            title: t('productCode.headerImportTax'),
             dataIndex: 'importTax',
             key: 'importTax',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // [AK] Phí ủy thác
         {
-            title: '[AK] Phí ủy thác',
+            title: t('productCode.headerTrustFee'),
             dataIndex: 'trustFee',
             key: 'trustFee',
             width: 130,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // [AL] Tổng chi phí NK
         {
-            title: '[AL] Tổng chi phí NK',
+            title: t('productCode.headerTotalImportCost'),
             dataIndex: 'totalImportCost',
             key: 'totalImportCost',
             width: 130,
             align: 'right',
-            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'}</span>
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'}</span>
         },
         // [AM] Tình trạng xuất VAT
         {
-            title: '[AM] Tình trạng VAT',
+            title: t('productCode.headerVatExportStatus'),
             dataIndex: 'vatExportStatus',
             key: 'vatExportStatus',
             width: 150
         },
         {
-            title: t('productCode.createdAt') || 'Ngày tạo',
+            title: t('productCode.createdAt'),
             dataIndex: 'createdAt',
             key: 'createdAt',
             width: 120,
-            render: (date) => new Date(date).toLocaleDateString('vi-VN')
+            render: (date) => new Date(date).toLocaleDateString(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN')
         },
         {
-            title: t('productCode.actions') || 'Thao tác',
+            title: t('productCode.actions'),
             key: 'actions',
             width: 100,
             fixed: 'right',
             render: (_, record) => (
                 <Space size="middle">
-                    <Tooltip title={t('productCode.edit') || 'Sửa'}>
+                    <Tooltip title={t('productCode.edit')}>
                         <Button
                             type="text"
                             icon={<EditOutlined />}
@@ -544,12 +544,12 @@ const ProductCodePage = () => {
                         />
                     </Tooltip>
                     <Popconfirm
-                        title={t('productCode.confirmDelete') || 'Bạn có chắc muốn xóa?'}
+                        title={t('productCode.confirmDelete')}
                         onConfirm={() => handleDelete(record.id)}
-                        okText={t('productCode.yes') || 'Có'}
-                        cancelText={t('productCode.no') || 'Không'}
+                        okText={t('productCode.yes')}
+                        cancelText={t('productCode.no')}
                     >
-                        <Tooltip title={t('productCode.delete') || 'Xóa'}>
+                        <Tooltip title={t('productCode.delete')}>
                             <Button type="text" danger icon={<DeleteOutlined />} />
                         </Tooltip>
                     </Popconfirm>

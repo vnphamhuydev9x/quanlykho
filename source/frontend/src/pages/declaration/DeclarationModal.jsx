@@ -214,7 +214,7 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                                 <Form.Item name="weight" noStyle>
                                     <InputNumber style={{ width: 'calc(100% - 40px)' }} min={0} step={0.01} disabled={isViewMode} />
                                 </Form.Item>
-                                <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa' }} placeholder="kg" disabled />
+                                <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kg" disabled />
                             </Space.Compact>
                         </Form.Item>
                         {/* [G] Khối lượng -> 5. [E] */}
@@ -223,7 +223,7 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                                 <Form.Item name="volume" noStyle>
                                     <InputNumber style={{ width: 'calc(100% - 40px)' }} min={0} step={0.001} disabled={isViewMode} />
                                 </Form.Item>
-                                <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none', backgroundColor: '#fafafa' }} placeholder="m³" disabled />
+                                <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="m³" disabled />
                             </Space.Compact>
                         </Form.Item>
                         {/* [H] Nguồn cung cấp thông tin -> 6. [F] */}
@@ -272,7 +272,7 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         {/* [N] Tổng cước (Formula) -> 12. [L] */}
                         <Form.Item label="12. [L] Tổng cước TQ_HN (Tạm tính)">
                             <Form.Item name="totalTransportFeeEstimate" noStyle>
-                                <InputNumber style={{ width: '100%', backgroundColor: '#f6ffed', color: '#389e0d', fontWeight: 'bold' }} disabled formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} disabled className="bg-gray-100" formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
                             </Form.Item>
                         </Form.Item>
 
@@ -379,7 +379,7 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         {/* [AD] Trị giá (Formula) -> 30. [AD] */}
                         <Form.Item label="30. [AD] Trị giá (=AA*AC)">
                             <Form.Item name="value" noStyle>
-                                <InputNumber style={{ width: '100%', backgroundColor: '#f6ffed', fontWeight: 'bold' }} disabled formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                                <InputNumber style={{ width: '100%' }} disabled className="bg-gray-100" formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
                             </Form.Item>
                         </Form.Item>
                         {/* [AE] Số kiện -> 31. [AE] */}

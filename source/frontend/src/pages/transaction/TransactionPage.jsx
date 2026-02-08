@@ -154,9 +154,9 @@ const TransactionPage = () => {
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
-            XLSX.writeFile(workbook, "Danh_Sach_Giao_Dich.xlsx");
+            XLSX.writeFile(workbook, t('transaction.exportFilename'));
 
-            message.success(t('common.exportSuccess') || 'Export Excel successful');
+            message.success(t('common.exportSuccess'));
         } catch (error) {
             console.error("Export error", error);
             message.error(t('error.UNKNOWN'));
@@ -191,7 +191,7 @@ const TransactionPage = () => {
             align: 'right',
             render: (amount) => (
                 <Typography.Text strong style={{ color: '#52c41a' }}>
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)}
+                    {new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(amount)}
                 </Typography.Text>
             )
         },
@@ -220,7 +220,7 @@ const TransactionPage = () => {
             title: t('common.createdAt'),
             dataIndex: 'createdAt',
             key: 'createdAt',
-            render: (date) => moment(date).format('DD/MM/YYYY HH:mm')
+            render: (date) => moment(date).format(t('common.id') === 'ID' ? 'DD/MM/YYYY HH:mm' : 'YYYY-MM-DD HH:mm')
         },
         {
             title: t('common.action'),
@@ -229,11 +229,11 @@ const TransactionPage = () => {
                 <Space size="middle">
                     {userRole === 'ADMIN' && record.status === 'SUCCESS' && (
                         <Popconfirm
-                            title={t('common.confirmDelete')} // Actually "Cancel" confirmation
-                            description="Bạn có chắc muốn HỦY giao dịch này không?"
+                            title={t('common.confirmDelete')}
+                            description={t('transaction.confirmCancelDescription')}
                             onConfirm={() => handleCancelTransaction(record.id)}
-                            okText="Yes"
-                            cancelText="No"
+                            okText={t('productCode.yes')}
+                            cancelText={t('productCode.no')}
                         >
                             <Tooltip title={t('transaction.cancelAction')}>
                                 <Button danger icon={<CloseCircleOutlined />} />
@@ -260,7 +260,7 @@ const TransactionPage = () => {
                                     onClick={handleExport}
                                     style={{ backgroundColor: '#217346', color: '#fff', borderColor: '#217346' }}
                                 >
-                                    {t('common.exportExcel') || "Export Excel"}
+                                    {t('common.exportExcel')}
                                 </Button>
                                 <Button
                                     type="primary"

@@ -66,7 +66,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             setCategories(categoriesRes.data?.items || categoriesRes.items || []);
             setDeclarations(declarationsRes.data?.items || declarationsRes.items || []);
         } catch (error) {
-            message.error(t('common.loadError') || 'Lỗi khi tải dữ liệu');
+            message.error(t('common.loadError'));
         } finally {
             setLoading(false);
         }
@@ -88,7 +88,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             });
             setTotalAmount(data.totalImportCost || 0); // Set total amount on load
         } catch (error) {
-            message.error(t('common.loadError') || 'Lỗi khi tải dữ liệu');
+            message.error(t('common.loadError'));
         }
     };
 
@@ -107,11 +107,11 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             if (editingRecord) {
                 await productCodeService.update(editingRecord.id, submitData);
                 productCodeId = editingRecord.id;
-                message.success(t('productCode.updateSuccess') || 'Cập nhật thành công');
+                message.success(t('productCode.updateSuccess'));
             } else {
                 const response = await productCodeService.create(submitData);
                 productCodeId = response.data.id;
-                message.success(t('productCode.createSuccess') || 'Tạo mới thành công');
+                message.success(t('productCode.createSuccess'));
             }
 
             if (fileList.length > 0) {
@@ -130,11 +130,11 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             onClose(true);
         } catch (error) {
             if (error.errorFields) {
-                message.error(t('common.validationError') || 'Vui lòng kiểm tra lại thông tin');
+                message.error(t('common.validationError'));
             } else if (error.response && error.response.data && error.response.data.message) {
                 message.error(error.response.data.message);
             } else {
-                message.error(t('common.saveError') || 'Lỗi khi lưu dữ liệu');
+                message.error(t('common.saveError'));
             }
         } finally {
             setSubmitting(false);
@@ -181,11 +181,15 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             return parseFloat(val) || 0;
         };
 
-        // 1. [M] Total Transport Fee TQ_HN = [L] Transport Rate * [H] Volume
-        // Note: Volume [H] is strictly defined as m3 in analysis, but input is defined as STRING. Parsing it.
-        const transportRate = getVal('transportRate'); // [L]
+        // 1. [M] Total Transport Fee TQ_HN = Max( [L] transportRate * [G] weight, [L1] transportRateVolume * [H] volume )
+        const transportRate = getVal('transportRate'); // [L] (Kg)
+        const transportRateVolume = getVal('transportRateVolume'); // [L1] (m3)
+        const weight = getVal('weight'); // [G]
         const volume = getVal('volume'); // [H]
-        const val_M = transportRate * volume;
+
+        const feeByWeight = weight * transportRate;
+        const feeByVolume = volume * transportRateVolume;
+        const val_M = Math.max(feeByWeight, feeByVolume);
 
         if (allValues.totalTransportFeeEstimate !== val_M) {
             updates.totalTransportFeeEstimate = val_M;
@@ -241,7 +245,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
     return (
         <Modal
-            title={editingRecord ? (t('productCode.edit') || 'Sửa Mã hàng') : (t('productCode.add') || 'Thêm Mã hàng')}
+            title={editingRecord ? t('productCode.edit') : t('productCode.add')}
             open={visible}
             onOk={handleSubmit}
             onCancel={onClose}
@@ -257,22 +261,22 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                     <Divider orientation="left" style={{ borderColor: '#d9d9d9', color: '#666', fontSize: '12px' }}>{t('productCode.systemInfo')}</Divider>
                     <Row gutter={16}>
                         <Col3>
-                            <Form.Item name="customerId" label="Khách hàng (System)" rules={[{ required: true }]}>
-                                <Select showSearch placeholder="Chọn khách hàng" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
+                            <Form.Item name="customerId" label={t('productCode.customerSystem')} rules={[{ required: true }]}>
+                                <Select showSearch placeholder={t('productCode.selectCustomer')} filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
                                     {customers.map(c => <Option key={c.id} value={c.id}>{`${c.fullName} (${c.username})`}</Option>)}
                                 </Select>
                             </Form.Item>
                         </Col3>
                         <Col3>
-                            <Form.Item name="warehouseId" label="Kho nhận (System)">
-                                <Select showSearch placeholder="Chọn kho" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
+                            <Form.Item name="warehouseId" label={t('productCode.warehouseSystem')}>
+                                <Select showSearch placeholder={t('productCode.selectWarehouse')} filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
                                     {warehouses.map(w => <Option key={w.id} value={w.id}>{w.name}</Option>)}
                                 </Select>
                             </Form.Item>
                         </Col3>
                         <Col3>
-                            <Form.Item name="categoryId" label="Loại hàng (System)">
-                                <Select showSearch placeholder="Chọn loại hàng" filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
+                            <Form.Item name="categoryId" label={t('productCode.categorySystem')}>
+                                <Select showSearch placeholder={t('productCode.selectCategory')} filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}>
                                     {categories.map(c => <Option key={c.id} value={c.id}>{c.name}</Option>)}
                                 </Select>
                             </Form.Item>
@@ -331,56 +335,124 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 7. [G] Trọng lượng */}
                         <Col3>
                             <Form.Item name="weight" label={t('productCode.weight')} rules={[{ required: true, message: t('productCode.weightRequired') }]}>
-                                <Input />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    step={0.01}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
                         {/* 8. [H] Khối lượng */}
                         <Col3>
                             <Form.Item name="volume" label={t('productCode.volume')} rules={[{ required: true, message: t('productCode.volumeRequired') }]}>
-                                <Input />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    step={0.001}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
                         {/* 9. [I] Phí nội địa TQ */}
                         <Col3>
                             <Form.Item name="domesticFeeTQ" label={t('productCode.domesticFeeTQ')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    step={0.01}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
                         {/* 10. [J] Phí kéo hàng TQ */}
                         <Col3>
                             <Form.Item name="haulingFeeTQ" label={t('productCode.haulingFeeTQ')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    step={0.01}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
                         {/* 11. [K] Tỷ giá */}
                         <Col3>
                             <Form.Item name="exchangeRate" label={t('productCode.exchangeRateLabel')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    step={0.01}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
-                        {/* 12. [L] Đơn giá cước TQ_HN */}
+                        {/* 12. [L] Đơn giá cước TQ_HN (Kg) */}
                         <Col3>
-                            <Form.Item name="transportRate" label={t('productCode.transportRate')} rules={[{ required: true, message: t('productCode.transportRateRequired') }]}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                            <Form.Item label={t('productCode.transportRate') + " (Kg)"}>
+                                <Form.Item name="transportRate" noStyle rules={[{ required: true, message: t('productCode.transportRateRequired') }]}>
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        min={0}
+                                        step={0.01}
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    />
+                                </Form.Item>
+                            </Form.Item>
+                        </Col3>
+
+                        {/* 12.1. [L1] Đơn giá cước TQ_HN (m3) */}
+                        <Col3>
+                            <Form.Item label={t('productCode.transportRate') + " (m3)"}>
+                                <Form.Item name="transportRateVolume" noStyle>
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        min={0}
+                                        step={0.01}
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    />
+                                </Form.Item>
                             </Form.Item>
                         </Col3>
 
                         {/* 13. [M] Tổng cước TQ_HN */}
                         <Col3>
-                            <Form.Item name="totalTransportFeeEstimate" label={t('productCode.totalTransportFeeEstimate')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            <Form.Item label={t('productCode.totalTransportFeeEstimate')}>
+                                <Form.Item name="totalTransportFeeEstimate" noStyle>
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        step={0.01}
+                                        disabled
+                                        className="bg-gray-100"
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    />
+                                </Form.Item>
                             </Form.Item>
                         </Col3>
 
                         {/* 14. [N] Phí nội địa VN */}
                         <Col3>
                             <Form.Item name="domesticFeeVN" label={t('productCode.domesticFeeVN')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    step={0.01}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
@@ -399,8 +471,8 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                     <Option value="Đã xếp xe">{t('productCode.statusDaXepXe')}</Option>
                                     <Option value="Kho VN">{t('productCode.statusNhapKhoVN')}</Option>
                                     <Option value="Kiểm hoá">{t('productCode.statusKiemHoa')}</Option>
-                                    <Option value="Đã giao, chưa thanh toán">Đã giao, chưa thanh toán</Option>
-                                    <Option value="đã giao, đã thanh toán">đã giao, đã thanh toán</Option>
+                                    <Option value="Đã giao, chưa thanh toán">{t('productCode.statusGiaoChuaThanhToan')}</Option>
+                                    <Option value="đã giao, đã thanh toán">{t('productCode.statusGiaoDaThanhToan')}</Option>
                                 </Select>
                             </Form.Item>
                         </Col3>
@@ -437,7 +509,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         <Col xs={24}>
                             <Form.Item label={t('productCode.taggedImage')}>
                                 <Upload {...taggedUploadProps}>
-                                    <div><PlusOutlined /><div style={{ marginTop: 8 }}>Upload</div></div>
+                                    <div><PlusOutlined /><div style={{ marginTop: 8 }}>{t('common.add')}</div></div>
                                 </Upload>
                                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                                     {existingTaggedImages.map((img, idx) => (
@@ -450,7 +522,12 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 21. [V] Số Lượng sản phẩm */}
                         <Col3>
                             <Form.Item name="productQuantity" label={t('productCode.productQuantity')}>
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
@@ -499,21 +576,41 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 28. [AC] Số lượng khai báo */}
                         <Col3>
                             <Form.Item name="declarationQuantity" label={t('productCode.declarationQuantity')}>
-                                <InputNumber style={{ width: '100%' }} />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
                         {/* 29. [AD] Giá xuất hoá đơn */}
                         <Col3>
                             <Form.Item name="invoicePriceExport" label={t('productCode.invoicePriceExport')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    step={0.01}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
                         {/* 30. [AE] Tổng giá trị lô hàng */}
                         <Col3>
-                            <Form.Item name="totalValueExport" label={t('productCode.totalValueExport')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            <Form.Item label={t('productCode.totalValueExport')}>
+                                <Form.Item name="totalValueExport" noStyle>
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        step={0.01}
+                                        disabled
+                                        className="bg-gray-100"
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    />
+                                </Form.Item>
                             </Form.Item>
                         </Col3>
 
@@ -527,7 +624,13 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         {/* 32. [AG] Phí phải nộp */}
                         <Col3>
                             <Form.Item name="otherFee" label={t('productCode.otherFeeLabel')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    step={0.01}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
@@ -540,29 +643,62 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                         {/* 34. [AI] Thuế VAT nhập khẩu */}
                         <Col3>
-                            <Form.Item name="vatImportTax" label={t('productCode.vatImportTax')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            <Form.Item label={t('productCode.vatImportTax')}>
+                                <Form.Item name="vatImportTax" noStyle>
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        step={0.01}
+                                        disabled
+                                        className="bg-gray-100"
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    />
+                                </Form.Item>
                             </Form.Item>
                         </Col3>
 
                         {/* 35. [AJ] Thuế NK phải nộp */}
                         <Col3>
                             <Form.Item name="importTax" label={t('productCode.importTaxLabel')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} />
+                                <InputNumber
+                                    style={{ width: '100%' }}
+                                    min={0}
+                                    step={0.01}
+                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                />
                             </Form.Item>
                         </Col3>
 
                         {/* 36. [AK] Phí uỷ thác */}
                         <Col3>
-                            <Form.Item name="trustFee" label={t('productCode.trustFee')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            <Form.Item label={t('productCode.trustFee')}>
+                                <Form.Item name="trustFee" noStyle>
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        step={0.01}
+                                        disabled
+                                        className="bg-gray-100"
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    />
+                                </Form.Item>
                             </Form.Item>
                         </Col3>
 
                         {/* 37. [AL] Tổng chi phí nhập khẩu */}
                         <Col3>
-                            <Form.Item name="totalImportCost" label={t('productCode.totalImportCost')}>
-                                <InputNumber style={{ width: '100%' }} step={0.01} disabled className="bg-gray-100" />
+                            <Form.Item label={t('productCode.totalImportCost')}>
+                                <Form.Item name="totalImportCost" noStyle>
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        step={0.01}
+                                        disabled
+                                        className="bg-gray-100"
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    />
+                                </Form.Item>
                             </Form.Item>
                         </Col3>
 
@@ -570,9 +706,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                         <Col3>
                             <Form.Item name="vatExportStatus" label={t('productCode.vatExportStatus')}>
                                 <Select placeholder={t('productCode.selectStatus')}>
-                                    <Option value="Chưa xuất VAT">Chưa xuất VAT</Option>
-                                    <Option value="đã xuất VAT , chưa đóng gói hs">đã xuất VAT, chưa đóng gói hs</Option>
-                                    <Option value="đã xuất VAT. đã đóng gói hồ sơ">đã xuất VAT. đã đóng gói hồ sơ</Option>
+                                    <Option value="Chưa xuất VAT">{t('productCode.vatChuaXuat')}</Option>
+                                    <Option value="đã xuất VAT , chưa đóng gói hs">{t('productCode.vatDaXuatChuaDongGoi')}</Option>
+                                    <Option value="đã xuất VAT. đã đóng gói hồ sơ">{t('productCode.vatDaXuatDaDongGoi')}</Option>
                                 </Select>
                             </Form.Item>
                         </Col3>

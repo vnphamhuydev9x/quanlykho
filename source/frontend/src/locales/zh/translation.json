@@ -180,7 +180,10 @@
         "exportError": "导出Excel时出错",
         "loadError": "加载数据时出错",
         "validationError": "请检查输入信息",
-        "add": "新增"
+        "add": "新增",
+        "upload": "上传",
+        "prev": "上一步",
+        "next": "下一步"
     },
     "productCode": {
         "title": "货物代码管理",
@@ -276,6 +279,9 @@
         "warehouseSystem": "接收仓库 (系统)",
         "categorySystem": "货物类型 (系统)",
         "detailInfo": "详细信息（按Excel）",
+        "tabGeneral": "基本信息",
+        "tabProduct": "货物信息",
+        "tabDeclaration": "报关信息",
         "entryDate": "1. [A] 入库日期",
         "entryDateRequired": "请选择入库日期",
         "customerCode": "2. [B] 客户代码",
@@ -289,6 +295,9 @@
         "packageUnit": "6. [F] 单位",
         "packageUnitRequired": "请选择单位",
         "selectUnit": "选择单位",
+        "unitThungCotton": "纸箱",
+        "unitPallet": "托盘",
+        "unitChiec": "件",
         "weight": "7. [G] 重量 (Kg)",
         "weightRequired": "请输入重量",
         "volume": "8. [H] 体积 (m3)",
@@ -365,7 +374,9 @@
         "headerImportTax": "[AJ] 进口税",
         "headerTrustFee": "[AK] 委托费",
         "headerTotalImportCost": "[AL] 进口总成本",
-        "headerVatExportStatus": "[AM] 增值税状态"
+        "headerVatExportStatus": "[AM] 增值税状态",
+        "summaryTotalPackages": "总件数",
+        "summaryTotalWeight": "总重量"
     },
     "validation": {
         "required": "此项必填！",

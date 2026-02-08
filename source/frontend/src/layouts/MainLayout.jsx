@@ -48,6 +48,7 @@ const MainLayout = ({ children }) => {
     // Get user info and check mustChangePassword
     const token = localStorage.getItem('access_token');
     let userRole = 'USER';
+    let userType = 'USER';
     let mustChangePassword = false;
     let username = 'User';
 
@@ -55,6 +56,7 @@ const MainLayout = ({ children }) => {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             userRole = payload.role;
+            userType = payload.type;
             mustChangePassword = payload.mustChangePassword;
             username = payload.username || 'User';
         } catch (e) {
@@ -253,6 +255,11 @@ const MainLayout = ({ children }) => {
         */
     ].filter(Boolean);
 
+    let menuItems = items;
+    if (userType === 'CUSTOMER') {
+        menuItems = items.filter(item => item.key === 'product-codes');
+    }
+
     return (
         <Layout style={{ minHeight: '100vh' }}>
             {/* Desktop Sider */}
@@ -289,7 +296,7 @@ const MainLayout = ({ children }) => {
                     theme="light"
                     mode="inline"
                     selectedKeys={[location.pathname]}
-                    items={items}
+                    items={menuItems}
                 />
             </Sider>
             {/* Mobile Drawer */}
@@ -314,7 +321,7 @@ const MainLayout = ({ children }) => {
                     theme="light"
                     mode="inline"
                     selectedKeys={[location.pathname]}
-                    items={items}
+                    items={menuItems}
                     onClick={onClose}
                 />
             </Drawer>

@@ -8,7 +8,7 @@ import ProductCodeModal from './ProductCodeModal';
 import * as XLSX from 'xlsx';
 
 const ProductCodePage = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
     const [data, setData] = useState([]);
@@ -124,19 +124,19 @@ const ProductCodePage = () => {
         try {
             const response = await productCodeService.exportData();
             const exportData = response.data.map(item => ({
-                'ID': item.id,
-                'Khách hàng': item.customer?.fullName || '',
-                'Tên đối tác': item.partnerName,
-                'Kho nhận': item.warehouse?.name || '',
-                'Loại hàng': item.category?.name || '',
-                'Tên sản phẩm': item.productName,
-                'Tỷ giá': item.exchangeRate,
-                'Tổng cân (kg)': item.totalWeight,
-                'Tổng khối (m³)': item.totalVolume,
-                'Tổng kiện': item.totalPackages,
-                'Thành tiền': item.totalAmount,
-                'Lợi nhuận': item.profit,
-                'Ngày tạo': new Date(item.createdAt).toLocaleDateString('vi-VN')
+                [t('common.id')]: item.id,
+                [t('productCode.customer')]: item.customer?.fullName || '',
+                [t('productCode.partnerName')]: item.partnerName,
+                [t('productCode.warehouse')]: item.warehouse?.name || '',
+                [t('productCode.category')]: item.category?.name || '',
+                [t('productCode.productNameLabel')]: item.productName,
+                [t('productCode.exchangeRateLabel')]: item.exchangeRate,
+                [t('productCode.weight')]: item.totalWeight,
+                [t('productCode.volume')]: item.totalVolume,
+                [t('productCode.packageCount')]: item.totalPackages,
+                [t('productCode.totalAmount')]: item.totalAmount,
+                [t('productCode.profit')]: item.profit,
+                [t('productCode.createdAt')]: new Date(item.createdAt).toLocaleDateString(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN')
             }));
 
             const ws = XLSX.utils.json_to_sheet(exportData);
@@ -165,7 +165,9 @@ const ProductCodePage = () => {
             dataIndex: 'entryDate',
             key: 'entryDate',
             width: 150,
-            render: (date) => date ? new Date(date).toLocaleDateString(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN') : '-'
+            key: 'entryDate',
+            width: 150,
+            render: (date) => date ? new Date(date).toLocaleDateString(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN') : '-'
         },
         // 2. [B] Mã khách hàng
         {
@@ -211,7 +213,7 @@ const ProductCodePage = () => {
             key: 'weight',
             width: 120,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // 8. [H] Khối lượng
         {
@@ -220,7 +222,7 @@ const ProductCodePage = () => {
             key: 'volume',
             width: 120,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // 9. [I] Phí nội địa TQ
         {
@@ -229,7 +231,7 @@ const ProductCodePage = () => {
             key: 'domesticFeeRMB',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // 10. [J] Phí kéo hàng TQ
         {
@@ -238,7 +240,7 @@ const ProductCodePage = () => {
             key: 'haulingFeeRMB',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // 11. [K] Tỷ giá
         {
@@ -247,7 +249,7 @@ const ProductCodePage = () => {
             key: 'exchangeRate',
             width: 120,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // 12. [L] Đơn giá cước TQ_HN
         {
@@ -256,7 +258,7 @@ const ProductCodePage = () => {
             key: 'transportRate',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // 13. [M] Tổng cước TQ_HN
         {
@@ -265,7 +267,7 @@ const ProductCodePage = () => {
             key: 'totalTransportFeeEstimate',
             width: 180,
             align: 'right',
-            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'}</span>
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'}</span>
         },
         // 14. [N] Phí nội địa VN
         {
@@ -274,7 +276,7 @@ const ProductCodePage = () => {
             key: 'domesticFeeVN',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // 15. [O] Ghi chú
         {
@@ -440,7 +442,7 @@ const ProductCodePage = () => {
             key: 'invoicePriceExport',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // 30. [AE] Tổng giá trị lô hàng
         {
@@ -449,7 +451,7 @@ const ProductCodePage = () => {
             key: 'totalValueExport',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
         // 31. [AF] Chính sách NK
         {
@@ -465,7 +467,7 @@ const ProductCodePage = () => {
             key: 'feeAmount',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // 33. [AH] Ghi chú
         {
@@ -482,7 +484,7 @@ const ProductCodePage = () => {
             key: 'vatImportTax',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // 35. [AJ] Thuế NK phải nộp
         {
@@ -491,7 +493,7 @@ const ProductCodePage = () => {
             key: 'importTax',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // 36. [AK] Phí uỷ thác
         {
@@ -500,7 +502,7 @@ const ProductCodePage = () => {
             key: 'trustFee',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'
+            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'
         },
         // 37. [AL] Tổng chi phí nhập khẩu
         {
@@ -509,7 +511,7 @@ const ProductCodePage = () => {
             key: 'totalImportCost',
             width: 180,
             align: 'right',
-            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: t('common.id') === 'ID' ? 'VND' : 'CNY' }).format(val) : '-'}</span>
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN', { style: 'currency', currency: i18n.language.startsWith('vi') ? 'VND' : 'CNY' }).format(val) : '-'}</span>
         },
         // 38. [AM] Tình trạng xuất VAT
         {
@@ -523,7 +525,9 @@ const ProductCodePage = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             width: 120,
-            render: (date) => new Date(date).toLocaleDateString(t('common.id') === 'ID' ? 'vi-VN' : 'zh-CN')
+            key: 'createdAt',
+            width: 120,
+            render: (date) => new Date(date).toLocaleDateString(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN')
         },
         {
             title: t('productCode.actions'),
@@ -623,10 +627,10 @@ const ProductCodePage = () => {
                         <span style={{ color: '#8c8c8c' }}>|</span>
                         <Space>
                             <span style={{ color: '#595959' }}>
-                                Tổng kiện: {data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.packageCount || 0), 0)}
+                                {t('productCode.summaryTotalPackages')}: {data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.packageCount || 0), 0)}
                             </span>
                             <span style={{ color: '#595959' }}>
-                                Tổng cân: {new Intl.NumberFormat('vi-VN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.weight || 0), 0))} kg
+                                {t('productCode.summaryTotalWeight')}: {new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.weight || 0), 0))} kg
                             </span>
                         </Space>
                     </Space>

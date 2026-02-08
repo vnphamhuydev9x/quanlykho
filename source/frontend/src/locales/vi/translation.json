@@ -181,7 +181,10 @@
         "id": "ID",
         "pleaseLoginAgain": "Vui lòng đăng nhập lại",
         "validationError": "Vui lòng kiểm tra lại thông tin",
-        "add": "Thêm mới"
+        "add": "Thêm mới",
+        "upload": "Tải lên",
+        "prev": "Trước",
+        "next": "Tiếp"
     },
     "productCode": {
         "title": "Quản lý Mã hàng",
@@ -277,6 +280,9 @@
         "warehouseSystem": "Kho nhận (System)",
         "categorySystem": "Loại hàng (System)",
         "detailInfo": "Thông tin Chi tiết (Theo Excel)",
+        "tabGeneral": "Thông tin chung",
+        "tabProduct": "Thông tin hàng hóa",
+        "tabDeclaration": "Thông tin khai báo",
         "entryDate": "1. [A] Ngày nhập kho",
         "entryDateRequired": "Vui lòng chọn ngày nhập kho",
         "customerCode": "2. [B] Mã khách hàng",
@@ -290,6 +296,9 @@
         "packageUnit": "6. [F] Đơn vị kiện",
         "packageUnitRequired": "Vui lòng chọn đơn vị kiện",
         "selectUnit": "Chọn đơn vị",
+        "unitThungCotton": "Thùng cotton",
+        "unitPallet": "Pallet",
+        "unitChiec": "Chiếc",
         "weight": "7. [G] Trọng lượng (Kg)",
         "weightRequired": "Vui lòng nhập trọng lượng",
         "volume": "8. [H] Khối lượng (m3)",
@@ -367,7 +376,9 @@
         "headerImportTax": "[AJ] Thuế NK",
         "headerTrustFee": "[AK] Phí ủy thác",
         "headerTotalImportCost": "[AL] Tổng chi phí NK",
-        "headerVatExportStatus": "[AM] Tình trạng VAT"
+        "headerVatExportStatus": "[AM] Tình trạng VAT",
+        "summaryTotalPackages": "Tổng kiện",
+        "summaryTotalWeight": "Tổng cân"
     },
     "validation": {
         "required": "Trường này là bắt buộc!",

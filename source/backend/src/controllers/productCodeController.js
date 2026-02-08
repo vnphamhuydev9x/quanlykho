@@ -20,7 +20,12 @@ const productCodeController = {
             const { page = 1, limit = 20, search = '', status = '' } = req.query;
             const skip = (parseInt(page) - 1) * parseInt(limit);
 
-            const cacheKey = `${CACHE_KEY}:${page}:${limit}:${search}:${status}`;
+            let cacheKey = `${CACHE_KEY}:${page}:${limit}:${search}:${status}`;
+
+            // Append user ID to cache key if CUSTOMER to prevent data leak
+            if (req.user && req.user.type === 'CUSTOMER') {
+                cacheKey += `:${req.user.userId}`;
+            }
 
             // 1. Check Cache
             const cachedData = await redisClient.get(cacheKey);
@@ -35,6 +40,11 @@ const productCodeController = {
             const where = {
                 deletedAt: null // Exclude soft deleted
             };
+
+            // RBAC: If CUSTOMER, only show their own codes
+            if (req.user && req.user.type === 'CUSTOMER') {
+                where.customerId = req.user.userId;
+            }
 
             // Filter by status if provided
             if (status) {
@@ -268,6 +278,7 @@ const productCodeController = {
                 transportRateVolume, // Extra? Not in A-AM list
                 purchaseFee, // Extra? Not in A-AM list
                 partnerName,
+                infoSource,
 
                 // Sub-tables
                 warehouseCosts,

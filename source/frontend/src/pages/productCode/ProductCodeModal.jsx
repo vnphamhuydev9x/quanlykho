@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, Row, Col, message, Spin, Upload, DatePicker, Divider, Space, Tooltip, Tabs } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, message, Spin, Upload, DatePicker, Divider, Space, Tooltip, Tabs, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../utils/axios';
 import { formatFloat } from '../../utils/format';
 import dayjs from 'dayjs';
 import productCodeService from '../../services/productCodeService';
+import customerService from '../../services/customerService';
 
 import CustomNumberInput from '../../components/CustomNumberInput';
 
@@ -21,8 +22,40 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState('1');
+    const [customers, setCustomers] = useState([]);
+
+    // Parse user on init
+    const [currentUser] = useState(() => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            try {
+                return JSON.parse(atob(token.split('.')[1]));
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    });
 
     // Dropdown data
+
+    useEffect(() => {
+        if (currentUser && currentUser.type !== 'CUSTOMER') {
+            fetchCustomers();
+        }
+    }, [currentUser]);
+
+    const fetchCustomers = async () => {
+        try {
+            const response = await customerService.getAll({ limit: 0 }); // Fetch all
+            setCustomers(response.data.customers || []);
+        } catch (error) {
+            console.error("Failed to fetch customers");
+        }
+    };
+
+    // Upload
 
 
     // Upload
@@ -44,10 +77,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                 setExistingImages([]);
                 setTaggedFileList([]);
                 setExistingTaggedImages([]);
+                setExistingTaggedImages([]);
                 setTotalAmount(0); // Reset total amount
+                setActiveTab('1');
+                if (currentUser && currentUser.type === 'CUSTOMER') {
+                    form.setFieldsValue({
+                        customerCodeInput: currentUser.username,
+                        customerId: currentUser.userId
+                    });
+                }
             }
         }
-    }, [visible, editingRecord]);
+    }, [visible, editingRecord, currentUser]);
 
 
 
@@ -231,6 +272,24 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
             width={1200}
             style={{ top: 20 }}
             maskClosable={false}
+            footer={[
+                <Button key="back" onClick={() => onClose()}>
+                    {t('common.cancel')}
+                </Button>,
+                activeTab !== '1' && (
+                    <Button key="prev" onClick={() => setActiveTab(String(parseInt(activeTab) - 1))}>
+                        {t('common.prev')}
+                    </Button>
+                ),
+                activeTab !== '3' && (
+                    <Button key="next" type="primary" ghost onClick={() => setActiveTab(String(parseInt(activeTab) + 1))}>
+                        {t('common.next')}
+                    </Button>
+                ),
+                <Button key="submit" type="primary" loading={submitting} onClick={handleSubmit}>
+                    {t('common.save')}
+                </Button>
+            ]}
         >
             <Spin spinning={loading}>
                 <Form form={form} layout="vertical" onValuesChange={handleValuesChange}>
@@ -239,11 +298,12 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                     {/* EXCEL ORDER FIELDS A -> AM */}
                     <Tabs
-                        defaultActiveKey="1"
+                        activeKey={activeTab}
+                        onChange={setActiveTab}
                         items={[
                             {
                                 key: '1',
-                                label: 'Thông tin chung',
+                                label: t('productCode.tabGeneral'),
                                 children: (
                                     <Row gutter={16}>
                                         {/* 1. [A] Ngày nhập kho */}
@@ -255,8 +315,32 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
 
                                         {/* 2. [B] Mã khách hàng */}
                                         <Col3>
+                                            <Form.Item name="customerId" hidden><Input /></Form.Item>
                                             <Form.Item name="customerCodeInput" label={t('productCode.customerCode')} rules={[{ required: true, message: t('productCode.customerCodeRequired') }]}>
-                                                <Input />
+                                                {currentUser && currentUser.type === 'CUSTOMER' ? (
+                                                    <Input disabled />
+                                                ) : (
+                                                    <Select
+                                                        showSearch
+                                                        placeholder={t('productCode.selectCustomer')}
+                                                        optionFilterProp="children"
+                                                        filterOption={(input, option) =>
+                                                            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                                        }
+                                                        onChange={(value) => {
+                                                            const cust = customers.find(c => c.username === value);
+                                                            if (cust) {
+                                                                form.setFieldsValue({ customerId: cust.id });
+                                                            } else {
+                                                                form.setFieldsValue({ customerId: null });
+                                                            }
+                                                        }}
+                                                        options={customers.map(c => ({
+                                                            value: c.username,
+                                                            label: `${c.username} - ${c.fullName}`,
+                                                        }))}
+                                                    />
+                                                )}
                                             </Form.Item>
                                         </Col3>
 
@@ -289,9 +373,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                         <Col3>
                                             <Form.Item name="packing" label={t('productCode.packageUnit')} rules={[{ required: true, message: t('productCode.packageUnitRequired') }]}>
                                                 <Select placeholder={t('productCode.selectUnit')}>
-                                                    <Option value="Thùng cotton">Thùng cotton</Option>
-                                                    <Option value="Pallet">Pallet</Option>
-                                                    <Option value="Chiếc">Chiếc</Option>
+                                                    <Option value="Thùng cotton">{t('productCode.unitThungCotton')}</Option>
+                                                    <Option value="Pallet">{t('productCode.unitPallet')}</Option>
+                                                    <Option value="Chiếc">{t('productCode.unitChiec')}</Option>
                                                 </Select>
                                             </Form.Item>
                                         </Col3>
@@ -417,7 +501,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                             },
                             {
                                 key: '2',
-                                label: 'Thông tin hàng hóa',
+                                label: t('productCode.tabProduct'),
                                 children: (
                                     <Row gutter={16}>
                                         {/* 17. [Q] Ảnh hàng hóa - Upload */}
@@ -428,7 +512,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                                                     maxCount={3 - existingImages.length}
                                                 >
                                                     {fileList.length + existingImages.length < 3 && (
-                                                        <div><PlusOutlined /><div style={{ marginTop: 8 }}>Upload</div></div>
+                                                        <div><PlusOutlined /><div style={{ marginTop: 8 }}>{t('common.upload')}</div></div>
                                                     )}
                                                 </Upload>
                                                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
@@ -522,7 +606,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord }) => {
                             },
                             {
                                 key: '3',
-                                label: 'Thông tin khai báo',
+                                label: t('productCode.tabDeclaration'),
                                 children: (
                                     <Row gutter={16}>
                                         {/* 27. [AB] Nhu cầu khai báo */}

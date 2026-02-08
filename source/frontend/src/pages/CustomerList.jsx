@@ -199,7 +199,7 @@ const CustomerList = () => {
             // Map data to localized headers and values
             const exportData = data.map(item => ({
                 [t('common.id')]: item.id,
-                [t('profile.username')]: item.username,
+                [t('profile.customerUsername')]: item.username,
                 [t('customer.fullName')]: item.fullName,
                 [t('customer.phone')]: item.phone,
                 [t('customer.address')]: item.address,
@@ -232,7 +232,7 @@ const CustomerList = () => {
             fixed: 'left',
         },
         {
-            title: t('profile.username'),
+            title: t('profile.customerUsername'),
             dataIndex: 'username',
             key: 'username',
             fixed: 'left',
@@ -331,7 +331,7 @@ const CustomerList = () => {
                     <Row gutter={[16, 16]} align="middle">
                         <Col xs={24} sm={24} md={24} lg={24}>
                             <Input
-                                placeholder={t('common.searchPlaceholder')}
+                                placeholder={t('customer.title') + " (" + t('customer.fullName') + ", " + t('profile.customerUsername') + ", " + t('customer.phone') + ")"}
                                 prefix={<SearchOutlined />}
                                 value={filters.search}
                                 onChange={e => handleFilterChange('search', e.target.value)}
@@ -419,7 +419,7 @@ const CustomerList = () => {
 
                     <Form.Item
                         name="username"
-                        label={t('profile.username')}
+                        label={t('profile.customerUsername')}
                         rules={[{ required: true, message: t('validation.required') }]}
                     >
                         <Input disabled={!!editingCustomer} />

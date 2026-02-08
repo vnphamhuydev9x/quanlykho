@@ -99,7 +99,7 @@ const Profile = () => {
                 extra={null}
             >
                 <Descriptions bordered column={1}>
-                    <Descriptions.Item label={t('profile.username')}>{user?.username}</Descriptions.Item>
+                    <Descriptions.Item label={user?.type === 'CUSTOMER' ? t('profile.customerUsername') : t('profile.username')}>{user?.username}</Descriptions.Item>
                     <Descriptions.Item label={t('profile.fullName')}>{user?.fullName || '-'}</Descriptions.Item>
 
                     {/* Email is not collected for Customers */}

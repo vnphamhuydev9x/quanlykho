@@ -20,7 +20,10 @@
         "inventory": "Hàng tồn",
         "inventoryTQ": "Tồn kho TQ",
         "inventoryVN": "Tồn kho VN",
-        "merchandise": "Hàng hóa"
+        "merchandise": "Hàng hóa",
+        "manifests": "Xếp xe",
+        "export": "Xuất kho",
+        "reports": "Báo cáo"
     },
     "inventory": {
         "titleTQ": "Quản lý Tồn kho TQ",

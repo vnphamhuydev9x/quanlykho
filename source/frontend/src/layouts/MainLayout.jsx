@@ -15,6 +15,11 @@ import {
 
     InboxOutlined,
     ShoppingOutlined,
+    BarChartOutlined,
+    PieChartOutlined,
+    CarOutlined,
+    CreditCardOutlined,
+    ExportOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -124,34 +129,22 @@ const MainLayout = ({ children }) => {
             onClick: () => navigate('/'),
         },
         {
-            key: '/declarations',
-            icon: <FileTextOutlined />,
-            label: t('menu.declarations'),
-            onClick: () => navigate('/declarations'),
-        },
-        {
-            key: '/transactions',
-            icon: <FileTextOutlined />,
-            label: t('menu.transactions'),
-            onClick: () => navigate('/transactions'),
-        },
-        {
             key: '/customers',
             icon: <TeamOutlined />,
             label: t('menu.customers'),
             onClick: () => navigate('/customers'),
         },
         {
-            key: '/merchandise',
-            icon: <ShoppingOutlined />,
-            label: t('menu.merchandise') || 'Hàng hóa',
-            onClick: () => navigate('/merchandise'),
+            key: '/transactions',
+            icon: <CreditCardOutlined />,
+            label: t('menu.transactions'),
+            onClick: () => navigate('/transactions'),
         },
         {
-            key: '/manifests',
+            key: '/declarations',
             icon: <FileTextOutlined />,
-            label: 'Xếp xe',
-            onClick: () => navigate('/manifests'),
+            label: t('menu.declarations'),
+            onClick: () => navigate('/declarations'),
         },
         {
             key: 'product-codes',
@@ -206,9 +199,15 @@ const MainLayout = ({ children }) => {
             ],
         },
         {
+            key: '/manifests',
+            icon: <CarOutlined />,
+            label: t('menu.manifests'),
+            onClick: () => navigate('/manifests'),
+        },
+        {
             key: 'inventory',
-            icon: <InboxOutlined />,
-            label: t('menu.inventory') || 'Hàng tồn',
+            icon: <HomeOutlined />,
+            label: t('menu.inventory'),
             children: [
                 {
                     key: '/product-codes?inventory=TQ',
@@ -222,7 +221,24 @@ const MainLayout = ({ children }) => {
                 }
             ],
         },
-        // Show Settings for everyone to test permission
+        {
+            key: '/product-codes?status=XUAT_DU',
+            icon: <ExportOutlined />,
+            label: t('menu.export'),
+            onClick: () => navigate('/product-codes?status=XUAT_DU'),
+        },
+        {
+            key: '/reports',
+            icon: <BarChartOutlined />,
+            label: t('menu.reports'),
+            onClick: () => navigate('/reports'),
+        },
+        {
+            key: '/merchandise',
+            icon: <ShoppingOutlined />,
+            label: t('menu.merchandise') || 'Hàng hóa',
+            onClick: () => navigate('/merchandise'),
+        },
         {
             key: 'settings',
             icon: <SettingOutlined />,
@@ -245,14 +261,6 @@ const MainLayout = ({ children }) => {
                 }
             ],
         },
-        // Warehouse Menu - Hidden for now or RBAC later
-        /*
-        {
-            key: '/warehouse',
-            icon: <DashboardOutlined />, // Changed icon
-            label: t('menu.warehouse'),
-        },
-        */
     ].filter(Boolean);
 
     let menuItems = items;

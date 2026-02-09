@@ -415,11 +415,12 @@ const productCodeController = {
                 if (productCode.customerId !== req.user.userId) {
                     return res.status(403).json({ code: 99008, message: "Forbidden" });
                 }
-                // Only allow updating 'otherNotes'
+                // Only allow updating 'otherNotes' and 'declarationNeed'
                 updateData = {};
-                if (req.body.otherNotes !== undefined) {
-                    updateData.otherNotes = req.body.otherNotes;
-                } else {
+                if (req.body.otherNotes !== undefined) updateData.otherNotes = req.body.otherNotes;
+                if (req.body.declarationNeed !== undefined) updateData.declarationNeed = req.body.declarationNeed;
+
+                if (Object.keys(updateData).length === 0) {
                     return res.status(200).json({ code: 200, message: "Nothing to update for Customer", data: productCode });
                 }
             } else {

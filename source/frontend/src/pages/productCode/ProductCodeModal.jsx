@@ -666,7 +666,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         {/* 27. [AB] Nhu cầu khai báo */}
                                         <Col3>
                                             <Form.Item name="declarationNeed" label={t('productCode.declarationNeed')}>
-                                                <TextArea rows={4} disabled={disabledGeneral} />
+                                                <TextArea rows={4} disabled={viewOnly} />
                                             </Form.Item>
                                         </Col3>
 

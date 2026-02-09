@@ -434,7 +434,10 @@ const CustomerList = () => {
                         label={t('profile.customerUsername')}
                         rules={[{ required: true, message: t('validation.required') }]}
                     >
-                        <Input disabled={!!editingCustomer} />
+                        <Input
+                            disabled={!!editingCustomer}
+                            placeholder={t('customer.customerCodePlaceholder')}
+                        />
                     </Form.Item>
 
                     {!editingCustomer && (

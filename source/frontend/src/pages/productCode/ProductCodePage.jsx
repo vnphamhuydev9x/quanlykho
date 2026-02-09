@@ -252,7 +252,7 @@ const ProductCodePage = () => {
             key: 'domesticFeeRMB',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(val) : '-'}</span>
         },
         // 10. [J] Phí kéo hàng TQ
         {
@@ -261,7 +261,7 @@ const ProductCodePage = () => {
             key: 'haulingFeeRMB',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
+            render: (val) => <span style={{ color: '#389e0d', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(val) : '-'}</span>
         },
         // 11. [K] Tỷ giá
         {
@@ -657,13 +657,13 @@ const ProductCodePage = () => {
                         <span style={{ color: '#8c8c8c' }}>|</span>
                         <Space>
                             <span style={{ color: '#595959' }}>
-                                {t('productCode.summaryTotalPackages')}: <strong>{data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.packageCount || 0), 0)}</strong>
+                                {t('productCode.summaryTotalPackages')}: <strong>{data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + Number(item.packageCount || 0), 0)}</strong>
                             </span>
                             <span style={{ color: '#595959' }}>
-                                {t('productCode.summaryTotalWeight')}: <strong>{new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.weight || 0), 0))}</strong> kg
+                                {t('productCode.summaryTotalWeight')}: <strong>{new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + Number(item.weight || 0), 0))}</strong> kg
                             </span>
                             <span style={{ color: '#595959' }}>
-                                {t('productCode.summaryTotalVolume')}: <strong>{new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + (item.volume || 0), 0))}</strong> m³
+                                {t('productCode.summaryTotalVolume')}: <strong>{new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + Number(item.volume || 0), 0))}</strong> m³
                             </span>
                         </Space>
                     </Space>

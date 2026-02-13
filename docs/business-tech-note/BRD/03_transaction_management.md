@@ -145,6 +145,9 @@ Cho phép quản trị viên hủy giao dịch đã tạo.
 
 #### Quy tắc nghiệp vụ
 - **Chỉ ADMIN** mới có quyền hủy giao dịch
+- Xóa mềm (soft delete): Dữ liệu không bị xóa vĩnh viễn, chỉ đánh dấu `deletedAt`
+- Giao dịch đã xóa sẽ không hiển thị trong danh sách
+- Sau khi xóa thành công → Danh sách giao dịch tự động cập nhật
 - **Chỉ** có thể hủy giao dịch có trạng thái **SUCCESS**
 - Giao dịch đã hủy (**CANCELLED**) **KHÔNG** thể hủy lại (nút Hủy sẽ không hiển thị)
 - Nếu cố gắng hủy giao dịch đã hủy → Hiển thị lỗi: "Giao dịch đã được hủy trước đó"

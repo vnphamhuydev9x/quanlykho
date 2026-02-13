@@ -197,6 +197,9 @@ Cho phép quản trị viên xóa tài khoản khách hàng khỏi hệ thống.
 4. Nếu xác nhận → Khách hàng bị xóa khỏi hệ thống
 
 #### Quy tắc nghiệp vụ
+- **Chỉ ADMIN** mới có quyền xóa khách hàng
+- Xóa mềm (soft delete): Dữ liệu không bị xóa vĩnh viễn, chỉ đánh dấu `deletedAt`
+- Khách hàng đã xóa sẽ không hiển thị trong danh sách
 - Sau khi xóa thành công → Danh sách khách hàng tự động cập nhật
 
 #### Lưu ý

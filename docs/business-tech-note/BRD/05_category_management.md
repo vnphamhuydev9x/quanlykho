@@ -162,6 +162,8 @@ Cho phép quản trị viên xóa loại hàng khỏi hệ thống.
 
 #### Quy tắc nghiệp vụ
 - **Chỉ ADMIN** mới có quyền xóa loại hàng
+- Xóa mềm (soft delete): Dữ liệu không bị xóa vĩnh viễn, chỉ đánh dấu `deletedAt`
+- Loại hàng đã xóa sẽ không hiển thị trong danh sách
 - Sau khi xóa thành công → Danh sách loại hàng tự động cập nhật
 
 #### Lưu ý

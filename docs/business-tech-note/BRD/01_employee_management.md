@@ -207,8 +207,9 @@ Cho phép quản trị viên xóa tài khoản nhân viên khỏi hệ thống.
 4. Nếu xác nhận → Nhân viên bị xóa khỏi hệ thống
 
 #### Quy tắc nghiệp vụ
-- Quản trị viên **KHÔNG** thể tự xóa chính mình
-- Nếu cố gắng tự xóa → Hiển thị lỗi: "Không thể tự xóa chính mình"
+- **Chỉ ADMIN** mới có quyền xóa nhân viên
+- Xóa mềm (soft delete): Dữ liệu không bị xóa vĩnh viễn, chỉ đánh dấu `deletedAt`
+- Nhân viên đã xóa sẽ không hiển thị trong danh sách
 - Sau khi xóa thành công → Danh sách nhân viên tự động cập nhật
 
 #### Lưu ý

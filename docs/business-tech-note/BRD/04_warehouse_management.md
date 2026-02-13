@@ -165,8 +165,10 @@ Cho phép quản trị viên xóa kho khỏi hệ thống.
 4. Nếu xác nhận → Kho bị xóa khỏi hệ thống
 
 #### Quy tắc nghiệp vụ
-- **Chỉ ADMIN** mới có quyền xóa kho
-- Sau khi xóa thành công → Danh sách kho tự động cập nhật
+- **Chỉ ADMIN** mới có quyền xóa kho VN
+- Xóa mềm (soft delete): Dữ liệu không bị xóa vĩnh viễn, chỉ đánh dấu `deletedAt`
+- Kho VN đã xóa sẽ không hiển thị trong danh sách
+- Sau khi xóa thành công → Danh sách kho VN tự động cập nhật
 
 #### Lưu ý
 - Thao tác xóa là **vĩnh viễn**, không thể khôi phục

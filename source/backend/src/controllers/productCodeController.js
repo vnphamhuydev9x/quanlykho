@@ -252,6 +252,7 @@ const productCodeController = {
                 subTag, // [T] Tem phụ
                 taggedImages, // [U] Ảnh hàng dán tem
                 productQuantity, // [V] Số Lượng sản phẩm
+                productUnit, // [V2] Đơn vị
                 specification, // [W] Quy cách
                 productDescription, // [X] Mô Tả sản phẩm
                 brand, // [Y] Nhãn Hiệu
@@ -337,6 +338,7 @@ const productCodeController = {
                     subTag,
                     taggedImages: taggedImages || [],
                     productQuantity: productQuantity ? parseFloat(productQuantity) : null,
+                    productUnit: productUnit || null,
                     specification,
                     productDescription,
                     brand,
@@ -470,6 +472,7 @@ const productCodeController = {
                 'subTag', // [T]
                 'taggedImages', // [U]
                 'productQuantity', // [V]
+                'productUnit', // [V2]
                 'specification', // [W]
                 'productDescription', // [X]
                 'brand', // [Y]

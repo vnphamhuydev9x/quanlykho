@@ -382,6 +382,7 @@ model ProductCode {
 
   // 23. [W] Số Lượng sản phẩm
   productQuantity      Decimal?  @db.Decimal(15, 2) // NUMBER
+  productUnit          String?   // STRING
 
   // 24. [X] Quy cách
   specification        String?   // STRING

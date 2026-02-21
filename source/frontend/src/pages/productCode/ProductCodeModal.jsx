@@ -431,9 +431,8 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         <Col3>
                                             <Form.Item name="packing" label={t('productCode.packageUnit')} rules={[{ required: true, message: t('productCode.packageUnitRequired') }]}>
                                                 <Select placeholder={t('productCode.selectUnit')} disabled={disabledGeneral}>
-                                                    <Option value="Thùng cotton">{t('productCode.unitThungCotton')}</Option>
+                                                    <Option value="Thùng carton">{t('productCode.unitThungCarton')}</Option>
                                                     <Option value="Pallet">{t('productCode.unitPallet')}</Option>
-                                                    <Option value="Chiếc">{t('productCode.unitChiec')}</Option>
                                                 </Select>
                                             </Form.Item>
                                         </Col3>
@@ -631,6 +630,13 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                     isInteger={true}
                                                     disabled={disabledGeneral}
                                                 />
+                                            </Form.Item>
+                                        </Col3>
+
+                                        {/* 22.1 [V2] Đơn vị */}
+                                        <Col3>
+                                            <Form.Item name="productUnit" label={t('productCode.productUnit')}>
+                                                <Input disabled={disabledGeneral} />
                                             </Form.Item>
                                         </Col3>
 

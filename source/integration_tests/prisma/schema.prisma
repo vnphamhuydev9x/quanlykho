@@ -219,6 +219,7 @@ model ProductCode {
   totalWeight           Decimal   @db.Decimal(15, 2)
   totalVolume           Decimal   @db.Decimal(15, 3)
   totalPackages         Int
+  productUnit           String?
   
   costCalculationMethod CostCalculationMethod @default(AUTO)
   weightPrice           Decimal   @db.Decimal(15, 2)

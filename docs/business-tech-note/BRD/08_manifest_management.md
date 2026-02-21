@@ -62,7 +62,7 @@ Mỗi chuyến xe chứa nhiều kiện hàng (Product Codes), hiển thị **8 
 | 2 | [B] | **Tên hàng** | `productName` | Tên sản phẩm/hàng hóa |
 | 3 | [C] | **Mã đơn** | `orderCode` | Mã đơn hàng |
 | 4 | [D] | **Số kiện** | `packageCount` | Số lượng kiện hàng |
-| 5 | [E] | **Đóng gói** | `packing` | Đơn vị đóng gói (Thùng cotton / Pallet / Chiếc) |
+| 5 | [E] | **Đóng gói** | `packing` | Đơn vị đóng gói (Thùng carton / Pallet) |
 | 6 | [F] | **TL (Kg)** | `weight` | Trọng lượng (đơn vị: Kg) |
 | 7 | [G] | **KL (m³)** | `volume` | Khối lượng (đơn vị: m³) |
 | 8 | [H] | **Ảnh** | `images` | Hiển thị Tag "Có ảnh" nếu có ảnh |
@@ -235,7 +235,7 @@ Hiển thị thông tin chi tiết của chuyến xe và danh sách hàng hóa t
   - **2. [B] Tên hàng**: Tên sản phẩm
   - **3. [C] Mã đơn**: Mã đơn hàng
   - **4. [D] Số kiện**: Số lượng kiện
-  - **5. [E] Đóng gói**: Đơn vị đóng gói
+  - **5. [E] Đóng gói**: Đơn vị đóng gói (Thùng carton / Pallet)
   - **6. [F] TL (Kg)**: Trọng lượng
   - **7. [G] KL (m³)**: Khối lượng
   - **8. [H] Ảnh**: Tag "Có ảnh" nếu có ảnh

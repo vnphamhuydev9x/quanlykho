@@ -412,6 +412,13 @@ const ProductCodePage = () => {
             width: 120,
             align: 'right'
         },
+        // 22.1 [V2] Đơn vị
+        {
+            title: t('productCode.productUnit'),
+            dataIndex: 'productUnit',
+            key: 'productUnit',
+            width: 120
+        },
         // 22. [W] Quy cách
         {
             title: t('productCode.specification'),

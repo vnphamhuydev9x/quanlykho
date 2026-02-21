@@ -39,7 +39,7 @@ Mỗi mã hàng bao gồm **39 trường dữ liệu** được chia thành **3 
 | 3 | [C] | **Mã đơn hàng** | Text | ✅ | Mã đơn hàng (Order Code) |
 | 4 | [D] | **Tên mặt hàng** | Text | ✅ | Tên sản phẩm/hàng hóa |
 | 5 | [E] | **Số kiện** | Number | ✅ | Số lượng kiện hàng |
-| 6 | [F] | **Đơn vị kiện** | Dropdown | ✅ | Thùng cotton / Pallet / Chiếc |
+| 6 | [F] | **Đơn vị kiện** | Dropdown | ✅ | Thùng carton / Pallet |
 | 7 | [G] | **Trọng lượng (Kg)** | Number | ✅ | Trọng lượng hàng hóa (đơn vị: Kg) |
 | 8 | [H] | **Khối lượng (m³)** | Number | ✅ | Thể tích hàng hóa (đơn vị: m³) |
 | 9 | [I] | **Phí nội địa TQ (RMB)** | Number | - | Phí nội địa tại Trung Quốc (đơn vị: RMB) |
@@ -61,6 +61,7 @@ Mỗi mã hàng bao gồm **39 trường dữ liệu** được chia thành **3 
 | 20 | [T] | **Tem phụ** | Text | - | Thông tin tem phụ |
 | 21 | [U] | **Ảnh hàng dán tem** | Image Upload | - | Ảnh hàng đã dán tem (tối đa 3 ảnh, ẩn nút upload khi đã đủ 3) |
 | 22 | [V] | **Số lượng SP** | Number | - | Số lượng sản phẩm |
+| 22.1 | [V2] | **Đơn vị** | Text | - | Đơn vị tính của sản phẩm (bộ, chiếc...) |
 | 23 | [W] | **Quy cách** | Text | - | Quy cách đóng gói |
 | 24 | [X] | **Mô tả SP** | TextArea | - | Mô tả chi tiết sản phẩm |
 | 25 | [Y] | **Nhãn hiệu** | Text | - | Thương hiệu/nhãn hiệu |
@@ -183,7 +184,7 @@ Cho phép người dùng (ADMIN, SALE, USER) tạo mã hàng mới trong hệ th
 - **Mã đơn hàng** [C]: Phải nhập
 - **Tên mặt hàng** [D]: Phải nhập
 - **Số kiện** [E]: Phải nhập
-- **Đơn vị kiện** [F]: Phải chọn (Thùng cotton / Pallet / Chiếc)
+- **Đơn vị kiện** [F]: Phải chọn (Thùng carton / Pallet)
 - **Trọng lượng** [G]: Phải nhập
 - **Khối lượng** [H]: Phải nhập
 - **Đơn giá cước TQ_HN (khối)** [L1]: Phải nhập

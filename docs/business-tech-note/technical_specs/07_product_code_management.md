@@ -38,6 +38,7 @@ Bảng dưới đây liệt kê mapping chi tiết giữa nghiệp vụ (BRD) v�
 | **20 [T]** | Tem phụ | `subTag` | `String?` | |
 | **21 [U]** | Ảnh dán tem | `taggedImages` | `String[]` | Max 3 URLs |
 | **22 [V]** | Số lượng SP | `productQuantity` | `Decimal?` | |
+| **22.1 [V2]**| Đơn vị | `productUnit` | `String?` | |
 | **23 [W]** | Quy cách | `specification` | `String?` | |
 | **24 [X]** | Mô tả SP | `productDescription` | `String?` | |
 | **25 [Y]** | Nhãn hiệu | `brand` | `String?` | |

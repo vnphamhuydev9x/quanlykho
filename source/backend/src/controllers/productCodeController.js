@@ -241,7 +241,7 @@ const productCodeController = {
                 domesticFeeRMB, // [I] Phí nội địa TQ (RMB)
                 haulingFeeRMB, // [J] Phí kéo hàng TQ (RMB)
                 exchangeRate, // [K] Tỷ giá
-                transportRate, // [L] Đơn giá cước vận chuyển TQ_HN
+                weightFee, // [L2] Đơn giá cước vận chuyển TQ_HN (cân)
                 totalTransportFeeEstimate, // [M] Tổng cước vận chuyển TQ_HN tạm tính
                 domesticFeeVN, // [N] Phí nội địa VN
                 notes, // [O] Ghi chú
@@ -276,7 +276,7 @@ const productCodeController = {
                 declarationPrice, // Extra/Unused in new spec? Keep for safety
                 declarationName, // Extra/Unused in new spec? Keep for safety
                 unloadingFeeRMB, // Extra? Not in A-AM list
-                transportRateVolume, // Extra? Not in A-AM list
+                volumeFee, // [L1] Đơn giá cước vận chuyển TQ_HN (khối)
                 purchaseFee, // Extra? Not in A-AM list
                 partnerName,
                 infoSource,
@@ -324,8 +324,11 @@ const productCodeController = {
                     domesticFeeRMB: domesticFeeRMB ? parseFloat(domesticFeeRMB) : null,
                     haulingFeeRMB: haulingFeeRMB ? parseFloat(haulingFeeRMB) : null,
                     exchangeRate: exchangeRate ? parseFloat(exchangeRate) : null,
-                    transportRate: transportRate ? parseFloat(transportRate) : null,
-                    totalTransportFeeEstimate: totalTransportFeeEstimate ? parseFloat(totalTransportFeeEstimate) : null,
+                    weightFee: weightFee ? parseFloat(weightFee) : null,
+                    volumeFee: volumeFee ? parseFloat(volumeFee) : null,
+                    totalTransportFeeEstimate: totalTransportFeeEstimate ? parseFloat(totalTransportFeeEstimate) : (
+                        (volume && volumeFee) || (weight && weightFee) ? Math.max((parseFloat(volume) || 0) * (parseFloat(volumeFee) || 0), (parseFloat(weight) || 0) * (parseFloat(weightFee) || 0)) : null
+                    ),
                     domesticFeeVN: domesticFeeVN ? parseFloat(domesticFeeVN) : null,
                     notes,
                     status,
@@ -357,7 +360,6 @@ const productCodeController = {
                     pctConfirmation,
                     accountingConfirmation,
                     unloadingFeeRMB: unloadingFeeRMB ? parseFloat(unloadingFeeRMB) : null,
-                    transportRateVolume: transportRateVolume ? parseFloat(transportRateVolume) : null,
                     purchaseFee: purchaseFee ? parseFloat(purchaseFee) : null,
                     declarationPrice: declarationPrice ? parseFloat(declarationPrice) : null,
                     declarationName,
@@ -457,7 +459,8 @@ const productCodeController = {
                 'domesticFeeRMB', // [I]
                 'haulingFeeRMB', // [J]
                 'exchangeRate', // [K]
-                'transportRate', // [L]
+                'weightFee', // [L2]
+                'volumeFee', // [L1]
                 'totalTransportFeeEstimate', // [M]
                 'domesticFeeVN', // [N]
                 'notes', // [O]
@@ -487,7 +490,7 @@ const productCodeController = {
 
                 // Extras/System
                 'infoSource', 'pctConfirmation', 'accountingConfirmation',
-                'unloadingFeeRMB', 'transportRateVolume', 'purchaseFee', 'declarationPrice', 'declarationName',
+                'unloadingFeeRMB', 'purchaseFee', 'declarationPrice', 'declarationName',
                 'partnerName'
             ];
 
@@ -501,14 +504,14 @@ const productCodeController = {
                     } else if ([
                         'weight', 'volume',
                         'domesticFeeRMB', 'haulingFeeRMB', 'exchangeRate',
-                        'transportRate', 'totalTransportFeeEstimate',
+                        'weightFee', 'volumeFee', 'totalTransportFeeEstimate',
                         'domesticFeeVN',
                         'productQuantity', 'declarationQuantity', 'invoicePriceExport', 'totalValueExport',
                         'feeAmount',
                         'vatImportTax', 'importTax', 'trustFee', 'totalImportCost',
 
                         // Extras
-                        'unloadingFeeRMB', 'transportRateVolume', 'purchaseFee', 'declarationPrice'
+                        'unloadingFeeRMB', 'purchaseFee', 'declarationPrice'
                     ].includes(field)) {
                         dataToUpdate[field] = updateData[field] ? parseFloat(updateData[field]) : null;
                     } else if (field === 'packageCount') {
@@ -518,6 +521,18 @@ const productCodeController = {
                     }
                 }
             });
+
+            // Recalculate server-side [M]
+            const currentWeight = dataToUpdate.weight !== undefined ? dataToUpdate.weight : parseFloat(productCode.weight || 0);
+            const currentVolume = dataToUpdate.volume !== undefined ? dataToUpdate.volume : parseFloat(productCode.volume || 0);
+            const currentWeightFee = dataToUpdate.weightFee !== undefined ? dataToUpdate.weightFee : parseFloat(productCode.weightFee || 0);
+            const currentVolumeFee = dataToUpdate.volumeFee !== undefined ? dataToUpdate.volumeFee : parseFloat(productCode.volumeFee || 0);
+
+            if (currentWeightFee || currentVolumeFee) {
+                const feeByWeight = currentWeight * currentWeightFee;
+                const feeByVolume = currentVolume * currentVolumeFee;
+                dataToUpdate.totalTransportFeeEstimate = Math.max(feeByWeight || 0, feeByVolume || 0) || null;
+            }
 
             // Relations
             if (updateData.customerId !== undefined) dataToUpdate.customerId = updateData.customerId ? parseInt(updateData.customerId) : null;

@@ -107,13 +107,13 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
         if (
             'weight' in changedValues ||
             'volume' in changedValues ||
-            'transportRate' in changedValues ||
-            'transportRateVolume' in changedValues
+            'weightFee' in changedValues ||
+            'volumeFee' in changedValues
         ) {
             const w = getVal('weight'); // [D]
             const v = getVal('volume'); // [E]
-            const rateW = getVal('transportRate'); // [J]
-            const rateV = getVal('transportRateVolume'); // [K]
+            const rateW = getVal('weightFee'); // [J]
+            const rateV = getVal('volumeFee'); // [K]
 
             const feeByWeight = w * rateW;
             const feeByVolume = v * rateV;
@@ -263,14 +263,14 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
 
                         {/* [L] Đơn giá cước (Kg) -> 10. [J] */}
                         <Form.Item label="10. [J] Đơn giá cước TQ_HN (Theo Kg)">
-                            <Form.Item name="transportRate" noStyle>
+                            <Form.Item name="weightFee" noStyle>
                                 <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
                             </Form.Item>
                         </Form.Item>
 
                         {/* [M] Đơn giá cước (m3) -> 11. [K] */}
                         <Form.Item label="11. [K] Đơn giá cước TQ_HN (Theo m3)">
-                            <Form.Item name="transportRateVolume" noStyle>
+                            <Form.Item name="volumeFee" noStyle>
                                 <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
                             </Form.Item>
                         </Form.Item>

@@ -167,13 +167,13 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
         };
 
         // [P] Tổng cước = Max( [H]*[N], [I]*[O] )
-        if (changedValues.weight !== undefined || changedValues.transportRate !== undefined ||
-            changedValues.volume !== undefined || changedValues.transportRateVolume !== undefined) {
+        if (changedValues.weight !== undefined || changedValues.weightFee !== undefined ||
+            changedValues.volume !== undefined || changedValues.volumeFee !== undefined) {
 
             const weight = getVal('weight'); // [H]
             const vol = getVal('volume'); // [I]
-            const rateKg = getVal('transportRate'); // [N]
-            const rateVol = getVal('transportRateVolume'); // [O]
+            const rateKg = getVal('weightFee'); // [N]
+            const rateVol = getVal('volumeFee'); // [O]
 
             const costByKg = weight * rateKg;
             const costByVol = vol * rateVol;
@@ -310,13 +310,13 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         </Col3>
                         {/* 14. [N] Đơn giá cước TQ_HN (Kg) */}
                         <Col3>
-                            <Form.Item name="transportRate" label="14. [N] Cước TQ_HN (Kg)">
+                            <Form.Item name="weightFee" label="14. [N] Cước TQ_HN (Kg)">
                                 <CustomNumberInput style={{ width: '100%' }} min={0} />
                             </Form.Item>
                         </Col3>
                         {/* 15. [O] Đơn giá cước TQ_HN (m3) */}
                         <Col3>
-                            <Form.Item name="transportRateVolume" label="15. [O] Cước TQ_HN (m3)">
+                            <Form.Item name="volumeFee" label="15. [O] Cước TQ_HN (m3)">
                                 <CustomNumberInput style={{ width: '100%' }} min={0} />
                             </Form.Item>
                         </Col3>

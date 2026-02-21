@@ -220,13 +220,13 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
             return parseFloat(val) || 0;
         };
 
-        // 1. [M] Total Transport Fee TQ_HN = Max( [L] transportRate * [G] weight, [L1] transportRateVolume * [H] volume )
-        // 1. [M] Total Transport Fee TQ_HN = [L] transportRate * [H] volume
-        // Formula in spec: =L2*H2
-        const transportRate = getVal('transportRate'); // [L]
+        // 1. [M] Total Transport Fee TQ_HN = Max( [L1] volumeFee * [H] volume, [L2] weightFee * [G] weight )
+        const weightFee = getVal('weightFee'); // [L2]
+        const volumeFee = getVal('volumeFee'); // [L1]
         const volume = getVal('volume'); // [H]
+        const weight = getVal('weight'); // [G]
 
-        const val_M = transportRate * volume;
+        const val_M = Math.max(weightFee * weight, volumeFee * volume) || 0;
 
         if (allValues.totalTransportFeeEstimate !== val_M) {
             updates.totalTransportFeeEstimate = val_M;
@@ -493,10 +493,23 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             </Form.Item>
                                         </Col3>
 
-                                        {/* 12. [L] Đơn giá cước TQ_HN */}
+                                        {/* 12. [L1] Đơn giá cước TQ_HN (khối) */}
                                         <Col3>
-                                            <Form.Item label={t('productCode.transportRate')}>
-                                                <Form.Item name="transportRate" noStyle rules={[{ required: true, message: t('productCode.transportRateRequired') }]}>
+                                            <Form.Item label={t('productCode.volumeFee')}>
+                                                <Form.Item name="volumeFee" noStyle rules={[{ required: true, message: t('productCode.volumeFeeRequired') }]}>
+                                                    <CustomNumberInput
+                                                        style={{ width: '100%' }}
+                                                        min={0}
+                                                        disabled={disabledGeneral}
+                                                    />
+                                                </Form.Item>
+                                            </Form.Item>
+                                        </Col3>
+
+                                        {/* 13. [L2] Đơn giá cước TQ_HN (cân) */}
+                                        <Col3>
+                                            <Form.Item label={t('productCode.weightFee')}>
+                                                <Form.Item name="weightFee" noStyle rules={[{ required: true, message: t('productCode.weightFeeRequired') }]}>
                                                     <CustomNumberInput
                                                         style={{ width: '100%' }}
                                                         min={0}
@@ -514,7 +527,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 label={
                                                     <Space>
                                                         {t('productCode.totalTransportFeeEstimate')}
-                                                        <Tooltip title="Tổng cước TQ_HN = Đơn giá cước TQ_HN [L] * Khối lượng [H]">
+                                                        <Tooltip title="Tổng cước TQ_HN = Max(Đơn giá cước khối [L1] * Khối lượng [H], Đơn giá cước cân [L2] * Trọng lượng [G])">
                                                             <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
                                                         </Tooltip>
                                                     </Space>

@@ -28,9 +28,9 @@ Màn **Mã hàng** cho phép quản lý thông tin chi tiết về các lô hàn
 
 ## 2. Cấu Trúc Dữ Liệu
 
-Mỗi mã hàng bao gồm **38 trường dữ liệu** được chia thành **3 nhóm chính**:
+Mỗi mã hàng bao gồm **39 trường dữ liệu** được chia thành **3 nhóm chính**:
 
-### 2.1 Tab 1: Thông tin chung (15 trường)
+### 2.1 Tab 1: Thông tin chung (16 trường)
 
 | STT | Mã Excel | Tên trường | Kiểu dữ liệu | Bắt buộc | Mô tả |
 |-----|----------|------------|--------------|----------|-------|
@@ -45,43 +45,44 @@ Mỗi mã hàng bao gồm **38 trường dữ liệu** được chia thành **3 
 | 9 | [I] | **Phí nội địa TQ (RMB)** | Number | - | Phí nội địa tại Trung Quốc (đơn vị: RMB) |
 | 10 | [J] | **Phí kéo hàng TQ (RMB)** | Number | - | Phí kéo hàng (đơn vị: RMB) |
 | 11 | [K] | **Tỷ giá** | Number | - | Tỷ giá RMB/VND |
-| 12 | [L] | **Đơn giá cước TQ_HN** | Number | ✅ | Đơn giá vận chuyển TQ → HN (VND) |
-| 13 | [M] | **Tổng cước TQ_HN** | Number (Auto) | - | **Tự động tính** = [L] × [H]. Có tooltip hiển thị công thức |
-| 14 | [N] | **Phí nội địa VN** | Number | - | Phí nội địa tại Việt Nam (VND) |
-| 15 | [O] | **Ghi chú** | Text | - | Ghi chú thêm |
+| 12 | [L1] | **Đơn giá cước TQ_HN (khối)** | Number | ✅ | Đơn giá vận chuyển TQ → HN theo m³ (VND) |
+| 13 | [L2] | **Đơn giá cước TQ_HN (cân)** | Number | ✅ | Đơn giá vận chuyển TQ → HN theo kg (VND) |
+| 14 | [M] | **Tổng cước TQ_HN** | Number (Auto) | - | **Tự động tính** = Max([L1] × [H], [L2] × [G]). Có tooltip hiển thị công thức |
+| 15 | [N] | **Phí nội địa VN** | Number | - | Phí nội địa tại Việt Nam (VND) |
+| 16 | [O] | **Ghi chú** | Text | - | Ghi chú thêm |
 
 ### 2.2 Tab 2: Thông tin sản phẩm (12 trường)
 
 | STT | Mã Excel | Tên trường | Kiểu dữ liệu | Bắt buộc | Mô tả |
 |-----|----------|------------|--------------|----------|-------|
-| 16 | [P] | **Tình trạng hàng hóa** | Dropdown | - | Kho TQ / Đã xếp xe / Kho VN / Kiểm hoá / Đã giao chưa TT / Đã giao đã TT |
-| 17 | [Q] | **Ảnh hàng hóa** | Image Upload | - | Ảnh sản phẩm (tối đa 3 ảnh, ẩn nút upload khi đã đủ 3) |
-| 18 | [S] | **Tem chính** | Text | - | Thông tin tem chính |
-| 19 | [T] | **Tem phụ** | Text | - | Thông tin tem phụ |
-| 20 | [U] | **Ảnh hàng dán tem** | Image Upload | - | Ảnh hàng đã dán tem (tối đa 3 ảnh, ẩn nút upload khi đã đủ 3) |
-| 21 | [V] | **Số lượng SP** | Number | - | Số lượng sản phẩm |
-| 22 | [W] | **Quy cách** | Text | - | Quy cách đóng gói |
-| 23 | [X] | **Mô tả SP** | TextArea | - | Mô tả chi tiết sản phẩm |
-| 24 | [Y] | **Nhãn hiệu** | Text | - | Thương hiệu/nhãn hiệu |
-| 25 | [Z] | **Mã số thuế** | Text | - | Mã số thuế đơn vị bán hàng |
-| 26 | [AA] | **Tên công ty bán hàng** | Text | - | Tên công ty cung cấp |
+| 17 | [P] | **Tình trạng hàng hóa** | Dropdown | - | Kho TQ / Đã xếp xe / Kho VN / Kiểm hoá / Đã giao chưa TT / Đã giao đã TT |
+| 18 | [Q] | **Ảnh hàng hóa** | Image Upload | - | Ảnh sản phẩm (tối đa 3 ảnh, ẩn nút upload khi đã đủ 3) |
+| 19 | [S] | **Tem chính** | Text | - | Thông tin tem chính |
+| 20 | [T] | **Tem phụ** | Text | - | Thông tin tem phụ |
+| 21 | [U] | **Ảnh hàng dán tem** | Image Upload | - | Ảnh hàng đã dán tem (tối đa 3 ảnh, ẩn nút upload khi đã đủ 3) |
+| 22 | [V] | **Số lượng SP** | Number | - | Số lượng sản phẩm |
+| 23 | [W] | **Quy cách** | Text | - | Quy cách đóng gói |
+| 24 | [X] | **Mô tả SP** | TextArea | - | Mô tả chi tiết sản phẩm |
+| 25 | [Y] | **Nhãn hiệu** | Text | - | Thương hiệu/nhãn hiệu |
+| 26 | [Z] | **Mã số thuế** | Text | - | Mã số thuế đơn vị bán hàng |
+| 27 | [AA] | **Tên công ty bán hàng** | Text | - | Tên công ty cung cấp |
 
 ### 2.3 Tab 3: Thông tin khai báo (11 trường)
 
 | STT | Mã Excel | Tên trường | Kiểu dữ liệu | Bắt buộc | Mô tả |
 |-----|----------|------------|--------------|----------|-------|
-| 27 | [AB] | **Nhu cầu khai báo** | TextArea | - | Nhu cầu khai báo hải quan (CUSTOMER được sửa) |
-| 28 | [AC] | **Số lượng khai báo** | Number | - | Số lượng khai báo |
-| 29 | [AD] | **Giá xuất HĐ** | Number | - | Giá xuất hóa đơn (VND) |
-| 30 | [AE] | **Tổng giá trị lô hàng** | Number (Auto) | - | **Tự động tính** = [AD] × [AC]. Có tooltip hiển thị công thức |
-| 31 | [AF] | **Chính sách NK** | Text | - | Chính sách nhập khẩu |
-| 32 | [AG] | **Phí phải nộp** | Number | - | Phí phải nộp (VND) |
-| 33 | [AH] | **Ghi chú** | Text | - | Ghi chú thêm (CUSTOMER được sửa) |
-| 34 | [AI] | **Thuế VAT NK** | Number (Auto) | - | **Tự động tính** = [AE] × 8%. Có tooltip hiển thị công thức |
-| 35 | [AJ] | **Thuế NK phải nộp** | Number | - | Thuế nhập khẩu phải nộp (VND) |
-| 36 | [AK] | **Phí uỷ thác** | Number (Auto) | - | **Tự động tính** = [AE] × 1%. Có tooltip hiển thị công thức |
-| 37 | [AL] | **Tổng chi phí NK** | Number (Auto) | - | **Tự động tính** = [AJ] + [AI] + [AG] + [N] + [M] + [AK] + (([I] + [J]) × [K]). Có tooltip hiển thị công thức |
-| 38 | [AM] | **Tình trạng xuất VAT** | Text | - | Tình trạng xuất VAT |
+| 28 | [AB] | **Nhu cầu khai báo** | TextArea | - | Nhu cầu khai báo hải quan (CUSTOMER được sửa) |
+| 29 | [AC] | **Số lượng khai báo** | Number | - | Số lượng khai báo |
+| 30 | [AD] | **Giá xuất HĐ** | Number | - | Giá xuất hóa đơn (VND) |
+| 31 | [AE] | **Tổng giá trị lô hàng** | Number (Auto) | - | **Tự động tính** = [AD] × [AC]. Có tooltip hiển thị công thức |
+| 32 | [AF] | **Chính sách NK** | Text | - | Chính sách nhập khẩu |
+| 33 | [AG] | **Phí phải nộp** | Number | - | Phí phải nộp (VND) |
+| 34 | [AH] | **Ghi chú** | Text | - | Ghi chú thêm (CUSTOMER được sửa) |
+| 35 | [AI] | **Thuế VAT NK** | Number (Auto) | - | **Tự động tính** = [AE] × 8%. Có tooltip hiển thị công thức |
+| 36 | [AJ] | **Thuế NK phải nộp** | Number | - | Thuế nhập khẩu phải nộp (VND) |
+| 37 | [AK] | **Phí uỷ thác** | Number (Auto) | - | **Tự động tính** = [AE] × 1%. Có tooltip hiển thị công thức |
+| 38 | [AL] | **Tổng chi phí NK** | Number (Auto) | - | **Tự động tính** = [AJ] + [AI] + [AG] + [N] + [M] + [AK] + (([I] + [J]) × [K]). Có tooltip hiển thị công thức |
+| 39 | [AM] | **Tình trạng xuất VAT** | Text | - | Tình trạng xuất VAT |
 
 ---
 
@@ -90,13 +91,13 @@ Mỗi mã hàng bao gồm **38 trường dữ liệu** được chia thành **3 
 ### 3.1 Xem Danh Sách Mã Hàng
 
 #### Mô tả
-Hiển thị danh sách tất cả các mã hàng trong hệ thống dưới dạng bảng ngang (horizontal scroll) với **38 cột** tương ứng với 38 trường dữ liệu.
+Hiển thị danh sách tất cả các mã hàng trong hệ thống dưới dạng bảng ngang (horizontal scroll) với **39 cột** tương ứng với 39 trường dữ liệu.
 
 #### Thông tin hiển thị trên bảng
 
-Bảng hiển thị **TẤT CẢ 38 trường** theo thứ tự từ trái sang phải:
+Bảng hiển thị **TẤT CẢ 39 trường** theo thứ tự từ trái sang phải:
 - **ID**: Mã tự động tăng
-- **1. [A] → 38. [AM]**: Tất cả các trường dữ liệu theo đúng thứ tự
+- **1. [A] → 39. [AM]**: Tất cả các trường dữ liệu theo đúng thứ tự
 - **Ngày tạo**: Thời gian tạo bản ghi (DD/MM/YYYY)
 - **Thao tác**: Nút Xem, Sửa, Xóa
 
@@ -185,15 +186,16 @@ Cho phép người dùng (ADMIN, SALE, USER) tạo mã hàng mới trong hệ th
 - **Đơn vị kiện** [F]: Phải chọn (Thùng cotton / Pallet / Chiếc)
 - **Trọng lượng** [G]: Phải nhập
 - **Khối lượng** [H]: Phải nhập
-- **Đơn giá cước TQ_HN** [L]: Phải nhập
+- **Đơn giá cước TQ_HN (khối)** [L1]: Phải nhập
+- **Đơn giá cước TQ_HN (cân)** [L2]: Phải nhập
 
 **2. Tính toán tự động**
 
 Hệ thống tự động tính **4 công thức** khi nhập dữ liệu:
 
-- **[M] Tổng cước TQ_HN** = [L] × [H]
-  - Tự động tính khi nhập: Đơn giá cước TQ_HN, Khối lượng
-  - **Tooltip**: Hiển thị công thức "Tổng cước TQ_HN = Đơn giá cước TQ_HN [L] * Khối lượng [H]" khi hover chuột
+- **[M] Tổng cước TQ_HN** = Max([L1] × [H], [L2] × [G])
+  - Tự động tính khi nhập: Đơn giá cước khối, Đơn giá cước cân, Khối lượng, Trọng lượng
+  - **Tooltip**: Hiển thị công thức "Tổng cước TQ_HN = Max(Đơn giá cước khối [L1] * Khối lượng [H], Đơn giá cước cân [L2] * Trọng lượng [G])" khi hover chuột
   
 - **[AE] Tổng giá trị lô hàng** = [AD] × [AC]
   - Tự động tính khi nhập: Giá xuất HĐ, Số lượng khai báo
@@ -371,7 +373,7 @@ File Excel chứa **các bản ghi đã chọn** với các cột:
 ├────────────────────────────────────────────────────────────┤
 │  Bảng danh sách (scroll ngang):                            │
 │  ┌──┬────┬────┬────┬────┬────┬─────────────┬────┬────┐   │
-│  │☑ │ID  │Ngày│Mã  │Mã  │Tên │... 38 cột...│Thao│    │   │
+│  │☑ │ID  │Ngày│Mã  │Mã  │Tên │... 39 cột...│Thao│    │   │
 │  │  │    │nhập│KH  │đơn │hàng│             │tác │    │   │
 │  ├──┼────┼────┼────┼────┼────┼─────────────┼────┼────┤   │
 │  │☑ │1   │13/ │Nguyễn│ABC│Điện│...          │👁✏️🗑│    │   │
@@ -397,7 +399,7 @@ File Excel chứa **các bản ghi đã chọn** với các cột:
 │  │ 4. [D] Tên  │ 5. [E] Số   │ 6. [F] Đơn vị│             │
 │  │ [_________] │ kiện [____] │ [Dropdown_] │              │
 │  │             │             │             │              │
-│  │ 12. [L] Đơn │ 13. [M] Tổng│             │              │
+│  │ 12. [L1]Đơn │ 13. [M] Tổng│             │              │
 │  │ giá cước    │ cước (Auto) │             │              │
 │  │ [_________] │ [_________] │             │              │
 │  │             │     (?)     │             │              │
@@ -508,7 +510,7 @@ File Excel chứa **các bản ghi đã chọn** với các cột:
 
 **1. Tổng cước TQ_HN ([M])**
 ```
-Tổng cước = Đơn giá cước TQ_HN [L] × Khối lượng [H]
+Tổng cước = Max(Đơn giá cước TQ_HN (khối) [L1] × Khối lượng [H], Đơn giá cước TQ_HN (cân) [L2] × Trọng lượng [G])
 ```
 
 **2. Tổng giá trị lô hàng ([AE])**
@@ -538,7 +540,7 @@ Tổng chi phí NK = Thuế NK [AJ] + Thuế VAT NK [AI] + Phí phải nộp [AG
 ## 7. Lưu Ý Đặc Biệt
 
 ### 7.1 Về cấu trúc dữ liệu
-- Màn Mã hàng có **38 trường dữ liệu** - là màn phức tạp nhất trong hệ thống (ngang với Khai báo)
+- Màn Mã hàng có **39 trường dữ liệu** - là màn phức tạp nhất trong hệ thống (ngang với Khai báo)
 - Dữ liệu được chia thành **3 tabs** để dễ quản lý:
   - Tab 1: Thông tin chung (15 trường)
   - Tab 2: Thông tin sản phẩm (12 trường)
@@ -568,7 +570,7 @@ Tổng chi phí NK = Thuế NK [AJ] + Thuế VAT NK [AI] + Phí phải nộp [AG
 - Xuất **chỉ các bản ghi đã chọn**
 - **Bắt buộc** phải chọn ít nhất 1 bản ghi trước khi xuất
 - Nếu chưa chọn → Hiển thị lỗi: "Vui lòng chọn ít nhất 1 bản ghi để xuất"
-- File Excel chứa thông tin tổng hợp (không phải tất cả 38 trường)
+- File Excel chứa thông tin tổng hợp (không phải tất cả 39 trường)
 
 ### 7.6 Về thông báo
 - Khi ADMIN/SALE/USER thay đổi **Tình trạng hàng hóa** [P]

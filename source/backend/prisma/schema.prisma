@@ -187,11 +187,11 @@ model Declaration {
   // 11. [K] Phí dỡ hàng (RMB)
   unloadingFeeRMB      Decimal?  @db.Decimal(15, 2) // NUMBER
 
-  // 12. [L] Đơn giá cước vận chuyển TQ_HN (Theo Kg)
-  transportRate        Decimal?  @db.Decimal(15, 2) // NUMBER
+  // 12. [L2] Đơn giá cước vận chuyển TQ_HN (Theo Kg)
+  weightFee            Decimal?  @db.Decimal(15, 2) // NUMBER
 
-  // 13. [K] Đơn giá cước vận chuyển TQ_HN (Theo m3) - Mới
-  transportRateVolume  Decimal?  @db.Decimal(15, 2) // NUMBER
+  // 13. [L1] Đơn giá cước vận chuyển TQ_HN (Theo m3)
+  volumeFee            Decimal?  @db.Decimal(15, 2) // NUMBER
 
   // 14. [N] Tổng cước vận chuyển TQ_HN tạm tính
   totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // FORMULA
@@ -355,11 +355,11 @@ model ProductCode {
   // 13. [M] Phí dỡ hàng (RMB) - NEW
   unloadingFeeRMB      Decimal?  @db.Decimal(15, 2) // NUMBER
 
-  // 14. [N] Đơn giá cước vận chuyển TQ_HN (Theo Kg)
-  transportRate        Decimal?  @db.Decimal(15, 2) // NUMBER
+  // 14. [L2] Đơn giá cước vận chuyển TQ_HN (Theo Kg)
+  weightFee            Decimal?  @db.Decimal(15, 2) // NUMBER
 
-  // 15. [O] Đơn giá cước vận chuyển TQ_HN (Theo m3) - NEW
-  transportRateVolume  Decimal?  @db.Decimal(15, 2) // NUMBER
+  // 15. [L1] Đơn giá cước vận chuyển TQ_HN (Theo m3) - NEW
+  volumeFee            Decimal?  @db.Decimal(15, 2) // NUMBER
 
   // 16. [P] Tổng cước vận chuyển TQ_HN tạm tính
   totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // FORMULA

@@ -163,8 +163,8 @@ const DeclarationPage = () => {
                 '7. [G] Phí nội địa (RMB)': item.domesticFeeRMB,
                 '8. [H] Phí kéo hàng (RMB)': item.haulingFeeRMB,
                 '9. [I] Phí dỡ hàng (RMB)': item.unloadingFeeRMB,
-                '10. [J] Đơn giá cước (Kg)': item.transportRate,
-                '11. [K] Đơn giá cước (m3)': item.transportRateVolume,
+                '10. [J] Đơn giá cước (Kg)': item.weightFee,
+                '11. [K] Đơn giá cước (m3)': item.volumeFee,
                 '12. [L] Tổng cước TQ_HN': item.totalTransportFeeEstimate,
                 '13. [M] Ghi chú': item.note,
                 '14. [N] Ảnh hàng hóa': item.productImage,
@@ -308,16 +308,16 @@ const DeclarationPage = () => {
         },
         {
             title: '10. [J] Cước (Kg)',
-            dataIndex: 'transportRate',
-            key: 'transportRate',
+            dataIndex: 'weightFee',
+            key: 'weightFee',
             width: 120,
             align: 'right',
             render: (value) => value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '-'
         },
         {
             title: '11. [K] Cước (m3)',
-            dataIndex: 'transportRateVolume',
-            key: 'transportRateVolume',
+            dataIndex: 'volumeFee',
+            key: 'volumeFee',
             width: 120,
             align: 'right',
             render: (value) => value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '-'

@@ -186,8 +186,6 @@ const ProductCodePage = () => {
             dataIndex: 'entryDate',
             key: 'entryDate',
             width: 150,
-            key: 'entryDate',
-            width: 150,
             render: (date) => date ? new Date(date).toLocaleDateString(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN') : '-'
         },
         // 2. [B] Mã khách hàng
@@ -272,11 +270,20 @@ const ProductCodePage = () => {
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'de-DE' : 'zh-CN').format(val) : '-'
         },
-        // 12. [L] Đơn giá cước TQ_HN
+        // 12. [L1] Đơn giá cước TQ_HN (khối)
         {
-            title: t('productCode.transportRate'),
-            dataIndex: 'transportRate',
-            key: 'transportRate',
+            title: t('productCode.volumeFee'),
+            dataIndex: 'volumeFee',
+            key: 'volumeFee',
+            width: 150,
+            align: 'right',
+            render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
+        },
+        // 13. [L2] Đơn giá cước TQ_HN (cân)
+        {
+            title: t('productCode.weightFee'),
+            dataIndex: 'weightFee',
+            key: 'weightFee',
             width: 150,
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'

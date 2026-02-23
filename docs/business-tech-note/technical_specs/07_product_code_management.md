@@ -102,7 +102,7 @@ Base URL: `/api/product-codes`
 ### 4.1 UI Layout
 - **Horizontal Scroll Table**: 39 cột.
 - **Tabs Modal**: 3 Tabs như BRD.
-- **Summary Bar**: Khi chọn nhiều dòng -> Tính tổng Kiện, Trọng lượng, Khối lượng.
+- **Summary Bar**: Khi chọn nhiều dòng -> Tính tổng Kiện (phân loại thành Thùng carton và Pallet), Trọng lượng, Khối lượng.
 
 ### 4.2 Auto Calculation (Client-side)
 Cần replicate logic tính toán ở FE để User thấy ngay:

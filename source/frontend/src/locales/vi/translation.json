@@ -468,6 +468,12 @@
     "dashboard": {
         "welcome": "Chào mừng bạn đến với hệ thống Quản lý kho."
     },
+    "infoSource": {
+        "khoTq": "Kho TQ",
+        "khoVn": "Kho VN",
+        "customer": "Khách hàng",
+        "expectedEntry": "Dự kiến nhập kho"
+    },
     "error": {
         "99001": "Vui lòng nhập tên đăng nhập và mật khẩu",
         "99002": "Sai tài khoản hoặc mật khẩu",

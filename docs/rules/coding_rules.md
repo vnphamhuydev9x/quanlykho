@@ -407,6 +407,16 @@ const response = await axiosInstance.get('/customers');
         *   **TUYỆT ĐỐI** không hiển thị thêm thông tin (SĐT, Email) trong dropdown nếu cột tương ứng trên bảng không có.
         *   Lý do: Đảm bảo tính nhất quán giữa cái nhìn thấy và cái tìm kiếm được.
 
+#### Dropdown / Select Options (Quy tắc Enum Bắt Buộc)
+*   **QUY TẮC BẮT BUỘC**: Khi thiết kế các trường Selection Box / Dropdown (ví dụ: Đơn vị kiện, Trạng thái, Phân loại, Thuế...), **TUYỆT ĐỐI KHÔNG** dùng text (raw string) làm `value`. Không dùng chữ tiếng Việt có dấu/không dấu hay text hiển thị làm Identifier.
+*   **Phải dùng Enum / Code Pattern**: Luôn sử dụng hằng số chuẩn tiếng Anh (Enum, Code - ví dụ: `CARTON`, `PALLET`, `PIECE`, `ENABLED`) làm `value` lưu xuống Database và làm key tính toán logic trên Frontend. Text hiển thị chỉ đóng vai trò giao diện và được map qua file locale (`translation.json`).
+*   **Lý do (Tránh lỗi diện rộng)**:
+    *   Nếu yêu cầu nghiệp vụ thay đổi text (Sửa lỗi chính tả "Thùng cotton" -> "Thùng carton", hay đổi "Active" -> "Đang hoạt động"), lập trình viên chỉ cần sửa file ngôn ngữ.
+    *   Nếu dùng raw text làm value, khi sửa text hiển thị, mọi logic tính toán, `filter()`, `reduce()` ở các hàm sum màn hình đều sẽ chết vì không so khớp được chuỗi cũ/mới nữa. Dữ liệu cũ trong DB cũng sẽ bị vỡ layout (Hậu quả: Tính tổng sai, mất dữ liệu, Orphaned data).
+*   **Code Mẫu**:
+    *   ❌ **Sai (Dùng text làm key)**: `<Option value="Thùng carton">Thùng carton</Option>` => Logic filter: `data.filter(i => i.packing === 'Thùng carton')` (Lỗi khi text đổi thành "Thùng giấy")
+    *   ✅ **Đúng (Dùng Enum làm key)**: `<Option value="CARTON">{t('unit.carton')}</Option>` => Logic filter: `data.filter(i => i.packing === 'CARTON')` (Code không bao giờ đổi, bền vững 100%)
+
 ### 12.2 Table Design
 
 #### Table Fixed Columns (Cột cố định trong Table)

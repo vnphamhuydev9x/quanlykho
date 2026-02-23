@@ -11,7 +11,7 @@ import declarationService from '../../services/declarationService';
 import CustomNumberInput from '../../components/CustomNumberInput';
 
 const { Option } = Select;
-
+import { INFO_SOURCE } from '../../constants/enums';
 // Helper for layout: 3 columns per row
 const Col3 = ({ children }) => <Col xs={24} md={8}>{children}</Col>;
 const { TextArea } = Input;
@@ -284,9 +284,9 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         <Col3>
                             <Form.Item name="infoSource" label="10. [J] Nguồn tin (Kg, m3)">
                                 <Select placeholder="Chọn nguồn">
-                                    <Option value="Kho TQ">Kho TQ</Option>
-                                    <Option value="Kho VN">Kho VN</Option>
-                                    <Option value="Khách hàng">Khách hàng</Option>
+                                    <Option value={INFO_SOURCE.KHO_TQ}>{t('infoSource.khoTq')}</Option>
+                                    <Option value={INFO_SOURCE.KHO_VN}>{t('infoSource.khoVn')}</Option>
+                                    <Option value={INFO_SOURCE.CUSTOMER}>{t('infoSource.customer')}</Option>
                                 </Select>
                             </Form.Item>
                         </Col3>

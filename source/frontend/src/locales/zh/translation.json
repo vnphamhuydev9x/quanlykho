@@ -455,6 +455,12 @@
     "dashboard": {
         "welcome": "欢迎使用仓库管理系统。"
     },
+    "infoSource": {
+        "khoTq": "中国仓库",
+        "khoVn": "越南仓库",
+        "customer": "客户",
+        "expectedEntry": "预计入库"
+    },
     "error": {
         "99001": "请输入用户名和密码",
         "99002": "用户名或密码错误",

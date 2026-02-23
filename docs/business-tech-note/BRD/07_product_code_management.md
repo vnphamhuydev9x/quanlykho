@@ -134,13 +134,13 @@ Ngoài ra còn hỗ trợ lọc đặc biệt:
 #### Chọn nhiều dòng
 
 Hệ thống cho phép **chọn nhiều dòng** (checkbox) để xem tổng hợp:
-- **Tổng số kiện**: Tổng số kiện của các dòng đã chọn
+- **Tổng số kiện**: Tổng số kiện của các dòng đã chọn (được đếm và phân loại chi tiết theo đơn vị đóng gói, ví dụ: 9 thùng carton và 17 pallet)
 - **Tổng trọng lượng**: Tổng trọng lượng (Kg)
 - **Tổng khối lượng**: Tổng khối lượng (m³)
 
 Hiển thị dưới dạng thanh thông tin màu xanh phía trên bảng:
 ```
-Đã chọn 5 dòng | Tổng kiện: 120 | Tổng trọng lượng: 1.234,56 kg | Tổng khối lượng: 45,67 m³
+Đã chọn 5 dòng | Tổng kiện: 9 thùng carton và 17 pallet | Tổng trọng lượng: 1.234,56 kg | Tổng khối lượng: 45,67 m³
 ```
 
 #### Phân trang
@@ -370,7 +370,7 @@ File Excel chứa **các bản ghi đã chọn** với các cột:
 │  └──────────────────────────────────────────────────┘     │
 │                              [Tìm kiếm] [Xóa lọc]         │
 ├────────────────────────────────────────────────────────────┤
-│  ☑ Đã chọn 5 dòng | Tổng kiện: 120 | Trọng lượng: 1.234kg│
+│  ☑ Đã chọn 5 dòng | Tổng kiện: 9 thùng carton và 17 pallet | Trọng lượng: 1.234kg│
 ├────────────────────────────────────────────────────────────┤
 │  Bảng danh sách (scroll ngang):                            │
 │  ┌──┬────┬────┬────┬────┬────┬─────────────┬────┬────┐   │

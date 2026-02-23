@@ -9,6 +9,7 @@ import productCodeService from '../../services/productCodeService';
 import customerService from '../../services/customerService';
 
 import CustomNumberInput from '../../components/CustomNumberInput';
+import { PACKAGE_UNIT, VAT_STATUS, PRODUCT_STATUS } from '../../constants/enums';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -431,8 +432,8 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         <Col3>
                                             <Form.Item name="packing" label={t('productCode.packageUnit')} rules={[{ required: true, message: t('productCode.packageUnitRequired') }]}>
                                                 <Select placeholder={t('productCode.selectUnit')} disabled={disabledGeneral}>
-                                                    <Option value="Thùng carton">{t('productCode.unitThungCarton')}</Option>
-                                                    <Option value="Pallet">{t('productCode.unitPallet')}</Option>
+                                                    <Option value={PACKAGE_UNIT.CARTON}>{t('productCode.unitThungCarton')}</Option>
+                                                    <Option value={PACKAGE_UNIT.PALLET}>{t('productCode.unitPallet')}</Option>
                                                 </Select>
                                             </Form.Item>
                                         </Col3>
@@ -840,9 +841,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         <Col3>
                                             <Form.Item name="vatExportStatus" label={t('productCode.vatExportStatus')}>
                                                 <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
-                                                    <Option value="Chưa xuất VAT">{t('productCode.vatChuaXuat')}</Option>
-                                                    <Option value="đã xuất VAT , chưa đóng gói hs">{t('productCode.vatDaXuatChuaDongGoi')}</Option>
-                                                    <Option value="đã xuất VAT. đã đóng gói hồ sơ">{t('productCode.vatDaXuatDaDongGoi')}</Option>
+                                                    <Option value={VAT_STATUS.NOT_ISSUED}>{t('productCode.vatChuaXuat')}</Option>
+                                                    <Option value={VAT_STATUS.ISSUED_NOT_PACKAGED}>{t('productCode.vatDaXuatChuaDongGoi')}</Option>
+                                                    <Option value={VAT_STATUS.ISSUED_PACKAGED}>{t('productCode.vatDaXuatDaDongGoi')}</Option>
                                                 </Select>
                                             </Form.Item>
                                         </Col3>
@@ -858,13 +859,13 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         <Col3>
                                             <Form.Item name="status" label={t('productCode.statusLabel')}>
                                                 <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
-                                                    <Option value="Nhập kho">{t('productCode.statusNhapKho')}</Option>
-                                                    <Option value="Chờ xếp xe">{t('productCode.statusChoXepXe')}</Option>
-                                                    <Option value="Xếp xe Trung Quốc">{t('productCode.statusXepXeTQ')}</Option>
-                                                    <Option value="Kiểm hóa">{t('productCode.statusKiemHoa')}</Option>
-                                                    <Option value="Chờ thông quan VN">{t('productCode.statusChoThongQuanVN')}</Option>
-                                                    <Option value="Đã thông quan">{t('productCode.statusDaThongQuan')}</Option>
-                                                    <Option value="Đã xếp xe">{t('productCode.statusDaXepXe')}</Option>
+                                                    <Option value={PRODUCT_STATUS.ENTERED_WAREHOUSE}>{t('productCode.statusNhapKho')}</Option>
+                                                    <Option value={PRODUCT_STATUS.WAITING_FOR_LOADING}>{t('productCode.statusChoXepXe')}</Option>
+                                                    <Option value={PRODUCT_STATUS.LOADING_IN_CHINA}>{t('productCode.statusXepXeTQ')}</Option>
+                                                    <Option value={PRODUCT_STATUS.CUSTOMS_INSPECTION}>{t('productCode.statusKiemHoa')}</Option>
+                                                    <Option value={PRODUCT_STATUS.WAITING_FOR_VN_CUSTOMS}>{t('productCode.statusChoThongQuanVN')}</Option>
+                                                    <Option value={PRODUCT_STATUS.CLEARED_CUSTOMS}>{t('productCode.statusDaThongQuan')}</Option>
+                                                    <Option value={PRODUCT_STATUS.LOADED}>{t('productCode.statusDaXepXe')}</Option>
                                                 </Select>
                                             </Form.Item>
                                         </Col3>

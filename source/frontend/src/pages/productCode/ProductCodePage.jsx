@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import productCodeService from '../../services/productCodeService';
 import ProductCodeModal from './ProductCodeModal';
 import * as XLSX from 'xlsx';
+import { PACKAGE_UNIT } from '../../constants/enums';
 
 const ProductCodePage = () => {
     const { t, i18n } = useTranslation();
@@ -671,7 +672,21 @@ const ProductCodePage = () => {
                         <span style={{ color: '#8c8c8c' }}>|</span>
                         <Space>
                             <span style={{ color: '#595959' }}>
-                                {t('productCode.summaryTotalPackages')}: <strong>{data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + Number(item.packageCount || 0), 0)}</strong>
+                                {t('productCode.summaryTotalPackages')}: <strong>{(() => {
+                                    const selectedItems = data.filter(item => selectedRowKeys.includes(item.id));
+                                    const countCarton = selectedItems.filter(i => i.packing === PACKAGE_UNIT.CARTON).reduce((sum, item) => sum + Number(item.packageCount || 0), 0);
+                                    const countPallet = selectedItems.filter(i => i.packing === PACKAGE_UNIT.PALLET).reduce((sum, item) => sum + Number(item.packageCount || 0), 0);
+
+                                    if (countCarton > 0 && countPallet > 0) {
+                                        return `${countCarton} thùng carton và ${countPallet} pallet`;
+                                    } else if (countCarton > 0) {
+                                        return `${countCarton} thùng carton`;
+                                    } else if (countPallet > 0) {
+                                        return `${countPallet} pallet`;
+                                    } else {
+                                        return selectedItems.reduce((sum, item) => sum + Number(item.packageCount || 0), 0);
+                                    }
+                                })()}</strong>
                             </span>
                             <span style={{ color: '#595959' }}>
                                 {t('productCode.summaryTotalWeight')}: <strong>{new Intl.NumberFormat(i18n.language.startsWith('vi') ? 'vi-VN' : 'zh-CN').format(data.filter(item => selectedRowKeys.includes(item.id)).reduce((sum, item) => sum + Number(item.weight || 0), 0))}</strong> kg

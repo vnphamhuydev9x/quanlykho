@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { TextArea } = Input;
+import { INFO_SOURCE, DECLARATION_STATUS } from '../../constants/enums';
 
 // Helper to convert file to base64
 const getBase64 = (file) =>
@@ -236,9 +237,9 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
                         {/* [H] Nguồn cung cấp thông tin -> 6. [F] */}
                         <Form.Item name="infoSource" label="6. [F] Nguồn tin (Kg, m3)">
                             <Select disabled={isViewMode}>
-                                <Option value="Kho TQ">Kho TQ</Option>
-                                <Option value="Kho VN">Kho VN</Option>
-                                <Option value="Dự kiến nhập kho">Dự kiến nhập kho</Option>
+                                <Option value={INFO_SOURCE.KHO_TQ}>{t('infoSource.khoTq')}</Option>
+                                <Option value={INFO_SOURCE.KHO_VN}>{t('infoSource.khoVn')}</Option>
+                                <Option value={INFO_SOURCE.EXPECTED_ENTRY}>{t('infoSource.expectedEntry')}</Option>
                             </Select>
                         </Form.Item>
                     </Col>

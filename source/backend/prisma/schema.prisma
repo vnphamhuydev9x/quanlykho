@@ -122,6 +122,18 @@ model Category {
   @@map("categories")
 }
 
+model MerchandiseCondition {
+  id              Int                     @id @default(autoincrement())
+  name_vi         String
+  name_zh         String?
+  canLoadVehicle  Boolean                 @default(false)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  deletedAt       DateTime?               // Soft Delete
+
+  @@map("merchandise_conditions")
+}
+
 enum TransactionStatus {
   SUCCESS
   CANCELLED

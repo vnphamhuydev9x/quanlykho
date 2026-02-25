@@ -15,6 +15,7 @@ const transactionRoutes = require('./routes/transactionRoute');
 const declarationRoutes = require('./routes/declarationRoute');
 const productCodeRoutes = require('./routes/productCodeRoute');
 const notificationRoutes = require('./routes/notificationRoute');
+const merchandiseConditionRoutes = require('./routes/merchandiseConditionRoute');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/product-codes', productCodeRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/manifests', require('./routes/manifestRoutes'));
+app.use('/api/merchandise-conditions', merchandiseConditionRoutes);
 
 app.get('/', (req, res) => {
     res.send('Kho Manager Backend is running');

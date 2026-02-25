@@ -276,6 +276,25 @@ async function main() {
     }
 
     console.log('Seeding finished.');
+
+    // --- SEED MERCHANDISE CONDITIONS ---
+    console.log('Seeding Merchandise Conditions...');
+    const defaultStatusName = "Nhập kho";
+    const existingDefaultStatus = await prisma.merchandiseCondition.findFirst({
+        where: { name_vi: defaultStatusName }
+    });
+    if (!existingDefaultStatus) {
+        await prisma.merchandiseCondition.create({
+            data: {
+                name_vi: defaultStatusName,
+                name_zh: "入库",
+                canLoadVehicle: true
+            }
+        });
+        console.log(`Created MerchandiseCondition: ${defaultStatusName}`);
+    } else {
+        console.log(`MerchandiseCondition already exists: ${defaultStatusName}`);
+    }
 }
 
 main()

@@ -7,6 +7,7 @@ import { formatFloat } from '../../utils/format';
 import dayjs from 'dayjs';
 import productCodeService from '../../services/productCodeService';
 import customerService from '../../services/customerService';
+import merchandiseConditionService from '../../services/merchandiseConditionService';
 
 import CustomNumberInput from '../../components/CustomNumberInput';
 import { PACKAGE_UNIT, VAT_STATUS, PRODUCT_STATUS } from '../../constants/enums';
@@ -26,6 +27,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
     const [submitting, setSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState('1');
     const [customers, setCustomers] = useState([]);
+    const [conditions, setConditions] = useState([]);
 
     // Parse user on init
     const [currentUser] = useState(() => {
@@ -45,6 +47,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
     useEffect(() => {
         if (currentUser && currentUser.type !== 'CUSTOMER') {
             fetchCustomers();
+            fetchConditions();
         }
     }, [currentUser]);
 
@@ -57,11 +60,21 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
         }
     };
 
+    const fetchConditions = async () => {
+        try {
+            const response = await merchandiseConditionService.getAll({ limit: 0 });
+            setConditions(response.data.items || []);
+        } catch (error) {
+            console.error("Failed to fetch conditions");
+        }
+    };
+
     // Auto-refresh when user returns to this tab
     useEffect(() => {
         const handleFocus = () => {
             if (visible && currentUser && currentUser.type !== 'CUSTOMER') {
                 fetchCustomers();
+                fetchConditions();
             }
         };
 
@@ -406,6 +419,17 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         <Col3>
                                             <Form.Item name="orderCode" label={t('productCode.orderCode')} rules={[{ required: true, message: t('productCode.orderCodeRequired') }]}>
                                                 <Input disabled={disabledGeneral} />
+                                            </Form.Item>
+                                        </Col3>
+
+                                        {/* 16. [P] Tình trạng hàng hoá */}
+                                        <Col3>
+                                            <Form.Item name="status" label={t('productCode.statusLabel')}>
+                                                <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
+                                                    {conditions.map(c => (
+                                                        <Option key={c.id} value={c.name_vi}>{c.name_vi}</Option>
+                                                    ))}
+                                                </Select>
                                             </Form.Item>
                                         </Col3>
 
@@ -850,28 +874,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                     </Row>
                                 ),
                             },
-                            {
-                                key: '4',
-                                label: t('productCode.tabStatus'),
-                                children: (
-                                    <Row gutter={16}>
-                                        {/* 16. [P] Tình trạng hàng hoá */}
-                                        <Col3>
-                                            <Form.Item name="status" label={t('productCode.statusLabel')}>
-                                                <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
-                                                    <Option value={PRODUCT_STATUS.ENTERED_WAREHOUSE}>{t('productCode.statusNhapKho')}</Option>
-                                                    <Option value={PRODUCT_STATUS.WAITING_FOR_LOADING}>{t('productCode.statusChoXepXe')}</Option>
-                                                    <Option value={PRODUCT_STATUS.LOADING_IN_CHINA}>{t('productCode.statusXepXeTQ')}</Option>
-                                                    <Option value={PRODUCT_STATUS.CUSTOMS_INSPECTION}>{t('productCode.statusKiemHoa')}</Option>
-                                                    <Option value={PRODUCT_STATUS.WAITING_FOR_VN_CUSTOMS}>{t('productCode.statusChoThongQuanVN')}</Option>
-                                                    <Option value={PRODUCT_STATUS.CLEARED_CUSTOMS}>{t('productCode.statusDaThongQuan')}</Option>
-                                                    <Option value={PRODUCT_STATUS.LOADED}>{t('productCode.statusDaXepXe')}</Option>
-                                                </Select>
-                                            </Form.Item>
-                                        </Col3>
-                                    </Row>
-                                ),
-                            },
+
                         ]}
                     />
                 </Form>

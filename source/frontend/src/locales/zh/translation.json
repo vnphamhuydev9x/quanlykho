@@ -8,6 +8,7 @@
         "warehouseVN": "越南仓库",
         "warehouse": "仓库",
         "employees": "员工",
+        "merchandiseConditions": "货物状况",
         "profile": "个人资料",
         "logout": "注销",
         "transactions": "交易",
@@ -50,6 +51,18 @@
         "createSuccess": "创建货类成功！",
         "updateSuccess": "更新货类成功！",
         "deleteSuccess": "删除货类成功！"
+    },
+    "merchandiseCondition": {
+        "title": "货物状况管理",
+        "add": "添加状态",
+        "edit": "编辑状态",
+        "nameVi": "越南语名称",
+        "nameZh": "中文名称",
+        "searchPlaceholder": "按越南语或中文名称搜索...",
+        "canLoadVehicle": "可装车",
+        "createSuccess": "添加货物状况成功！",
+        "updateSuccess": "更新货物状况成功！",
+        "deleteSuccess": "删除货物状况成功！"
     },
     "transaction": {
         "title": "充值管理",

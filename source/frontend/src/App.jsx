@@ -11,6 +11,7 @@ import EmployeeList from './pages/EmployeeList';
 import CustomerList from './pages/CustomerList';
 import WarehousePage from './pages/warehouse/WarehousePage';
 import CategoryPage from './pages/category/CategoryPage';
+import MerchandiseConditionPage from './pages/merchandiseCondition/MerchandiseConditionPage';
 import DeclarationPage from './pages/declaration/DeclarationPage';
 import TransactionPage from './pages/transaction/TransactionPage';
 
@@ -84,6 +85,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <CategoryPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/merchandise-conditions"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <MerchandiseConditionPage />
                 </MainLayout>
               </ProtectedRoute>
             }

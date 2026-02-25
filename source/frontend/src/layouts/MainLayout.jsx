@@ -295,12 +295,6 @@ const MainLayout = ({ children }) => {
             ],
         },
         {
-            key: '/product-codes?status=XUAT_DU',
-            icon: <ExportOutlined />,
-            label: t('menu.export'),
-            onClick: () => navigate('/product-codes?status=XUAT_DU'),
-        },
-        {
             key: '/reports',
             icon: <BarChartOutlined />,
             label: t('menu.reports'),
@@ -323,14 +317,19 @@ const MainLayout = ({ children }) => {
                     onClick: () => navigate('/settings/warehouses'),
                 },
                 {
-                    key: '/settings/categories',
-                    label: t('menu.categories'),
-                    onClick: () => navigate('/settings/categories'),
-                },
-                {
                     key: '/settings/employees',
                     label: t('menu.employees'),
                     onClick: () => navigate('/settings/employees'),
+                },
+                {
+                    key: '/settings/merchandise-conditions',
+                    label: t('menu.merchandiseConditions'),
+                    onClick: () => navigate('/settings/merchandise-conditions'),
+                },
+                {
+                    key: '/settings/categories',
+                    label: t('menu.categories'),
+                    onClick: () => navigate('/settings/categories'),
                 }
             ],
         },

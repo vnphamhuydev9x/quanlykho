@@ -665,12 +665,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             </Form.Item>
                                         </Col3>
 
-                                        {/* 22. [W] Quy cách */}
-                                        <Col3>
-                                            <Form.Item name="specification" label={t('productCode.specification')}>
-                                                <Input disabled={disabledGeneral} />
-                                            </Form.Item>
-                                        </Col3>
+
 
                                         {/* 23. [X] Mô Tả sản phẩm */}
                                         <Col3>
@@ -707,6 +702,13 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 label: t('productCode.tabDeclaration'),
                                 children: (
                                     <Row gutter={16}>
+                                        {/* 22. [W] Quy cách */}
+                                        <Col3>
+                                            <Form.Item name="specification" label={t('productCode.specification')}>
+                                                <TextArea rows={4} disabled={disabledGeneral} />
+                                            </Form.Item>
+                                        </Col3>
+
                                         {/* 27. [AB] Nhu cầu khai báo */}
                                         <Col3>
                                             <Form.Item name="declarationNeed" label={t('productCode.declarationNeed')}>

@@ -51,7 +51,7 @@ Mỗi mã hàng bao gồm **39 trường dữ liệu** được chia thành **3 
 | 15 | [N] | **Phí nội địa VN** | Number | - | Phí nội địa tại Việt Nam (VND) |
 | 16 | [O] | **Ghi chú** | Text | - | Ghi chú thêm |
 
-### 2.2 Tab 2: Thông tin sản phẩm (12 trường)
+### 2.2 Tab 2: Thông tin sản phẩm (11 trường)
 
 | STT | Mã Excel | Tên trường | Kiểu dữ liệu | Bắt buộc | Mô tả |
 |-----|----------|------------|--------------|----------|-------|
@@ -62,16 +62,16 @@ Mỗi mã hàng bao gồm **39 trường dữ liệu** được chia thành **3 
 | 21 | [U] | **Ảnh hàng dán tem** | Image Upload | - | Ảnh hàng đã dán tem (tối đa 3 ảnh, ẩn nút upload khi đã đủ 3) |
 | 22 | [V] | **Số lượng SP** | Number | - | Số lượng sản phẩm |
 | 22.1 | [V2] | **Đơn vị** | Text | - | Đơn vị tính của sản phẩm (bộ, chiếc...) |
-| 23 | [W] | **Quy cách** | Text | - | Quy cách đóng gói |
 | 24 | [X] | **Mô tả SP** | TextArea | - | Mô tả chi tiết sản phẩm |
 | 25 | [Y] | **Nhãn hiệu** | Text | - | Thương hiệu/nhãn hiệu |
 | 26 | [Z] | **Mã số thuế** | Text | - | Mã số thuế đơn vị bán hàng |
 | 27 | [AA] | **Tên công ty bán hàng** | Text | - | Tên công ty cung cấp |
 
-### 2.3 Tab 3: Thông tin khai báo (11 trường)
+### 2.3 Tab 3: Thông tin khai báo (12 trường)
 
 | STT | Mã Excel | Tên trường | Kiểu dữ liệu | Bắt buộc | Mô tả |
 |-----|----------|------------|--------------|----------|-------|
+| 23 | [W] | **Quy cách** | TextArea | - | Quy cách đóng gói |
 | 28 | [AB] | **Nhu cầu khai báo** | TextArea | - | Nhu cầu khai báo hải quan (CUSTOMER được sửa) |
 | 29 | [AC] | **Số lượng khai báo** | Number | - | Số lượng khai báo |
 | 30 | [AD] | **Giá xuất HĐ** | Number | - | Giá xuất hóa đơn (VND) |
@@ -543,9 +543,9 @@ Tổng chi phí NK = Thuế NK [AJ] + Thuế VAT NK [AI] + Phí phải nộp [AG
 ### 7.1 Về cấu trúc dữ liệu
 - Màn Mã hàng có **39 trường dữ liệu** - là màn phức tạp nhất trong hệ thống (ngang với Khai báo)
 - Dữ liệu được chia thành **3 tabs** để dễ quản lý:
-  - Tab 1: Thông tin chung (15 trường)
-  - Tab 2: Thông tin sản phẩm (12 trường)
-  - Tab 3: Thông tin khai báo (11 trường)
+  - Tab 1: Thông tin chung (16 trường)
+  - Tab 2: Thông tin sản phẩm (11 trường)
+  - Tab 3: Thông tin khai báo (12 trường)
 
 ### 7.2 Về hiển thị
 - Bảng danh sách có **scroll ngang** (horizontal scroll) do có quá nhiều cột

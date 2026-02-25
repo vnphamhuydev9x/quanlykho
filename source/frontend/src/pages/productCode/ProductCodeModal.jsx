@@ -422,17 +422,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             </Form.Item>
                                         </Col3>
 
-                                        {/* 16. [P] Tình trạng hàng hoá */}
-                                        <Col3>
-                                            <Form.Item name="status" label={t('productCode.statusLabel')}>
-                                                <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
-                                                    {conditions.map(c => (
-                                                        <Option key={c.id} value={c.name_vi}>{c.name_vi}</Option>
-                                                    ))}
-                                                </Select>
-                                            </Form.Item>
-                                        </Col3>
-
                                         {/* 4. [D] Tên mặt hàng */}
                                         <Col3>
                                             <Form.Item name="productName" label={t('productCode.productNameLabel')} rules={[{ required: true, message: t('productCode.productNameRequired') }]}>
@@ -582,6 +571,17 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         <Col3>
                                             <Form.Item name="notes" label={t('productCode.notesLabel')}>
                                                 <Input disabled={disabledGeneral} />
+                                            </Form.Item>
+                                        </Col3>
+
+                                        {/* 16. [P] Tình trạng hàng hoá */}
+                                        <Col3>
+                                            <Form.Item name="status" label={t('productCode.statusLabel')}>
+                                                <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
+                                                    {conditions.map(c => (
+                                                        <Option key={c.id} value={c.name_vi}>{c.name_vi}</Option>
+                                                    ))}
+                                                </Select>
                                             </Form.Item>
                                         </Col3>
 

@@ -474,6 +474,26 @@
         "customer": "客户",
         "expectedEntry": "预计入库"
     },
+    "shortDeclaration": {
+        "title": "简短申报管理",
+        "add": "新增",
+        "edit": "编辑",
+        "productName": "详细品名",
+        "hsCode": "HS编码",
+        "origin": "原产地",
+        "unit1": "单位",
+        "unit2": "第二单位",
+        "importTaxCode": "进口税则号",
+        "importTaxRate": "进口税率(%)",
+        "vatTaxCode": "增值税则号",
+        "vatTaxRate": "增值税率(%)",
+        "createSuccess": "创建成功",
+        "updateSuccess": "更新成功",
+        "deleteSuccess": "删除成功",
+        "uploadExcel": "上传 Excel",
+        "searchPlaceholder": "搜索详细品名，HS编码...",
+        "duplicateErrorId": "简短申报记录重复 (ID: {{id}})"
+    },
     "error": {
         "99001": "请输入用户名和密码",
         "99002": "用户名或密码错误",
@@ -484,6 +504,7 @@
         "99007": "账户已被禁用。请联系管理员。",
         "99008": "您没有权限执行此操作",
         "99009": "无效的操作",
+        "99015": "简短申报记录已存在",
         "99500": "系统错误 (Server Error)",
         "UNKNOWN": "未知错误"
     }

@@ -176,6 +176,12 @@ const MainLayout = ({ children }) => {
             onClick: () => navigate('/transactions'),
         },
         {
+            key: '/short-declarations',
+            icon: <FileTextOutlined />,
+            label: t('menu.shortDeclarations'),
+            onClick: () => navigate('/short-declarations'),
+        },
+        {
             key: '/declarations',
             icon: <FileTextOutlined />,
             label: t('menu.declarations'),

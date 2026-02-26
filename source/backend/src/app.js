@@ -40,6 +40,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/manifests', require('./routes/manifestRoutes'));
 app.use('/api/merchandise-conditions', merchandiseConditionRoutes);
+app.use('/api/short-declarations', require('./routes/shortDeclaration.routes'));
 
 app.get('/', (req, res) => {
     res.send('Kho Manager Backend is running');

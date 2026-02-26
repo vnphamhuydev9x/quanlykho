@@ -539,4 +539,30 @@ model Notification {
   @@map("notifications")
 }
 
+model ShortDeclaration {
+  id              Int       @id @default(autoincrement())
+  
+  // 9 trường thông tin chính
+  productName     String?   @db.Text
+  hsCode          String?
+  origin          String?
+  unit1           String?
+  unit2           String?
+  importTaxCode   String?
+  importTaxRate   Decimal?  @db.Decimal(5, 2)
+  vatTaxCode      String?
+  vatTaxRate      Decimal?  @db.Decimal(5, 2)
+  
+  // Hash field for existing check
+  hash            String?   @db.VarChar(255)
+  
+  // System fields
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime? // Soft Delete
+
+  @@index([hash])
+  @@map("short_declarations")
+}
+
 

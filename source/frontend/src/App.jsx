@@ -15,6 +15,7 @@ import MerchandiseConditionPage from './pages/merchandiseCondition/MerchandiseCo
 import DeclarationPage from './pages/declaration/DeclarationPage';
 import TransactionPage from './pages/transaction/TransactionPage';
 
+import ShortDeclarationList from './pages/shortDeclaration/ShortDeclarationList';
 import ProductCodePage from './pages/productCode/ProductCodePage';
 import MerchandisePage from './pages/merchandise/MerchandisePage';
 import ManifestListPage from './pages/manifest/ManifestListPage';
@@ -95,6 +96,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <MerchandiseConditionPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/short-declarations"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ShortDeclarationList />
                 </MainLayout>
               </ProtectedRoute>
             }

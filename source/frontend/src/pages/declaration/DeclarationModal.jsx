@@ -20,7 +20,7 @@ const getBase64 = (file) =>
         reader.onerror = (error) => reject(error);
     });
 
-const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, onSuccess }) => {
+const DeclarationModal = ({ visible, declaration, initialData, isViewMode = false, onCancel, onSuccess }) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
@@ -59,10 +59,15 @@ const DeclarationModal = ({ visible, declaration, isViewMode = false, onCancel, 
             } else {
                 // Create mode: reset form
                 form.resetFields();
+                if (initialData) {
+                    setTimeout(() => {
+                        form.setFieldsValue(initialData);
+                    }, 50);
+                }
                 setFileList([]);
             }
         }
-    }, [visible, declaration]);
+    }, [visible, declaration, initialData, form]);
 
     const fetchAllCustomers = async () => {
         setFetchingCustomers(true);

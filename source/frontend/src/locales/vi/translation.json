@@ -24,6 +24,7 @@
         "merchandise": "Hàng hóa",
         "manifests": "Xếp xe",
         "export": "Xuất kho",
+        "shortDeclarations": "Tờ khai rút gọn",
         "reports": "Báo cáo"
     },
     "inventory": {
@@ -487,6 +488,26 @@
         "customer": "Khách hàng",
         "expectedEntry": "Dự kiến nhập kho"
     },
+    "shortDeclaration": {
+        "title": "Quản lý Tờ khai rút gọn",
+        "add": "Thêm mới",
+        "edit": "Sửa tờ khai",
+        "productName": "Tên hàng (mô tả chi tiết)",
+        "hsCode": "Mã HS",
+        "origin": "Xuất xứ",
+        "unit1": "Đơn vị tính",
+        "unit2": "Đơn vị tính 2",
+        "importTaxCode": "Mã biểu thuế NK",
+        "importTaxRate": "TS NK(%)",
+        "vatTaxCode": "Mã biểu thuế VAT",
+        "vatTaxRate": "Thuế suất VAT(%)",
+        "createSuccess": "Tạo tờ khai rút gọn thành công",
+        "updateSuccess": "Cập nhật thành công",
+        "deleteSuccess": "Xóa thành công",
+        "uploadExcel": "Upload Excel",
+        "searchPlaceholder": "Tìm theo Tên hàng, HS, Mã thuế...",
+        "duplicateErrorId": "Đã tồn tại tờ khai rút gọn trùng lặp (ID: {{id}})"
+    },
     "error": {
         "99001": "Vui lòng nhập tên đăng nhập và mật khẩu",
         "99002": "Sai tài khoản hoặc mật khẩu",
@@ -497,6 +518,7 @@
         "99007": "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
         "99008": "Bạn không có quyền thực hiện thao tác này",
         "99009": "Hành động không hợp lệ",
+        "99015": "Tờ khai rút gọn này đã tồn tại",
         "99500": "Lỗi hệ thống (Server Error)",
         "UNKNOWN": "Lỗi không xác định"
     }

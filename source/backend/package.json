@@ -23,7 +23,8 @@
     "multer": "^2.0.2",
     "redis": "^5.10.0",
     "uuid": "^13.0.0",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",

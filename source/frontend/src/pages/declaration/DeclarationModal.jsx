@@ -376,7 +376,7 @@ const DeclarationModal = ({ visible, declaration, initialData, isViewMode = fals
                         </Form.Item>
                         {/* [AA] SL khai báo -> 27. [AA] */}
                         <Form.Item name="declarationQuantityDeclared" label="27. [AA] Số lượng khai báo (Chính thức)">
-                            <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
+                            <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} isInteger={true} />
                         </Form.Item>
                         {/* [AB] Đơn vị tính -> 28. [AB] */}
                         <Form.Item name="unit" label="28. [AB] Đơn vị tính">

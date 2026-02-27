@@ -723,6 +723,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 <CustomNumberInput
                                                     style={{ width: '100%' }}
                                                     min={0}
+                                                    isInteger={true}
                                                     disabled={disabledGeneral}
                                                 />
                                             </Form.Item>

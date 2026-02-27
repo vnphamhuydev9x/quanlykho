@@ -371,7 +371,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 23. [W] SL SP */}
                         <Col3>
                             <Form.Item name="productQuantity" label="23. [W] SL Sản phẩm">
-                                <CustomNumberInput style={{ width: '100%' }} min={0} />
+                                <CustomNumberInput style={{ width: '100%' }} min={0} isInteger={true} />
                             </Form.Item>
                         </Col3>
                         {/* 24. [X] Quy cách */}
@@ -419,7 +419,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 31. [AE] SL Khai báo */}
                         <Col3>
                             <Form.Item name="declarationQuantity" label="31. [AE] SL Khai báo">
-                                <CustomNumberInput style={{ width: '100%' }} min={0} />
+                                <CustomNumberInput style={{ width: '100%' }} min={0} isInteger={true} />
                             </Form.Item>
                         </Col3>
                         {/* 32. [AF] Giá xuất hóa đơn */}

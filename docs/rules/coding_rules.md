@@ -614,6 +614,17 @@ const response = await axiosInstance.get('/customers');
 *   **Lưu ý chung**: 
     *   Luôn disable `InputNumber` khi ở chế độ `isViewMode` và thêm `className="bg-gray-100"`.
     *   Luôn để `min={0}` trừ khi có yêu cầu đặc biệt.
+    *   **Hiển thị Đơn vị (Unit)**: Sử dụng `Space.Compact block` kết hợp thẻ `Input` (disabled) làm hậu tố đơn vị cho Form.Item để đảm bảo chiều rộng hiển thị chiếm 100%. **KHÔNG** sử dụng `addonAfter` vì nó sẽ không hiển thị tốt.
+<!-- Ví dụ:
+<Form.Item label="Trọng lượng">
+    <Space.Compact block>
+        <Form.Item name="weight" noStyle>
+            <CustomNumberInput style={{ width: 'calc(100% - 40px)' }} />
+        </Form.Item>
+        <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kg" disabled />
+    </Space.Compact>
+</Form.Item>
+-->
 
 #### Currency Display in Table (Hiển thị Tiền trong Bảng)
 *   **Quy tắc**:

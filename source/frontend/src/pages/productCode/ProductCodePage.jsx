@@ -501,12 +501,23 @@ const ProductCodePage = () => {
             align: 'right',
             render: (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '-'
         },
-        // 31. [AF] Chính sách NK
+        // 31. [AF1] Thuế VAT (%)
         {
-            title: t('productCode.importPolicy'),
-            dataIndex: 'declarationPolicy',
-            key: 'declarationPolicy',
-            width: 150
+            title: t('productCode.vatPercent'),
+            dataIndex: 'vatPercent',
+            key: 'vatPercent',
+            width: 120,
+            align: 'right',
+            render: (val) => val != null ? `${val}%` : '-'
+        },
+        // 31. [AF2] Thuế Nhập Khẩu (%)
+        {
+            title: t('productCode.importTaxPercent'),
+            dataIndex: 'importTaxPercent',
+            key: 'importTaxPercent',
+            width: 120,
+            align: 'right',
+            render: (val) => val != null ? `${val}%` : '-'
         },
         // 32. [AG] Phí phải nộp
         {

@@ -16,3 +16,8 @@ body {
 .ant-pagination-options {
   display: inline-block !important;
 }
+
+/* Force InputNumber with addonAfter to respect parent width 100% */
+.ant-input-number-group-wrapper {
+  width: 100% !important;
+}

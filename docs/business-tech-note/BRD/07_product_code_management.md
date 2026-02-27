@@ -76,11 +76,12 @@ Mỗi mã hàng bao gồm **39 trường dữ liệu** được chia thành **3 
 | 29 | [AC] | **Số lượng khai báo** | Number | - | Số lượng khai báo |
 | 30 | [AD] | **Giá xuất HĐ** | Number | - | Giá xuất hóa đơn (VND) |
 | 31 | [AE] | **Tổng giá trị lô hàng** | Number (Auto) | - | **Tự động tính** = [AD] × [AC]. Có tooltip hiển thị công thức |
-| 32 | [AF] | **Chính sách NK** | Text | - | Chính sách nhập khẩu |
+| 32 | [AF1] | **Thuế VAT** | Number (%) | - | Tỷ lệ thuế VAT (%) |
+| 32.1 | [AF2] | **Thuế nhập khẩu** | Number (%) | - | Tỷ lệ thuế nhập khẩu (%) |
 | 33 | [AG] | **Phí phải nộp** | Number | - | Phí phải nộp (VND) |
 | 34 | [AH] | **Ghi chú** | Text | - | Ghi chú thêm (CUSTOMER được sửa) |
-| 35 | [AI] | **Thuế VAT NK** | Number (Auto) | - | **Tự động tính** = [AE] × 8%. Có tooltip hiển thị công thức |
-| 36 | [AJ] | **Thuế NK phải nộp** | Number | - | Thuế nhập khẩu phải nộp (VND) |
+| 35 | [AI] | **Thuế VAT phải nộp** | Number (Auto) | - | **Tự động tính** = [AE] × [AF1]. Có tooltip |
+| 36 | [AJ] | **Thuế nhập khẩu phải nộp** | Number (Auto) | - | **Tự động tính** = [AE] × [AF2]. Có tooltip |
 | 37 | [AK] | **Phí uỷ thác** | Number (Auto) | - | **Tự động tính** = [AE] × 1%. Có tooltip hiển thị công thức |
 | 38 | [AL] | **Tổng chi phí NK** | Number (Auto) | - | **Tự động tính** = [AJ] + [AI] + [AG] + [N] + [M] + [AK] + (([I] + [J]) × [K]). Có tooltip hiển thị công thức |
 | 39 | [AM] | **Tình trạng xuất VAT** | Text | - | Tình trạng xuất VAT |
@@ -202,9 +203,13 @@ Hệ thống tự động tính **4 công thức** khi nhập dữ liệu:
   - Tự động tính khi nhập: Giá xuất HĐ, Số lượng khai báo
   - **Tooltip**: Hiển thị công thức "Tổng giá trị = Giá xuất hoá đơn [AD] * Số lượng khai báo [AC]" khi hover chuột
 
-- **[AI] Thuế VAT NK** = [AE] × 8%
-  - Tự động tính khi [AE] thay đổi
-  - **Tooltip**: Hiển thị công thức "Thuế VAT NK = Tổng giá trị [AE] * 8%" khi hover chuột
+- **[AI] Thuế VAT phải nộp** = [AE] × Thuế VAT (%) [AF1]
+  - Tự động tính khi [AE] hoặc [AF1] thay đổi
+  - **Tooltip**: Hiển thị công thức "Thuế VAT phải nộp = Tổng giá trị [AE] * Thuế VAT % [AF1]" khi hover chuột
+
+- **[AJ] Thuế nhập khẩu phải nộp** = [AE] × Thuế nhập khẩu (%) [AF2]
+  - Tự động tính khi [AE] hoặc [AF2] thay đổi
+  - **Tooltip**: Hiển thị công thức "Thuế nhập khẩu phải nộp = Tổng giá trị [AE] * Thuế NK % [AF2]" khi hover chuột
 
 - **[AK] Phí uỷ thác** = [AE] × 1%
   - Tự động tính khi [AE] thay đổi
@@ -519,9 +524,14 @@ Tổng cước = Max(Đơn giá cước TQ_HN (khối) [L1] × Khối lượng [
 Tổng giá trị = Giá xuất HĐ [AD] × Số lượng khai báo [AC]
 ```
 
-**3. Thuế VAT NK ([AI])**
+**3. Thuế VAT phải nộp ([AI])**
 ```
-Thuế VAT NK = Tổng giá trị [AE] × 8%
+Thuế VAT phải nộp = Tổng giá trị [AE] × Thuế VAT (%) [AF1]
+```
+
+**4. Thuế nhập khẩu phải nộp ([AJ])**
+```
+Thuế NK phải nộp = Tổng giá trị [AE] × Thuế nhập khẩu (%) [AF2]
 ```
 
 **4. Phí uỷ thác ([AK])**

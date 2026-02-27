@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, InputNumber, Row, Col, message } from 'antd';
+import { Modal, Form, Input, InputNumber, Row, Col, message, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../utils/axios';
 

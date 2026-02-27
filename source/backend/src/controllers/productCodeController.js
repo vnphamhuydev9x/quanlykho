@@ -263,7 +263,9 @@ const productCodeController = {
                 declarationQuantity, // [AC] Số lượng khai báo
                 invoicePriceExport, // [AD] Giá xuất hoá đơn
                 totalValueExport, // [AE] Tổng giá trị lô hàng
-                declarationPolicy, // [AF] Chính sách NK
+                vatPercent, // [AF1] Thuế VAT (%)
+                importTaxPercent, // [AF2] Thuế Nhập Khẩu (%)
+                declarationPolicy, // [AF] Chính sách NK (Legacy)
                 feeAmount, // [AG] Phí phải nộp
                 otherNotes, // [AH] Ghi chú
                 vatImportTax, // [AI] Thuế VAT nhập khẩu phải nộp
@@ -350,6 +352,8 @@ const productCodeController = {
                     declarationQuantity: declarationQuantity ? parseFloat(declarationQuantity) : null,
                     invoicePriceExport: invoicePriceExport ? parseFloat(invoicePriceExport) : null,
                     totalValueExport: totalValueExport ? parseFloat(totalValueExport) : null,
+                    vatPercent: vatPercent ? parseFloat(vatPercent) : null,
+                    importTaxPercent: importTaxPercent ? parseFloat(importTaxPercent) : null,
                     declarationPolicy,
                     feeAmount: feeAmount ? parseFloat(feeAmount) : null,
                     otherNotes,
@@ -485,6 +489,8 @@ const productCodeController = {
                 'declarationQuantity', // [AC]
                 'invoicePriceExport', // [AD]
                 'totalValueExport', // [AE]
+                'vatPercent', // [AF1]
+                'importTaxPercent', // [AF2]
                 'declarationPolicy', // [AF]
                 'feeAmount', // [AG]
                 'otherNotes', // [AH]
@@ -513,6 +519,7 @@ const productCodeController = {
                         'weightFee', 'volumeFee', 'totalTransportFeeEstimate',
                         'domesticFeeVN',
                         'productQuantity', 'declarationQuantity', 'invoicePriceExport', 'totalValueExport',
+                        'vatPercent', 'importTaxPercent',
                         'feeAmount',
                         'vatImportTax', 'importTax', 'trustFee', 'totalImportCost',
 

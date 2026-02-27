@@ -259,7 +259,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
         }
 
         // 3. [AI] VAT Import Tax = [AE] * 8%
-        const val_AI = val_AE * 0.08;
+        const vatPercent = getVal('vatPercent'); // [AF1]
+        const importTaxPercent = getVal('importTaxPercent'); // [AF2]
+        const val_AI = (val_AE * vatPercent) / 100;
         if (allValues.vatImportTax !== val_AI) {
             updates.vatImportTax = val_AI;
             shouldUpdate = true;
@@ -273,7 +275,12 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
         }
 
         // 5. [AL] Total Import Cost = [AJ] + [AI] + [AG] + [N] + [M] + [AK] + (([I] + [J]) * [K])
-        const importTax = getVal('importTax'); // [AJ]
+        const val_AJ = (val_AE * importTaxPercent) / 100;
+        if (allValues.importTax !== val_AJ) {
+            updates.importTax = val_AJ;
+            shouldUpdate = true;
+        }
+        // importTax is now val_AJ, no need to getVal
         const feeAmount = getVal('feeAmount'); // [AG]
         const domesticFeeVN = getVal('domesticFeeVN'); // [N]
         const domesticFeeRMB = getVal('domesticFeeRMB'); // [I]
@@ -281,7 +288,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
         const exchangeRate = getVal('exchangeRate'); // [K]
 
         const val_CostTQ_VND = (domesticFeeRMB + haulingFeeRMB) * exchangeRate;
-        const val_AL = importTax + val_AI + feeAmount + domesticFeeVN + val_M + val_AK + val_CostTQ_VND;
+        const val_AL = val_AJ + val_AI + feeAmount + domesticFeeVN + val_M + val_AK + val_CostTQ_VND;
 
         if (allValues.totalImportCost !== val_AL) {
             updates.totalImportCost = val_AL;
@@ -454,45 +461,65 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
 
                                         {/* 7. [G] Trọng lượng */}
                                         <Col3>
-                                            <Form.Item name="weight" label={t('productCode.weight')} rules={[{ required: true, message: t('productCode.weightRequired') }]}>
-                                                <CustomNumberInput
-                                                    style={{ width: '100%' }}
-                                                    min={0}
-                                                    disabled={disabledGeneral}
-                                                />
+                                            <Form.Item label={t('productCode.weight')} rules={[{ required: true, message: t('productCode.weightRequired') }]}>
+                                                <Space.Compact block>
+                                                    <Form.Item name="weight" noStyle rules={[{ required: true, message: t('productCode.weightRequired') }]}>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 40px)' }}
+                                                            min={0}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kg" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 8. [H] Khối lượng */}
                                         <Col3>
-                                            <Form.Item name="volume" label={t('productCode.volume')} rules={[{ required: true, message: t('productCode.volumeRequired') }]}>
-                                                <CustomNumberInput
-                                                    style={{ width: '100%' }}
-                                                    min={0}
-                                                    disabled={disabledGeneral}
-                                                />
+                                            <Form.Item label={t('productCode.volume')} rules={[{ required: true, message: t('productCode.volumeRequired') }]}>
+                                                <Space.Compact block>
+                                                    <Form.Item name="volume" noStyle rules={[{ required: true, message: t('productCode.volumeRequired') }]}>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 40px)' }}
+                                                            min={0}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="m³" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 9. [I] Phí nội địa TQ */}
                                         <Col3>
-                                            <Form.Item name="domesticFeeRMB" label={t('productCode.domesticFeeTQ')}>
-                                                <CustomNumberInput
-                                                    style={{ width: '100%' }}
-                                                    min={0}
-                                                    disabled={disabledGeneral}
-                                                />
+                                            <Form.Item label={t('productCode.domesticFeeTQ')}>
+                                                <Space.Compact block>
+                                                    <Form.Item name="domesticFeeRMB" noStyle>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 60px)' }}
+                                                            min={0}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="RMB" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 10. [J] Phí kéo hàng TQ */}
                                         <Col3>
-                                            <Form.Item name="haulingFeeRMB" label={t('productCode.haulingFeeTQ')}>
-                                                <CustomNumberInput
-                                                    style={{ width: '100%' }}
-                                                    min={0}
-                                                    disabled={disabledGeneral}
-                                                />
+                                            <Form.Item label={t('productCode.haulingFeeTQ')}>
+                                                <Space.Compact block>
+                                                    <Form.Item name="haulingFeeRMB" noStyle>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 60px)' }}
+                                                            min={0}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="RMB" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
@@ -510,26 +537,32 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         {/* 12. [L1] Đơn giá cước TQ_HN (khối) */}
                                         <Col3>
                                             <Form.Item label={t('productCode.volumeFee')}>
-                                                <Form.Item name="volumeFee" noStyle rules={[{ required: true, message: t('productCode.volumeFeeRequired') }]}>
-                                                    <CustomNumberInput
-                                                        style={{ width: '100%' }}
-                                                        min={0}
-                                                        disabled={disabledGeneral}
-                                                    />
-                                                </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="volumeFee" noStyle rules={[{ required: true, message: t('productCode.volumeFeeRequired') }]}>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 60px)' }}
+                                                            min={0}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 13. [L2] Đơn giá cước TQ_HN (cân) */}
                                         <Col3>
                                             <Form.Item label={t('productCode.weightFee')}>
-                                                <Form.Item name="weightFee" noStyle rules={[{ required: true, message: t('productCode.weightFeeRequired') }]}>
-                                                    <CustomNumberInput
-                                                        style={{ width: '100%' }}
-                                                        min={0}
-                                                        disabled={disabledGeneral}
-                                                    />
-                                                </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="weightFee" noStyle rules={[{ required: true, message: t('productCode.weightFeeRequired') }]}>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 60px)' }}
+                                                            min={0}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
@@ -559,12 +592,17 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
 
                                         {/* 14. [N] Phí nội địa VN */}
                                         <Col3>
-                                            <Form.Item name="domesticFeeVN" label={t('productCode.domesticFeeVN')}>
-                                                <CustomNumberInput
-                                                    style={{ width: '100%' }}
-                                                    min={0}
-                                                    disabled={disabledGeneral}
-                                                />
+                                            <Form.Item label={t('productCode.domesticFeeVN')}>
+                                                <Space.Compact block>
+                                                    <Form.Item name="domesticFeeVN" noStyle>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 60px)' }}
+                                                            min={0}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
@@ -742,12 +780,17 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
 
                                         {/* 29. [AD] Giá xuất hoá đơn */}
                                         <Col3>
-                                            <Form.Item name="invoicePriceExport" label={t('productCode.invoicePriceExport')}>
-                                                <CustomNumberInput
-                                                    style={{ width: '100%' }}
-                                                    min={0}
-                                                    disabled={disabledGeneral}
-                                                />
+                                            <Form.Item label={t('productCode.invoicePriceExport')}>
+                                                <Space.Compact block>
+                                                    <Form.Item name="invoicePriceExport" noStyle>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 60px)' }}
+                                                            min={0}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
@@ -774,21 +817,55 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             </Form.Item>
                                         </Col3>
 
-                                        {/* 31. [AF] Chính sách NK */}
+
+                                        {/* 31. [AF][1] Thuế VAT */}
                                         <Col3>
-                                            <Form.Item name="declarationPolicy" label={t('productCode.importPolicy')}>
-                                                <Input disabled={disabledGeneral} />
+                                            <Form.Item label={t('productCode.vatPercent')}>
+                                                <Space.Compact block>
+                                                    <Form.Item name="vatPercent" noStyle>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 40px)' }}
+                                                            min={0}
+                                                            max={100}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="%" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
+                                        </Col3>
+
+
+                                        {/* 31. [AF][2] Thuế NK */}
+                                        <Col3>
+                                            <Form.Item label={t('productCode.importTaxPercent')}>
+                                                <Space.Compact block>
+                                                    <Form.Item name="importTaxPercent" noStyle>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 40px)' }}
+                                                            min={0}
+                                                            max={100}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="%" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
                                         {/* 32. [AG] Phí phải nộp */}
                                         <Col3>
-                                            <Form.Item name="feeAmount" label={t('productCode.otherFeeLabel')}>
-                                                <CustomNumberInput
-                                                    style={{ width: '100%' }}
-                                                    min={0}
-                                                    disabled={disabledGeneral}
-                                                />
+                                            <Form.Item label={t('productCode.otherFeeLabel')}>
+                                                <Space.Compact block>
+                                                    <Form.Item name="feeAmount" noStyle>
+                                                        <CustomNumberInput
+                                                            style={{ width: 'calc(100% - 60px)' }}
+                                                            min={0}
+                                                            disabled={disabledGeneral}
+                                                        />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
                                             </Form.Item>
                                         </Col3>
 
@@ -805,7 +882,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 label={
                                                     <Space>
                                                         {t('productCode.vatImportTax')}
-                                                        <Tooltip title="Thuế VAT NK = Tổng giá trị [AE] * 8%">
+                                                        <Tooltip title="Thuế VAT phải nộp = Tổng giá trị [AE] * Thuế VAT [AF][1]">
                                                             <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
                                                         </Tooltip>
                                                     </Space>
@@ -823,12 +900,23 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
 
                                         {/* 35. [AJ] Thuế NK phải nộp */}
                                         <Col3>
-                                            <Form.Item name="importTax" label={t('productCode.importTaxLabel')}>
-                                                <CustomNumberInput
-                                                    style={{ width: '100%' }}
-                                                    min={0}
-                                                    disabled={disabledGeneral}
-                                                />
+                                            <Form.Item
+                                                label={
+                                                    <Space>
+                                                        {t('productCode.importTaxLabel')}
+                                                        <Tooltip title="Thuế nhập khẩu phải nộp = Tổng giá trị [AE] * Thuế nhập khẩu [AF][2]">
+                                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                                        </Tooltip>
+                                                    </Space>
+                                                }
+                                            >
+                                                <Form.Item name="importTax" noStyle>
+                                                    <CustomNumberInput
+                                                        style={{ width: '100%' }}
+                                                        disabled
+                                                        className="bg-gray-100"
+                                                    />
+                                                </Form.Item>
                                             </Form.Item>
                                         </Col3>
 

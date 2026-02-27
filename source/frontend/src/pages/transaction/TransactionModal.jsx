@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, Input, Spin, message } from 'antd';
+import { Modal, Form, Select, Input, Spin, message, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 import transactionService from '../../services/transactionService';
 import customerService from '../../services/customerService';
@@ -104,15 +104,18 @@ const TransactionModal = ({ visible, onCancel, onSuccess }) => {
                 </Form.Item>
 
                 <Form.Item
-                    name="amount"
                     label={t('transaction.amount')}
                     rules={[{ required: true, message: t('validation.required') }]}
                 >
-                    <CustomNumberInput
-                        style={{ width: '100%' }}
-                        addonAfter="VND"
-                        min={0}
-                    />
+                    <Space.Compact block>
+                        <Form.Item name="amount" noStyle rules={[{ required: true, message: t('validation.required') }]}>
+                            <CustomNumberInput
+                                style={{ width: 'calc(100% - 60px)' }}
+                                min={0}
+                            />
+                        </Form.Item>
+                        <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                    </Space.Compact>
                 </Form.Item>
 
                 <Form.Item

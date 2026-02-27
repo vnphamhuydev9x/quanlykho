@@ -269,24 +269,33 @@ const DeclarationModal = ({ visible, declaration, initialData, isViewMode = fals
 
                         {/* [L] Đơn giá cước (Kg) -> 10. [J] */}
                         <Form.Item label="10. [J] Đơn giá cước TQ_HN (Theo Kg)">
-                            <Form.Item name="weightFee" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="weightFee" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={isViewMode} />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
 
                         {/* [M] Đơn giá cước (m3) -> 11. [K] */}
                         <Form.Item label="11. [K] Đơn giá cước TQ_HN (Theo m3)">
-                            <Form.Item name="volumeFee" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="volumeFee" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={isViewMode} />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
 
                         {/* [N] Tổng cước (Formula) -> 12. [L] */}
                         <Form.Item label="12. [L] Tổng cước TQ_HN (Tạm tính)">
-                            <Form.Item name="totalTransportFeeEstimate" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} disabled className="bg-gray-100" />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="totalTransportFeeEstimate" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} disabled className="bg-gray-100" />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
 
                         {/* [O] Ghi chú -> 13. [M] */}
                         <Form.Item name="note" label="13. [M] Ghi chú">
@@ -352,10 +361,13 @@ const DeclarationModal = ({ visible, declaration, initialData, isViewMode = fals
                         </Form.Item>
                         {/* [X] Giá xuất hóa đơn -> 24. [X] */}
                         <Form.Item label="24. [X] Giá xuất hóa đơn (Trước VAT)">
-                            <Form.Item name="invoicePrice" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="invoicePrice" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={isViewMode} />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
                         {/* [Y] Thông tin bổ sung -> 25. [Y] */}
                         <Form.Item name="additionalInfo" label="25. [Y] Thông tin cần bổ sung">
                             <TextArea rows={2} disabled={isViewMode} />
@@ -384,16 +396,22 @@ const DeclarationModal = ({ visible, declaration, initialData, isViewMode = fals
                         </Form.Item>
                         {/* [AC] Giá khai báo -> 29. [AC] */}
                         <Form.Item label="29. [AC] Giá khai báo">
-                            <Form.Item name="declarationPrice" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="declarationPrice" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={isViewMode} />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
                         {/* [AD] Trị giá (Formula) -> 30. [AD] */}
                         <Form.Item label="30. [AD] Trị giá (=AA*AC)">
-                            <Form.Item name="value" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} disabled className="bg-gray-100" />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="value" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} disabled className="bg-gray-100" />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
                         {/* [AE] Số kiện -> 31. [AE] */}
                         <Form.Item name="packageCountDeclared" label="31. [AE] Số kiện">
                             <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} isInteger={true} />
@@ -417,33 +435,52 @@ const DeclarationModal = ({ visible, declaration, initialData, isViewMode = fals
                             <Input disabled={isViewMode} />
                         </Form.Item>
                         {/* [AJ] % Thuế VAT -> 36. [AJ] */}
-                        <Form.Item name="vatPercent" label="36. [AJ] % Thuế VAT">
-                            <CustomNumberInput style={{ width: '100%' }} min={0} max={100} disabled={isViewMode} suffix="%" />
+                        <Form.Item label="36. [AJ] % Thuế VAT">
+                            <Space.Compact block>
+                                <Form.Item name="vatPercent" noStyle>
+                                    <CustomNumberInput style={{ width: 'calc(100% - 40px)' }} min={0} max={100} disabled={isViewMode} />
+                                </Form.Item>
+                                <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="%" disabled />
+                            </Space.Compact>
                         </Form.Item>
                         {/* [AK] Thuế VAT phải nộp -> 37. [AK] */}
                         <Form.Item label="37. [AK] Thuế VAT phải nộp">
-                            <Form.Item name="vatAmount" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="vatAmount" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={isViewMode} />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
                     </Col>
                     <Col span={8}>
                         {/* [AL] % Thuế NK -> 38. [AL] */}
-                        <Form.Item name="importTaxPercent" label="38. [AL] % Thuế NK">
-                            <CustomNumberInput style={{ width: '100%' }} min={0} max={100} disabled={isViewMode} suffix="%" />
+                        <Form.Item label="38. [AL] % Thuế NK">
+                            <Space.Compact block>
+                                <Form.Item name="importTaxPercent" noStyle>
+                                    <CustomNumberInput style={{ width: 'calc(100% - 40px)' }} min={0} max={100} disabled={isViewMode} />
+                                </Form.Item>
+                                <Input style={{ width: '40px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="%" disabled />
+                            </Space.Compact>
                         </Form.Item>
                         {/* [AM] Thuế NK USD -> 39. [AM] */}
                         <Form.Item label="39. [AM] Thuế NK (USD)">
-                            <Form.Item name="importTaxUSD" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="importTaxUSD" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={isViewMode} />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="USD" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
                         {/* [AN] Thuế NK VNĐ -> 40. [AN] */}
                         <Form.Item label="40. [AN] Thuế NK (VNĐ)">
-                            <Form.Item name="importTaxVND" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="importTaxVND" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={isViewMode} />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
                         {/* [AO] Tỷ giá HQ -> 41. [AO] */}
                         <Form.Item label="41. [AO] Tỷ giá Hải Quan">
                             <Form.Item name="customsExchangeRate" noStyle>
@@ -452,10 +489,13 @@ const DeclarationModal = ({ visible, declaration, initialData, isViewMode = fals
                         </Form.Item>
                         {/* [AP] Phí KTCL -> 42. [AP] */}
                         <Form.Item label="42. [AP] Phí KTCL">
-                            <Form.Item name="qualityControlFee" noStyle>
-                                <CustomNumberInput style={{ width: '100%' }} min={0} disabled={isViewMode} />
-                            </Form.Item>
-                        </Form.Item>
+                                                <Space.Compact block>
+                                                    <Form.Item name="qualityControlFee" noStyle>
+                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={isViewMode} />
+                                                    </Form.Item>
+                                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                                                </Space.Compact>
+                                            </Form.Item>
                         {/* [AQ] Xác nhận PKT -> 43. [AQ] */}
                         <Form.Item name="accountingConfirmation" label="43. [AQ] Xác nhận của PKT">
                             <Input disabled={isViewMode} />

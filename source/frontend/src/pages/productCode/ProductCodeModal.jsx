@@ -539,7 +539,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             <Form.Item label={t('productCode.volumeFee')}>
                                                 <Space.Compact block>
                                                     <Form.Item name="volumeFee" noStyle rules={[{ required: true, message: t('productCode.volumeFeeRequired') }]}>
-                                                        <CustomNumberInput
+                                                        <CustomNumberInput isInteger={true}
                                                             style={{ width: 'calc(100% - 60px)' }}
                                                             min={0}
                                                             disabled={disabledGeneral}
@@ -555,7 +555,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             <Form.Item label={t('productCode.weightFee')}>
                                                 <Space.Compact block>
                                                     <Form.Item name="weightFee" noStyle rules={[{ required: true, message: t('productCode.weightFeeRequired') }]}>
-                                                        <CustomNumberInput
+                                                        <CustomNumberInput isInteger={true}
                                                             style={{ width: 'calc(100% - 60px)' }}
                                                             min={0}
                                                             disabled={disabledGeneral}
@@ -581,7 +581,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 }
                                             >
                                                 <Form.Item name="totalTransportFeeEstimate" noStyle>
-                                                    <CustomNumberInput
+                                                    <CustomNumberInput isInteger={true}
                                                         style={{ width: '100%' }}
                                                         disabled
                                                         className="bg-gray-100"
@@ -595,7 +595,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             <Form.Item label={t('productCode.domesticFeeVN')}>
                                                 <Space.Compact block>
                                                     <Form.Item name="domesticFeeVN" noStyle>
-                                                        <CustomNumberInput
+                                                        <CustomNumberInput isInteger={true}
                                                             style={{ width: 'calc(100% - 60px)' }}
                                                             min={0}
                                                             disabled={disabledGeneral}
@@ -783,7 +783,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             <Form.Item label={t('productCode.invoicePriceExport')}>
                                                 <Space.Compact block>
                                                     <Form.Item name="invoicePriceExport" noStyle>
-                                                        <CustomNumberInput
+                                                        <CustomNumberInput isInteger={true}
                                                             style={{ width: 'calc(100% - 60px)' }}
                                                             min={0}
                                                             disabled={disabledGeneral}
@@ -808,7 +808,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 }
                                             >
                                                 <Form.Item name="totalValueExport" noStyle>
-                                                    <CustomNumberInput
+                                                    <CustomNumberInput isInteger={true}
                                                         style={{ width: '100%' }}
                                                         disabled
                                                         className="bg-gray-100"
@@ -858,7 +858,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                             <Form.Item label={t('productCode.otherFeeLabel')}>
                                                 <Space.Compact block>
                                                     <Form.Item name="feeAmount" noStyle>
-                                                        <CustomNumberInput
+                                                        <CustomNumberInput isInteger={true}
                                                             style={{ width: 'calc(100% - 60px)' }}
                                                             min={0}
                                                             disabled={disabledGeneral}
@@ -889,7 +889,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 }
                                             >
                                                 <Form.Item name="vatImportTax" noStyle>
-                                                    <CustomNumberInput
+                                                    <CustomNumberInput isInteger={true}
                                                         style={{ width: '100%' }}
                                                         disabled
                                                         className="bg-gray-100"
@@ -911,7 +911,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 }
                                             >
                                                 <Form.Item name="importTax" noStyle>
-                                                    <CustomNumberInput
+                                                    <CustomNumberInput isInteger={true}
                                                         style={{ width: '100%' }}
                                                         disabled
                                                         className="bg-gray-100"
@@ -933,7 +933,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 }
                                             >
                                                 <Form.Item name="trustFee" noStyle>
-                                                    <CustomNumberInput
+                                                    <CustomNumberInput isInteger={true}
                                                         style={{ width: '100%' }}
                                                         disabled
                                                         className="bg-gray-100"
@@ -955,7 +955,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 }
                                             >
                                                 <Form.Item name="totalImportCost" noStyle>
-                                                    <CustomNumberInput
+                                                    <CustomNumberInput isInteger={true}
                                                         style={{ width: '100%' }}
                                                         disabled
                                                         className="bg-gray-100"

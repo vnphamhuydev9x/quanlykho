@@ -109,7 +109,7 @@ const TransactionModal = ({ visible, onCancel, onSuccess }) => {
                 >
                     <Space.Compact block>
                         <Form.Item name="amount" noStyle rules={[{ required: true, message: t('validation.required') }]}>
-                            <CustomNumberInput
+                            <CustomNumberInput isInteger={true}
                                 style={{ width: 'calc(100% - 60px)' }}
                                 min={0}
                             />

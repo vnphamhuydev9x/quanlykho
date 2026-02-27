@@ -336,13 +336,13 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                         {/* 14. [N] Đơn giá cước TQ_HN (Kg) */}
                         <Col3>
                             <Form.Item name="weightFee" label="14. [N] Cước TQ_HN (Kg)">
-                                <CustomNumberInput style={{ width: '100%' }} min={0} />
+                                <CustomNumberInput isInteger={true} style={{ width: '100%' }} min={0} />
                             </Form.Item>
                         </Col3>
                         {/* 15. [O] Đơn giá cước TQ_HN (m3) */}
                         <Col3>
                             <Form.Item name="volumeFee" label="15. [O] Cước TQ_HN (m3)">
-                                <CustomNumberInput style={{ width: '100%' }} min={0} />
+                                <CustomNumberInput isInteger={true} style={{ width: '100%' }} min={0} />
                             </Form.Item>
                         </Col3>
                         {/* 16. [P] Tổng cước TQ_HN tạm tính */}
@@ -350,7 +350,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                             <Form.Item label="16. [P] Tổng cước TQ_HN">
                                                 <Space.Compact block>
                                                     <Form.Item name="totalTransportFeeEstimate" noStyle>
-                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} disabled className="bg-gray-100" />
+                                                        <CustomNumberInput isInteger={true} style={{ width: 'calc(100% - 60px)' }} disabled className="bg-gray-100" />
                                                     </Form.Item>
                                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                                                 </Space.Compact>
@@ -457,7 +457,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                             <Form.Item label="32. [AF] Giá xuất HĐ">
                                                 <Space.Compact block>
                                                     <Form.Item name="invoicePriceExport" noStyle>
-                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} />
+                                                        <CustomNumberInput isInteger={true} style={{ width: 'calc(100% - 60px)' }} min={0} />
                                                     </Form.Item>
                                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                                                 </Space.Compact>
@@ -468,7 +468,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                             <Form.Item label="33. [AG] Giá khai báo">
                                                 <Space.Compact block>
                                                     <Form.Item name="declarationPrice" noStyle>
-                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} />
+                                                        <CustomNumberInput isInteger={true} style={{ width: 'calc(100% - 60px)' }} min={0} />
                                                     </Form.Item>
                                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                                                 </Space.Compact>
@@ -479,7 +479,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                             <Form.Item label="34. [AH] Phí ủy thác">
                                                 <Space.Compact block>
                                                     <Form.Item name="trustFee" noStyle>
-                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} />
+                                                        <CustomNumberInput isInteger={true} style={{ width: 'calc(100% - 60px)' }} min={0} />
                                                     </Form.Item>
                                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                                                 </Space.Compact>
@@ -496,7 +496,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                             <Form.Item label="36. [AJ] Phí phải nộp">
                                                 <Space.Compact block>
                                                     <Form.Item name="feeAmount" noStyle>
-                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} />
+                                                        <CustomNumberInput isInteger={true} style={{ width: 'calc(100% - 60px)' }} min={0} />
                                                     </Form.Item>
                                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                                                 </Space.Compact>
@@ -507,7 +507,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                             <Form.Item label="37. [AK] Thuế NK">
                                                 <Space.Compact block>
                                                     <Form.Item name="importTax" noStyle>
-                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} />
+                                                        <CustomNumberInput isInteger={true} style={{ width: 'calc(100% - 60px)' }} min={0} />
                                                     </Form.Item>
                                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                                                 </Space.Compact>
@@ -518,7 +518,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                             <Form.Item label="38. [AL] Thuế VAT NK">
                                                 <Space.Compact block>
                                                     <Form.Item name="vatImportTax" noStyle>
-                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} />
+                                                        <CustomNumberInput isInteger={true} style={{ width: 'calc(100% - 60px)' }} min={0} />
                                                     </Form.Item>
                                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                                                 </Space.Compact>
@@ -529,7 +529,7 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
                             <Form.Item label="39. [AM] Phí mua hàng">
                                                 <Space.Compact block>
                                                     <Form.Item name="purchaseFee" noStyle>
-                                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} />
+                                                        <CustomNumberInput isInteger={true} style={{ width: 'calc(100% - 60px)' }} min={0} />
                                                     </Form.Item>
                                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                                                 </Space.Compact>

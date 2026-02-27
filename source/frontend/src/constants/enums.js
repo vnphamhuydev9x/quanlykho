@@ -67,6 +67,12 @@ export const ROLES = {
     CHUNG_TU: 'CHUNG_TU'
 };
 
+export const LOADING_STATUS = {
+    CHUA_XEP_XE: 'CHUA_XEP_XE',
+    CHO_XEP_XE: 'CHO_XEP_XE',
+    DA_XEP_XE: 'DA_XEP_XE'
+};
+
 // === ARRAY OPTIONS FOR UI SELECTION BOXES ===
 
 export const INFO_SOURCE_OPTIONS = [
@@ -85,6 +91,12 @@ export const VAT_STATUS_OPTIONS = [
     { value: VAT_STATUS.NOT_ISSUED, labelKey: 'productCode.vatChuaXuat' },
     { value: VAT_STATUS.ISSUED_NOT_PACKAGED, labelKey: 'productCode.vatDaXuatChuaDongGoi' },
     { value: VAT_STATUS.ISSUED_PACKAGED, labelKey: 'productCode.vatDaXuatDaDongGoi' }
+];
+
+export const LOADING_STATUS_OPTIONS = [
+    { value: LOADING_STATUS.CHUA_XEP_XE, labelKey: 'loadingStatus.chuaXepXe' },
+    { value: LOADING_STATUS.CHO_XEP_XE, labelKey: 'loadingStatus.choXepXe' },
+    { value: LOADING_STATUS.DA_XEP_XE, labelKey: 'loadingStatus.daXepXe' }
 ];
 
 export const STATUS_FILTER_OPTIONS = [

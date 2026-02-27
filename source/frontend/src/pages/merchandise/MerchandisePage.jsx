@@ -103,6 +103,7 @@ const MerchandisePage = () => {
             '15. [O] Cước m3': item.volumeFee,
             '16. [P] Tổng cước': item.totalTransportFeeEstimate,
             '17. [Q] Ghi chú': item.notes,
+            '16.1 Trạng thái xếp xe': item.loadingStatus,
             '20. [T] Tem chính': item.mainTag,
             '21. [U] Tem phụ': item.subTag,
             '22. [V] Xác nhận PCT': item.pctConfirmation,
@@ -168,6 +169,7 @@ const MerchandisePage = () => {
         // Adding more keys...)
         { title: '11. [K] Phí NĐ RMB', dataIndex: 'domesticFeeRMB', width: 100, render: rmbFormatter },
         { title: '12. [L] Phí kéo RMB', dataIndex: 'haulingFeeRMB', width: 100, render: rmbFormatter },
+        { title: '16.1 Trạng thái xếp xe', dataIndex: 'loadingStatus', width: 120 },
         {
             title: 'Action',
             key: 'action',

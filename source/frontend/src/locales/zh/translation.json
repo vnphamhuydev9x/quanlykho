@@ -213,6 +213,8 @@
         "selectCategory": "选择货物类型",
         "productName": "产品名称",
         "productNamePlaceholder": "输入产品名称",
+        "loadingStatusLabel": "16.1 装车状态",
+        "selectLoadingStatus": "选择装车状态",
         "exchangeRate": "汇率",
         "declaration": "报关",
         "selectDeclaration": "选择报关（可选）",
@@ -473,6 +475,11 @@
         "khoVn": "越南仓库",
         "customer": "客户",
         "expectedEntry": "预计入库"
+    },
+    "loadingStatus": {
+        "chuaXepXe": "未装车",
+        "choXepXe": "等待装车",
+        "daXepXe": "已装车"
     },
     "shortDeclaration": {
         "title": "简短申报管理",

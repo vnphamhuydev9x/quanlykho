@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import productCodeService from '../../services/productCodeService';
 import ProductCodeModal from './ProductCodeModal';
 import * as XLSX from 'xlsx';
-import { PACKAGE_UNIT } from '../../constants/enums';
+import { PACKAGE_UNIT, LOADING_STATUS_OPTIONS } from '../../constants/enums';
 
 const ProductCodePage = () => {
     const { t, i18n } = useTranslation();
@@ -344,6 +344,18 @@ const ProductCodePage = () => {
 
                 const config = statusConfig[status] || legacyConfig[status] || { color: 'default', label: status };
                 return <Tag color={config.color}>{config.label}</Tag>;
+            }
+        },
+        // 16.1 Trạng thái xếp xe
+        {
+            title: t('productCode.loadingStatusLabel'),
+            dataIndex: 'loadingStatus',
+            key: 'loadingStatus',
+            width: 150,
+            render: (val) => {
+                if (!val) return '-';
+                const opt = LOADING_STATUS_OPTIONS.find(o => o.value === val);
+                return opt ? <Tag color="geekblue">{t(opt.labelKey)}</Tag> : <Tag>{val}</Tag>;
             }
         },
         // 17. [Q] Ảnh hàng hóa

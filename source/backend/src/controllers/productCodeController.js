@@ -247,6 +247,7 @@ const productCodeController = {
                 notes, // [O] Ghi chú
                 status, // [P] Tình trạng hàng hoá
                 images, // [Q] Ảnh hàng hóa
+                loadingStatus, // [16.1] Trạng thái xếp xe
                 // [R] Hidden
                 mainTag, // [S] Tem chính
                 subTag, // [T] Tem phụ
@@ -333,6 +334,7 @@ const productCodeController = {
                     domesticFeeVN: domesticFeeVN ? parseFloat(domesticFeeVN) : null,
                     notes,
                     status,
+                    loadingStatus,
                     images: images || [],
                     mainTag,
                     subTag,
@@ -467,6 +469,7 @@ const productCodeController = {
                 'domesticFeeVN', // [N]
                 'notes', // [O]
                 'status', // [P]
+                'loadingStatus', // [16.1]
                 'images', // [Q]
                 'mainTag', // [S]
                 'subTag', // [T]

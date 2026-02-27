@@ -220,6 +220,8 @@
         "selectCategory": "Chọn loại hàng",
         "productName": "Tên sản phẩm",
         "productNamePlaceholder": "Nhập tên sản phẩm",
+        "loadingStatusLabel": "16.1 Trạng thái xếp xe",
+        "selectLoadingStatus": "Chọn trạng thái xếp xe",
         "exchangeRate": "Tỷ giá",
         "declaration": "Khai báo",
         "selectDeclaration": "Chọn khai báo (tùy chọn)",
@@ -487,6 +489,11 @@
         "khoVn": "Kho VN",
         "customer": "Khách hàng",
         "expectedEntry": "Dự kiến nhập kho"
+    },
+    "loadingStatus": {
+        "chuaXepXe": "Chưa xếp xe",
+        "choXepXe": "Chờ xếp xe",
+        "daXepXe": "Đã xếp xe"
     },
     "shortDeclaration": {
         "title": "Quản lý Tờ khai rút gọn",

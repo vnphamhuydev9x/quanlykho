@@ -449,6 +449,7 @@ model ProductCode {
 
   // Legacy/System fields (Keep what might be useful or make optional)
   status               String?   // SELECTION BOX
+  loadingStatus        String?   // SELECTION BOX - Trạng thái xếp xe
   packageUnit          String?   // Legacy
   exchangeRate         Decimal?  @db.Decimal(15, 4) // Legacy
   domesticFeeVN        Decimal?  @db.Decimal(15, 2) // Legacy

@@ -10,7 +10,7 @@ import customerService from '../../services/customerService';
 import merchandiseConditionService from '../../services/merchandiseConditionService';
 
 import CustomNumberInput from '../../components/CustomNumberInput';
-import { PACKAGE_UNIT_OPTIONS, VAT_STATUS_OPTIONS, PRODUCT_STATUS } from '../../constants/enums';
+import { PACKAGE_UNIT_OPTIONS, VAT_STATUS_OPTIONS, PRODUCT_STATUS, LOADING_STATUS_OPTIONS } from '../../constants/enums';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -581,6 +581,17 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
                                                     {conditions.map(c => (
                                                         <Option key={c.id} value={c.name_vi}>{c.name_vi}</Option>
+                                                    ))}
+                                                </Select>
+                                            </Form.Item>
+                                        </Col3>
+
+                                        {/* 16.1 Trạng thái xếp xe */}
+                                        <Col3>
+                                            <Form.Item name="loadingStatus" label={t('productCode.loadingStatusLabel')}>
+                                                <Select placeholder={t('productCode.selectLoadingStatus')} disabled={disabledGeneral}>
+                                                    {LOADING_STATUS_OPTIONS.map(opt => (
+                                                        <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
                                                     ))}
                                                 </Select>
                                             </Form.Item>

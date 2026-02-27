@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import warehouseService from '../../services/warehouseService';
 import WarehouseModal from './WarehouseModal';
 import moment from 'moment';
+import { COMMON_STATUS, WAREHOUSE_STATUS_OPTIONS } from '../../constants/enums';
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -219,8 +220,9 @@ const WarehousePage = () => {
                                     (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
                                 }
                             >
-                                <Option value="AVAILABLE">{t('warehouse.available')}</Option>
-                                <Option value="UNAVAILABLE">{t('warehouse.unavailable')}</Option>
+                                {WAREHOUSE_STATUS_OPTIONS.map(opt => (
+                                    <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
+                                ))}
                             </Select>
                         </Col>
                         <Col xs={24} sm={24} md={24} lg={16} style={{ textAlign: 'right' }}>

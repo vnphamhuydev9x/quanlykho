@@ -17,6 +17,7 @@ import transactionService from '../../services/transactionService';
 import TransactionModal from './TransactionModal';
 import moment from 'moment';
 import { formatFloat } from '../../utils/format';
+import { TRANSACTION_STATUS, TRANSACTION_STATUS_OPTIONS } from '../../constants/enums';
 
 const { Option } = Select;
 
@@ -302,8 +303,9 @@ const TransactionPage = () => {
                                     (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
                                 }
                             >
-                                <Option value="SUCCESS">{t('transaction.success')}</Option>
-                                <Option value="CANCELLED">{t('transaction.cancelled')}</Option>
+                                {TRANSACTION_STATUS_OPTIONS.map(opt => (
+                                    <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
+                                ))}
                             </Select>
                         </Col>
                         <Col xs={24} sm={12} md={12} lg={7}>

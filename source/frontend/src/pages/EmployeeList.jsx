@@ -3,6 +3,7 @@ import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconf
 import { PlusOutlined, EditOutlined, DeleteOutlined, SyncOutlined, EyeOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../utils/axios';
+import { STATUS_FILTER, ROLES, STATUS_FILTER_OPTIONS, ROLES_OPTIONS } from '../constants/enums';
 
 const { Option } = Select;
 
@@ -276,8 +277,9 @@ const EmployeeList = () => {
                                     (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
                                 }
                             >
-                                <Option value="active">{t('employee.active')}</Option>
-                                <Option value="inactive">{t('employee.inactive')}</Option>
+                                {STATUS_FILTER_OPTIONS.map(opt => (
+                                    <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
+                                ))}
                             </Select>
                         </Col>
                         <Col xs={24} sm={12} md={12} lg={7}>
@@ -293,13 +295,9 @@ const EmployeeList = () => {
                                     (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
                                 }
                             >
-                                <Option value="ADMIN">{t('roles.ADMIN')}</Option>
-                                <Option value="SALE">{t('roles.SALE')}</Option>
-                                <Option value="KHO_TQ">{t('roles.KHO_TQ')}</Option>
-                                <Option value="KE_TOAN">{t('roles.KE_TOAN')}</Option>
-                                <Option value="DIEU_VAN">{t('roles.DIEU_VAN')}</Option>
-                                <Option value="KHO_VN">{t('roles.KHO_VN')}</Option>
-                                <Option value="CHUNG_TU">{t('roles.CHUNG_TU')}</Option>
+                                {ROLES_OPTIONS.map(opt => (
+                                    <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
+                                ))}
                             </Select>
                         </Col>
                         <Col xs={24} sm={24} md={24} lg={10} style={{ textAlign: 'right' }}>
@@ -382,13 +380,9 @@ const EmployeeList = () => {
                                 (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
                             }
                         >
-                            <Option value="ADMIN">{t('roles.ADMIN')}</Option>
-                            <Option value="SALE">{t('roles.SALE')}</Option>
-                            <Option value="KHO_TQ">{t('roles.KHO_TQ')}</Option>
-                            <Option value="KE_TOAN">{t('roles.KE_TOAN')}</Option>
-                            <Option value="DIEU_VAN">{t('roles.DIEU_VAN')}</Option>
-                            <Option value="KHO_VN">{t('roles.KHO_VN')}</Option>
-                            <Option value="CHUNG_TU">{t('roles.CHUNG_TU')}</Option>
+                            {ROLES_OPTIONS.map(opt => (
+                                <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
+                            ))}
                         </Select>
                     </Form.Item>
 

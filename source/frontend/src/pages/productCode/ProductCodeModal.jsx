@@ -10,7 +10,7 @@ import customerService from '../../services/customerService';
 import merchandiseConditionService from '../../services/merchandiseConditionService';
 
 import CustomNumberInput from '../../components/CustomNumberInput';
-import { PACKAGE_UNIT, VAT_STATUS, PRODUCT_STATUS } from '../../constants/enums';
+import { PACKAGE_UNIT_OPTIONS, VAT_STATUS_OPTIONS, PRODUCT_STATUS } from '../../constants/enums';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -445,8 +445,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         <Col3>
                                             <Form.Item name="packing" label={t('productCode.packageUnit')} rules={[{ required: true, message: t('productCode.packageUnitRequired') }]}>
                                                 <Select placeholder={t('productCode.selectUnit')} disabled={disabledGeneral}>
-                                                    <Option value={PACKAGE_UNIT.CARTON}>{t('productCode.unitThungCarton')}</Option>
-                                                    <Option value={PACKAGE_UNIT.PALLET}>{t('productCode.unitPallet')}</Option>
+                                                    {PACKAGE_UNIT_OPTIONS.map(opt => (
+                                                        <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
+                                                    ))}
                                                 </Select>
                                             </Form.Item>
                                         </Col3>
@@ -867,9 +868,9 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         <Col3>
                                             <Form.Item name="vatExportStatus" label={t('productCode.vatExportStatus')}>
                                                 <Select placeholder={t('productCode.selectStatus')} disabled={disabledGeneral}>
-                                                    <Option value={VAT_STATUS.NOT_ISSUED}>{t('productCode.vatChuaXuat')}</Option>
-                                                    <Option value={VAT_STATUS.ISSUED_NOT_PACKAGED}>{t('productCode.vatDaXuatChuaDongGoi')}</Option>
-                                                    <Option value={VAT_STATUS.ISSUED_PACKAGED}>{t('productCode.vatDaXuatDaDongGoi')}</Option>
+                                                    {VAT_STATUS_OPTIONS.map(opt => (
+                                                        <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
+                                                    ))}
                                                 </Select>
                                             </Form.Item>
                                         </Col3>

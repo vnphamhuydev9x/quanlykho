@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import axiosInstance from '../utils/axios';
 import * as XLSX from 'xlsx';
 import { useLocation } from 'react-router-dom';
+import { STATUS_FILTER, CUSTOMER_STATUS_FILTER_OPTIONS } from '../constants/enums';
 
 const { Option } = Select;
 
@@ -365,8 +366,9 @@ const CustomerList = () => {
                                     (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
                                 }
                             >
-                                <Option value="active">{t('customer.active')}</Option>
-                                <Option value="inactive">{t('customer.inactive')}</Option>
+                                {CUSTOMER_STATUS_FILTER_OPTIONS.map(opt => (
+                                    <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
+                                ))}
                             </Select>
                         </Col>
                         <Col xs={24} sm={12} md={12} lg={7}>

@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import categoryService from '../../services/categoryService';
 import CategoryModal from './CategoryModal';
 import moment from 'moment';
+import { COMMON_STATUS, CATEGORY_STATUS_OPTIONS } from '../../constants/enums';
 
 const { Option } = Select;
 
@@ -218,8 +219,9 @@ const CategoryPage = () => {
                                     (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
                                 }
                             >
-                                <Option value="AVAILABLE">{t('category.available')}</Option>
-                                <Option value="UNAVAILABLE">{t('category.unavailable')}</Option>
+                                {CATEGORY_STATUS_OPTIONS.map(opt => (
+                                    <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
+                                ))}
                             </Select>
                         </Col>
 

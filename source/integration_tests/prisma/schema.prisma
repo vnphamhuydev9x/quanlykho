@@ -40,6 +40,8 @@ model User {
   createdTransactions Transaction[] @relation("CreatedTransactions")
   declarations        Declaration[] @relation("CustomerDeclarations")
   productCodes        ProductCode[] @relation("CustomerProductCodes")
+  employeeProductCodes ProductCode[] @relation("EmployeeProductCodes")
+  notifications       Notification[] @relation("UserNotifications")
 
   deletedAt DateTime? // Soft Delete
 
@@ -47,20 +49,20 @@ model User {
 }
 
 enum CostType {
-  SHIP_NOI_DIA
-  PHI_NANG_HANG
-  PHI_HA_HANG
-  PHI_KEO_HANG
-  PHI_GIA_CO
-  PHI_DONG_GO
-  PHI_KIEM_DEM
-  PHI_LUU_KHO
-  PHI_CAN
-  PHI_KIEM_TRA_CHAT_LUONG
-  PHI_TU_CONG_BO
-  PHI_XU_LY_HAI_QUAN
-  PHI_THUONG_KIEM
-  PHI_KHAC
+  SHIP_NOI_DIA          // Ship nội địa
+  PHI_NANG_HANG         // Phí nâng hàng
+  PHI_HA_HANG           // Phí hạ hàng
+  PHI_KEO_HANG          // Phí kéo hàng
+  PHI_GIA_CO            // Phí gia cố
+  PHI_DONG_GO           // Phí đóng gỗ
+  PHI_KIEM_DEM          // Phí kiểm đếm
+  PHI_LUU_KHO           // Phí lưu kho
+  PHI_CAN               // Phí cân
+  PHI_KIEM_TRA_CHAT_LUONG // Phí kiểm tra chất lượng
+  PHI_TU_CONG_BO        // Phí tự công bố
+  PHI_XU_LY_HAI_QUAN    // Phí xử lý hải quan
+  PHI_THUONG_KIEM       // Phí thương kiểm
+  PHI_KHAC              // Phí khác
 }
 
 enum Currency {
@@ -69,9 +71,20 @@ enum Currency {
 }
 
 enum CostCalculationMethod {
-  AUTO
-  BY_WEIGHT
-  BY_VOLUME
+  AUTO          // Tự động
+  BY_WEIGHT     // Theo cân
+  BY_VOLUME     // Theo khối
+}
+
+enum ProductCodeStatus {
+  NHAP_KHO_TQ
+  CHO_XEP_XE
+  DA_XEP_XE
+  KIEM_HOA
+  CHO_THONG_QUAN_VN
+  NHAP_KHO_VN
+  XUAT_THIEU
+  XUAT_DU
 }
 
 enum WarehouseStatus {
@@ -110,6 +123,20 @@ model Category {
   @@map("categories")
 }
 
+model MerchandiseCondition {
+  id              Int                     @id @default(autoincrement())
+  name_vi         String
+  name_zh         String?
+  canLoadVehicle  Boolean                 @default(false)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  deletedAt       DateTime?               // Soft Delete
+
+  productCodes    ProductCode[]
+
+  @@map("merchandise_conditions")
+}
+
 enum TransactionStatus {
   SUCCESS
   CANCELLED
@@ -136,44 +163,146 @@ model Transaction {
 
 model Declaration {
   id                   Int       @id @default(autoincrement())
-  invoiceRequestName   String    // Tên yêu cầu xuất hóa đơn
   
   // Relations
   customerId           Int
   customer             User      @relation("CustomerDeclarations", fields: [customerId], references: [id])
   
-  // Product Information
-  productNameVi        String    // Tên hàng tiếng việt
-  hsCode               String    // Mã HSCode
-  quantity             Int       // Số lượng sản phẩm
-  totalPackages        Int       // Tổng số kiện
-  totalWeight          Decimal   @db.Decimal(15, 2) // Tổng cân nặng
-  totalVolume          Decimal   @db.Decimal(15, 3) // Tổng thể tích m3
-  productDescription   String?   // Mô tả sản phẩm
-  contractPrice        Decimal   @db.Decimal(15, 2) // Giá xuất hợp đồng
-  productUsage         String?   // Công dụng
-  productUnit          String    // Đơn vị sản phẩm
-  
-  // Tax and Fee Information
-  declarationPriceVND  Decimal   @db.Decimal(15, 0) // Giá cần khai báo VND
-  importTaxPercent     Decimal   @db.Decimal(5, 2)  // Thuế nhập khẩu (%)
-  vatPercent           Decimal   @db.Decimal(5, 2) @default(10.00) // Thuế VAT (%)
-  serviceFeePercent    Decimal   @db.Decimal(5, 2)  // Phí dịch vụ (%)
-  
-  // Declaration Status
-  isDeclared           Boolean   @default(false) // Đã khai báo hay chưa
-  
-  // Supplier Information
-  supplierName         String?   // Tên nhà cung cấp
-  supplierAddress      String?   // Địa chỉ nhà cung cấp
-  
-  // Label Information
-  labelCode            String?   // Mã nhãn
-  labelDate            DateTime? // Ngày nhãn
-  
-  // Images (max 3)
-  images               String[]  // Mảng đường dẫn ảnh
-  
+  // 1. [A] Ngày nhập kho
+  entryDate            DateTime? // DATETIME
+
+  // 2. [B] Mã khách hàng (Store selected value or code)
+  customerCodeInput    String?   // SELECTION BOX
+
+  // 3. [C] Tên mặt hàng
+  productName          String?   // STRING
+
+  // 4. [D] Mã đơn hàng
+  orderCode            String?   // STRING
+
+  // 5. [E] Số Kiện
+  // 5. [E] Số Kiện
+  packageCount         Int?      // NUMBER
+
+  // 6. [F] Trọng lượng (Kg)
+  weight               Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 7. [G] Khối lượng (m3)
+  volume               Decimal?  @db.Decimal(15, 3) // NUMBER
+
+  // 8. [H] Nguồn cung cấp thông tin
+  infoSource           String?   // SELECTION BOX
+
+  // 9. [I] Phí nội địa (RMB)
+  domesticFeeRMB       Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 10. [J] Phí kéo hàng (RMB)
+  haulingFeeRMB        Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 11. [K] Phí dỡ hàng (RMB)
+  unloadingFeeRMB      Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 12. [L2] Đơn giá cước vận chuyển TQ_HN (Theo Kg)
+  weightFee            Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 13. [L1] Đơn giá cước vận chuyển TQ_HN (Theo m3)
+  volumeFee            Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 14. [N] Tổng cước vận chuyển TQ_HN tạm tính
+  totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // FORMULA
+
+  // 15. [O] Ghi chú
+  note                 String?   // STRING
+
+  // 16. [P] Ảnh hàng hóa
+  productImage         String?   // STRING (URL?)
+
+  // 17. [P] Tem phụ - Mới
+  subTag               String?   // STRING
+
+  // 18. [R] Số Lượng sản phẩm
+  productQuantity      Int?      // NUMBER
+
+  // 19. [S] Quy cách
+  specification        String?   // STRING
+
+  // 20. [T] Mô Tả sản phẩm
+  productDescription   String?   // STRING
+
+  // 21. [U] Nhãn Hiệu
+  brand                String?   // STRING
+
+  // 22. [V] Nhu cầu khai báo
+  declarationNeed      String?   // STRING
+
+  // 23. [W] Chính sách khai báo
+  declarationPolicy    String?   // STRING
+
+  // 24. [X] Giá xuất hoá đơn
+  invoicePrice         Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 25. [Y] THÔNG TIN CẦN BỔ SUNG
+  additionalInfo       String?   // STRING
+
+  // 26. [Z] Tên khai báo
+  declarationName      String?   // STRING
+
+  // 27. [AA] Số lượng khai báo (Input 2)
+  declarationQuantityDeclared Decimal? @db.Decimal(15, 2) // NUMBER
+
+  // 28. [AB] Đơn vị tính
+  unit                 String?   // STRING
+
+  // 29. [AC] Giá khai báo
+  declarationPrice     Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 30. [AD] Trị giá
+  value                Decimal?  @db.Decimal(15, 2) // FORMULA/NUMBER
+
+  // 31. [AE] số kiện (Declared)
+  // 31. [AE] số kiện (Declared)
+  packageCountDeclared Int?      // NUMBER
+
+  // 32. [AF] net weight
+  netWeight            Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 33. [AG] Gross weight
+  grossWeight          Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 34. [AH] CBM
+  cbm                  Decimal?  @db.Decimal(15, 3) // NUMBER
+
+  // 35. [AI] HS CODE
+  hsCode               String?   // STRING
+
+  // 36. [AJ] % thuế VAT
+  vatPercent           Decimal?  @db.Decimal(5, 2) // NUMBER
+
+  // 37. [AK] Thuế VAT phải nộp
+  vatAmount            Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 38. [AL] %Thuế NK
+  importTaxPercent     Decimal?  @db.Decimal(5, 2) // NUMBER
+
+  // 39. [AM] Thuế NK usd
+  importTaxUSD         Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 40. [AN] Thuế NK phải nộp VNĐ
+  importTaxVND         Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 41. [AO] TỶ GIÁ HẢI QUAN
+  customsExchangeRate  Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 42. [AP] Phí ktcl
+  qualityControlFee    Decimal?  @db.Decimal(15, 2) // NUMBER
+
+  // 43. [AQ] Xác nhận của PKT
+  accountingConfirmation String? // STRING
+
+  // History Tracking
+
+
+  // System fields
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime? // Soft Delete
@@ -186,55 +315,91 @@ model Declaration {
 model ProductCode {
   id                    Int       @id @default(autoincrement())
   
-  customerId            Int
-  customer              User      @relation("CustomerProductCodes", fields: [customerId], references: [id])
+  // Relations
+  employeeId            Int?
+  employee              User?     @relation("EmployeeProductCodes", fields: [employeeId], references: [id])
+
+  customerId            Int?
+  customer              User?     @relation("CustomerProductCodes", fields: [customerId], references: [id])
   
-  partnerName           String
+  merchandiseConditionId Int?
+  merchandiseCondition   MerchandiseCondition? @relation(fields: [merchandiseConditionId], references: [id])
+
+  // Legacy/System relations
+  warehouseId           Int?
+  warehouse             Warehouse? @relation(fields: [warehouseId], references: [id])
   
-  warehouseId           Int
-  warehouse             Warehouse @relation(fields: [warehouseId], references: [id])
-  
-  categoryId            Int
-  category              Category  @relation(fields: [categoryId], references: [id])
-  
-  productName           String
-  exchangeRate          Decimal   @db.Decimal(15, 4)
+  categoryId            Int?
+  category              Category?  @relation(fields: [categoryId], references: [id])
   
   declarationId         Int?
   declaration           Declaration? @relation(fields: [declarationId], references: [id])
+
+  manifestId            Int?
+  manifest              Manifest?    @relation(fields: [manifestId], references: [id])
+
+  // MASTER FIELDS
+  entryDate             DateTime? // Ngày nhập kho
+  orderCode             String?   // Mã đơn hàng
+  totalWeight           Int?      // Tổng trọng lượng (kg)
+  totalVolume           Decimal?  @db.Decimal(15, 3) // Tổng khối lượng (m3)
+  domesticFeeRMB        Decimal?  @db.Decimal(15, 2) // Phí nội địa (RMB)
+  unloadingFeeRMB       Decimal?  @db.Decimal(15, 2) // Phí dỡ hàng (RMB)
+  infoSource            String?   // Nguồn cung cấp thông tin (Kg.m3)
+  totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Tổng cước vận chuyển TQ_HN tạm tính
+  exchangeRate          Decimal?  @db.Decimal(15, 4) // Tỷ giá (VND/RMB)
   
-  notes                 String?
-  
-  separateTax           Boolean   @default(false)
-  originalWeightPrice   Decimal   @db.Decimal(15, 2)
-  originalVolumePrice   Decimal   @db.Decimal(15, 2)
-  serviceFee            Decimal   @db.Decimal(15, 2)
-  importTax             Decimal?  @db.Decimal(15, 0)
-  vat                   Decimal?  @db.Decimal(15, 0)
-  totalAmount           Decimal   @db.Decimal(15, 2)
-  incidentalFee         Decimal   @db.Decimal(15, 2) @default(0)
-  incidentalNotes       String?
-  profit                Decimal   @db.Decimal(15, 2) @default(0)
-  
-  totalWeight           Decimal   @db.Decimal(15, 2)
-  totalVolume           Decimal   @db.Decimal(15, 3)
-  totalPackages         Int
-  productUnit           String?
-  
-  costCalculationMethod CostCalculationMethod @default(AUTO)
-  weightPrice           Decimal   @db.Decimal(15, 2)
-  volumePrice           Decimal   @db.Decimal(15, 2)
-  
-  images                String[]
-  
+  // Relations to Details
+  items                 ProductItem[]
   warehouseCosts        WarehouseCost[]
   packageDetails        PackageDetail[]
   
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-  deletedAt             DateTime?
+  deletedAt             DateTime? // Soft Delete
 
   @@map("product_codes")
+}
+
+model ProductItem {
+  id                Int         @id @default(autoincrement())
+  
+  productCodeId     Int
+  productCode       ProductCode @relation(fields: [productCodeId], references: [id], onDelete: Cascade)
+  
+  productName       String?     // Tên mặt hàng
+  packageCount      Int?        // Số kiện
+  packageUnit       String?     // Đơn vị kiện (Selection box)
+  weight            Int?        // Trọng lượng (kg)
+  volume            Decimal?    @db.Decimal(15, 3) // Khối lượng (m3)
+  volumeFee         Int?        // Đơn giá cước TQ_HN (khối)
+  weightFee         Int?        // Đơn giá cước TQ_HN (cân)
+  domesticFeeTQ     Decimal?    @db.Decimal(15, 2) // Phí nội địa TQ (RMB)
+  haulingFeeTQ      Decimal?    @db.Decimal(15, 2) // Phí kéo hàng TQ (RMB)
+  domesticFeeVN     Int?        // Phí nội địa VN (VND)
+  notes             String?     @db.Text // Ghi chú
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  deletedAt         DateTime?   // Soft Delete
+
+  @@map("product_items")
+}
+
+model Manifest {
+  id          Int           @id @default(autoincrement())
+  name        String        // Tên chuyến (VD: Chuyến ngày 2/2/2026)
+  date        DateTime      @default(now()) // Ngày xếp xe
+  status      String        @default("OPEN") // OPEN, CLOSED, SHIPPED
+  note        String?       // Ghi chú
+
+  productCodes ProductCode[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?     // Soft Delete
+
+  @@map("manifests")
 }
 
 model WarehouseCost {
@@ -243,11 +408,11 @@ model WarehouseCost {
   productCodeId     Int
   productCode       ProductCode @relation(fields: [productCodeId], references: [id], onDelete: Cascade)
   
-  costType          CostType
-  currency          Currency
-  originalCost      Decimal     @db.Decimal(15, 2)
-  otherFee          Decimal     @db.Decimal(15, 2) @default(0)
-  notes             String?
+  costType          CostType    // Tên chi phí
+  currency          Currency    // Tiền tệ
+  originalCost      Decimal     @db.Decimal(15, 2) // Chi phí gốc
+  otherFee          Decimal     @db.Decimal(15, 2) @default(0) // Tiền thu khác
+  notes             String?     // Ghi chú
   
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
@@ -261,15 +426,56 @@ model PackageDetail {
   productCodeId     Int
   productCode       ProductCode @relation(fields: [productCodeId], references: [id], onDelete: Cascade)
   
-  trackingCode      String
-  length            Decimal     @db.Decimal(10, 2)
-  width             Decimal     @db.Decimal(10, 2)
-  height            Decimal     @db.Decimal(10, 2)
-  totalWeight       Decimal     @db.Decimal(15, 2)
-  totalPackages     Int
+  trackingCode      String      // Mã vận đơn
+  length            Decimal     @db.Decimal(10, 2) // Dài (cm)
+  width             Decimal     @db.Decimal(10, 2) // Rộng (cm)
+  height            Decimal     @db.Decimal(10, 2) // Cao (cm)
+  totalWeight       Decimal     @db.Decimal(15, 2) // Tổng cân (kg)
+  totalPackages     Int         // Tổng kiện
   
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
   @@map("package_details")
 }
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int      // Recipient
+  user        User     @relation("UserNotifications", fields: [userId], references: [id])
+  content     String
+  isRead      Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("notifications")
+}
+
+model ShortDeclaration {
+  id              Int       @id @default(autoincrement())
+  
+  // 9 trường thông tin chính
+  productName     String?   @db.Text
+  hsCode          String?
+  origin          String?
+  unit1           String?
+  unit2           String?
+  importTaxCode   String?
+  importTaxRate   Decimal?  @db.Decimal(5, 2)
+  vatTaxCode      String?
+  vatTaxRate      Decimal?  @db.Decimal(5, 2)
+  
+  // Hash field for existing check
+  hash            String?   @db.VarChar(255)
+  
+  // System fields
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime? // Soft Delete
+
+  @@index([hash])
+  @@map("short_declarations")
+}
+
+

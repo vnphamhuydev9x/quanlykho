@@ -5,21 +5,23 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 const upload = require('../config/upload');
 
-// Get All: FE hiển thị cho tất cả -> Auth Required
-router.get('/', authMiddleware, productCodeController.getAllProductCodes);
+// All product code routes require authentication and ADMIN role base on new TechSpec
+router.use(authMiddleware);
+router.use(roleMiddleware(['ADMIN']));
 
-// Get By ID: Auth Required
-router.get('/:id', authMiddleware, productCodeController.getProductCodeById);
+// Get All
+router.get('/', productCodeController.getAllProductCodes);
 
-// Export Data: ADMIN only
-router.get('/export/all', authMiddleware, roleMiddleware(['ADMIN']), productCodeController.getAllProductCodesForExport);
+// Get By ID
+router.get('/:id', productCodeController.getProductCodeById);
 
-// Upload Images: ADMIN only
-router.post('/:id/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.array('images', 10), productCodeController.uploadImages);
+// Create
+router.post('/', productCodeController.createProductCode);
 
-// Create/Update/Delete: ADMIN only (Update allowed for SALE/USER with restrictions in controller)
-router.post('/', authMiddleware, roleMiddleware(['ADMIN']), productCodeController.createProductCode);
-router.put('/:id', authMiddleware, roleMiddleware(['ADMIN', 'SALE', 'USER']), productCodeController.updateProductCode);
-router.delete('/:id', authMiddleware, roleMiddleware(['ADMIN']), productCodeController.deleteProductCode);
+// Update
+router.put('/:id', productCodeController.updateProductCode);
+
+// Delete
+router.delete('/:id', productCodeController.deleteProductCode);
 
 module.exports = router;

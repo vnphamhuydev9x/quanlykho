@@ -320,6 +320,8 @@
         "packageUnit": "6. [F] Đơn vị kiện",
         "packageUnitRequired": "Vui lòng chọn đơn vị kiện",
         "selectUnit": "Chọn đơn vị",
+        "unitKhongDongGoi": "Không đóng gói",
+        "unitBaoTai": "Bao tải",
         "unitThungCarton": "Thùng carton",
         "unitPallet": "Pallet",
         "weight": "7. [G] Trọng lượng (Kg)",

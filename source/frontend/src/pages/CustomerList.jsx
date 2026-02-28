@@ -299,6 +299,7 @@ const CustomerList = () => {
         {
             title: t('common.action'),
             key: 'action',
+            fixed: 'right',
             render: (_, record) => (
                 <Space size="middle">
                     <Button icon={<EyeOutlined />} onClick={() => handleView(record)} title={t('common.view')} />

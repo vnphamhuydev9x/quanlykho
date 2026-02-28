@@ -125,7 +125,7 @@ const ManifestDetailPage = () => {
 
     // Columns for Main Table (8 Columns Simplified)
     const columns = [
-        { title: '#', render: (t, r, i) => i + 1, width: 50 },
+        { title: '#', render: (t, r, i) => i + 1, width: 50, fixed: 'left' },
         { title: '1. [A] Mã KH', dataIndex: 'customerCodeInput', width: 100, render: (t, r) => t || r.customer?.customerCode },
         { title: '2. [B] Tên hàng', dataIndex: 'productName', width: 150 },
         { title: '3. [C] Mã đơn', dataIndex: 'orderCode', width: 120 },
@@ -142,6 +142,7 @@ const ManifestDetailPage = () => {
         {
             title: '',
             key: 'action',
+            fixed: 'right',
             render: (_, record) => (
                 <Button danger type="text" icon={<DeleteOutlined />} onClick={() => handleRemoveItem(record.id)} />
             )
@@ -195,6 +196,7 @@ const ManifestDetailPage = () => {
                         dataSource={manifest.productCodes || []}
                         rowKey="id"
                         loading={loading}
+                        scroll={{ x: 'max-content' }}
                         pagination={false}
                         bordered
                         summary={(pageData) => {

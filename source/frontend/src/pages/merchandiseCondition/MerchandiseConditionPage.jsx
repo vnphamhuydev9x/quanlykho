@@ -142,6 +142,7 @@ const MerchandiseConditionPage = () => {
         {
             title: t('common.action'),
             key: 'action',
+            fixed: 'right',
             render: (_, record) => (
                 <Space size="middle">
                     <Button

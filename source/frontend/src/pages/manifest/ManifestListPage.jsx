@@ -102,7 +102,7 @@ const ManifestListPage = () => {
     };
 
     const columns = [
-        { title: 'ID', dataIndex: 'id', width: 60 },
+        { title: 'ID', dataIndex: 'id', width: 60, fixed: 'left' },
         { title: 'Tên chuyến', dataIndex: 'name', width: 200 },
         {
             title: 'Ngày xếp',
@@ -133,6 +133,7 @@ const ManifestListPage = () => {
             title: 'Hành động',
             key: 'action',
             width: 150,
+            fixed: 'right',
             render: (_, record) => (
                 <Space>
                     <Button type="primary" icon={<EyeOutlined />} size="small" onClick={() => navigate(`/manifests/${record.id}`)}>
@@ -172,6 +173,7 @@ const ManifestListPage = () => {
                 dataSource={data}
                 rowKey="id"
                 loading={loading}
+                scroll={{ x: 'max-content' }}
                 pagination={pagination}
                 onChange={handleTableChange}
                 bordered

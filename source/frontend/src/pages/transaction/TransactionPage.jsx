@@ -227,6 +227,7 @@ const TransactionPage = () => {
         {
             title: t('common.action'),
             key: 'action',
+            fixed: 'right',
             render: (_, record) => (
                 <Space size="middle">
                     {userRole === 'ADMIN' && record.status === 'SUCCESS' && (

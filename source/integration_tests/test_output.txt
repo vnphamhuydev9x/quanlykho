@@ -1,0 +1,610 @@
+  console.log
+    Testing against BASE_URL: http://localhost:5001
+
+      at Object.log (helpers.js:21:9)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+  console.log
+    Redis Client Error AggregateError: 
+        at internalConnectMultiple (node:net:1142:49)
+        at afterConnectMultiple (node:net:1723:7) {
+      code: 'ECONNREFUSED',
+      [errors]: [
+        Error: connect ECONNREFUSED ::1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '::1',
+          port: 6380
+        },
+        Error: connect ECONNREFUSED 127.0.0.1:6380
+            at createConnectionError (node:net:1686:14)
+            at afterConnectMultiple (node:net:1716:16) {
+          errno: -4078,
+          code: 'ECONNREFUSED',
+          syscall: 'connect',
+          address: '127.0.0.1',
+          port: 6380
+        }
+      ]
+    }
+
+      at Commander.log (helpers.js:18:42)
+
+FAIL ./productCode.test.js (5.429 s)
+  Product Code API - Master/Detail
+    Scenario 1: Validation - Relation Database
+      ├ù should return 400 if employeeId not found
+      ├ù should return 400 if customerId not found
+      ├ù should return 400 if merchandiseConditionId not found
+    Scenario 2: Validation - Enum Hard-coded
+      ├ù should return 400 if item packageUnit is invalid enum
+    Scenario 3: Business Logic - Auto Calculation & Scenario 5.1: List Caching
+      ├ù should create product code and auto calculate total transport fee based on max values
+      ├ù should invalidate list cache after creation
+    Scenario 4: Master-Detail Database Consistency & Scenario 5.2: Detail Caching
+      ├ù should update (PUT) product code, replacing items and recalculating transport fee
+      ├ù should cascade soft delete and clear cache on DELETE API
+
+  ΓùÅ Product Code API - Master/Detail ΓÇ║ Scenario 1: Validation - Relation Database ΓÇ║ should return 400 if employeeId not found
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      13 | let createdProductCodeId;
+      14 |
+    > 15 | beforeAll(async () => {
+         | ^
+      16 |     await connectTestInfra();
+      17 | });
+      18 |
+
+      at Object.beforeAll (productCode.test.js:15:1)
+
+  ΓùÅ Product Code API - Master/Detail ΓÇ║ Scenario 1: Validation - Relation Database ΓÇ║ should return 400 if customerId not found
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      13 | let createdProductCodeId;
+      14 |
+    > 15 | beforeAll(async () => {
+         | ^
+      16 |     await connectTestInfra();
+      17 | });
+      18 |
+
+      at Object.beforeAll (productCode.test.js:15:1)
+
+  ΓùÅ Product Code API - Master/Detail ΓÇ║ Scenario 1: Validation - Relation Database ΓÇ║ should return 400 if merchandiseConditionId not found
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      13 | let createdProductCodeId;
+      14 |
+    > 15 | beforeAll(async () => {
+         | ^
+      16 |     await connectTestInfra();
+      17 | });
+      18 |
+
+      at Object.beforeAll (productCode.test.js:15:1)
+
+  ΓùÅ Product Code API - Master/Detail ΓÇ║ Scenario 2: Validation - Enum Hard-coded ΓÇ║ should return 400 if item packageUnit is invalid enum
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      13 | let createdProductCodeId;
+      14 |
+    > 15 | beforeAll(async () => {
+         | ^
+      16 |     await connectTestInfra();
+      17 | });
+      18 |
+
+      at Object.beforeAll (productCode.test.js:15:1)
+
+  ΓùÅ Product Code API - Master/Detail ΓÇ║ Scenario 3: Business Logic - Auto Calculation & Scenario 5.1: List Caching ΓÇ║ should create product code and auto calculate total transport fee based on max values
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      13 | let createdProductCodeId;
+      14 |
+    > 15 | beforeAll(async () => {
+         | ^
+      16 |     await connectTestInfra();
+      17 | });
+      18 |
+
+      at Object.beforeAll (productCode.test.js:15:1)
+
+  ΓùÅ Product Code API - Master/Detail ΓÇ║ Scenario 3: Business Logic - Auto Calculation & Scenario 5.1: List Caching ΓÇ║ should invalidate list cache after creation
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      13 | let createdProductCodeId;
+      14 |
+    > 15 | beforeAll(async () => {
+         | ^
+      16 |     await connectTestInfra();
+      17 | });
+      18 |
+
+      at Object.beforeAll (productCode.test.js:15:1)
+
+  ΓùÅ Product Code API - Master/Detail ΓÇ║ Scenario 4: Master-Detail Database Consistency & Scenario 5.2: Detail Caching ΓÇ║ should update (PUT) product code, replacing items and recalculating transport fee
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      13 | let createdProductCodeId;
+      14 |
+    > 15 | beforeAll(async () => {
+         | ^
+      16 |     await connectTestInfra();
+      17 | });
+      18 |
+
+      at Object.beforeAll (productCode.test.js:15:1)
+
+  ΓùÅ Product Code API - Master/Detail ΓÇ║ Scenario 4: Master-Detail Database Consistency & Scenario 5.2: Detail Caching ΓÇ║ should cascade soft delete and clear cache on DELETE API
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      13 | let createdProductCodeId;
+      14 |
+    > 15 | beforeAll(async () => {
+         | ^
+      16 |     await connectTestInfra();
+      17 | });
+      18 |
+
+      at Object.beforeAll (productCode.test.js:15:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       8 failed, 8 total
+Snapshots:   0 total
+Time:        5.458 s
+Ran all test suites matching /productCode.test.js/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

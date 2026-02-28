@@ -1,6 +1,8 @@
 // Package Unit Enums
 export const PACKAGE_UNIT = {
-    CARTON: 'CARTON',
+    KHONG_DONG_GOI: 'KHONG_DONG_GOI',
+    BAO_TAI: 'BAO_TAI',
+    THUNG_CARTON: 'THUNG_CARTON',
     PALLET: 'PALLET'
 };
 
@@ -83,7 +85,9 @@ export const INFO_SOURCE_OPTIONS = [
 ];
 
 export const PACKAGE_UNIT_OPTIONS = [
-    { value: PACKAGE_UNIT.CARTON, labelKey: 'productCode.unitThungCarton' },
+    { value: PACKAGE_UNIT.KHONG_DONG_GOI, labelKey: 'productCode.unitKhongDongGoi' },
+    { value: PACKAGE_UNIT.BAO_TAI, labelKey: 'productCode.unitBaoTai' },
+    { value: PACKAGE_UNIT.THUNG_CARTON, labelKey: 'productCode.unitThungCarton' },
     { value: PACKAGE_UNIT.PALLET, labelKey: 'productCode.unitPallet' }
 ];
 

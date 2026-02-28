@@ -235,6 +235,13 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
         *   Sử dụng **Eager Loading** (Prisma `include` hoặc nested `select`) để lấy dữ liệu trong 1 query duy nhất.
         *   Hoặc lấy danh sách ID, query 1 lần bảng con (`where: { id: { in: ids } }`) rồi map lại trên Application Layer.
 
+## 8. Backend Data Validation Standards
+*   **Selection Box (Dropdown) Mandatory Validation**:
+    *   **Quy tắc**: Khi một trường thông tin ở Frontend là selection box thì có 2 trường hợp lấy dữ liệu:
+        1. Lấy từ data của một table khác (ví dụ: Nhân viên, Khách hàng).
+        2. Lấy từ một list các hard code values / Enum (ví dụ: Đơn vị kiện, Trạng thái).
+    *   **Bắt buộc**: Với CẢ 2 trường hợp này, Backend **BẮT BUỘC** phải validate để chắc chắn rằng dữ liệu gửi lên từ Frontend là hợp lệ (tôn tại ID trong bảng con hoặc khớp value với list Enum đã định nghĩa). Tuyệt đối không được bỏ qua validation dẫn đến lưu rác/dữ liệu không xác định do Frontend truyền sai.
+
 ---
 
 # FRONTEND RULES
@@ -440,22 +447,18 @@ const response = await axiosInstance.get('/customers');
 ### 12.2 Table Design
 
 #### Table Fixed Columns (Cột cố định trong Table)
-*   **Quy tắc**: Chỉ cố định tối đa 2 cột đầu tiên bên trái (`fixed: 'left'`).
-*   **Cột 1**: Luôn là ID hoặc mã định danh chính.
-*   **Cột 2**: Thông tin quan trọng nhất (thường là tên, khách hàng, hoặc đối tượng chính).
-*   **KHÔNG** cố định cột Action ở bên phải (`fixed: 'right'`).
-*   **Lý do**: 
-    *   Tránh tình trạng table bị "kẹp" giữa 2 cột fixed, gây khó khăn khi scroll.
-    *   Cột Action không cần thiết phải luôn hiển thị, user có thể scroll để thấy.
-    *   Cải thiện UX trên màn hình nhỏ.
+*   **Quy tắc Bắt buộc**: Với mọi Table có scroll ngang (`scroll={{ x: ... }}`), LUÔN LUÔN cố định cột đầu tiên bên trái (`fixed: 'left'`) và cột cuối cùng (thường là cột Thao tác/Action) bên phải (`fixed: 'right'`).
+*   **Cột Đầu**: Luôn là ID, mã định danh, hoặc thông tin quan trọng nhất để người dùng luôn biết mình đang xem dòng nào.
+*   **Cột Cuối**: Luôn là Action (Thao tác) để dễ dàng thao tác mà không cần cuộn ngang lại.
+*   **Lý do**: Tối ưu hóa UX, giúp người dùng không bị mất ngữ cảnh và dễ dàng thao tác trên mọi kích thước màn hình.
 *   **Ví dụ**:
     ```javascript
     const columns = [
-        { title: 'ID', dataIndex: 'id', fixed: 'left', width: 80 }, // ✅ Fixed
-        { title: 'Khách hàng', key: 'customer', fixed: 'left', width: 200 }, // ✅ Fixed
-        { title: 'Sản phẩm', dataIndex: 'product', width: 150 }, // ❌ Không fixed
-        { title: 'Giá', dataIndex: 'price', width: 120 }, // ❌ Không fixed
-        { title: 'Action', key: 'action', width: 150 } // ❌ KHÔNG fixed right
+        { title: 'ID', dataIndex: 'id', fixed: 'left', width: 80 }, // ✅ Fixed Left
+        { title: 'Khách hàng', key: 'customer', width: 200 }, 
+        { title: 'Sản phẩm', dataIndex: 'product', width: 150 }, 
+        { title: 'Giá', dataIndex: 'price', width: 120 }, 
+        { title: 'Action', key: 'action', fixed: 'right', width: 150 } // ✅ Fixed Right
     ];
     ```
 

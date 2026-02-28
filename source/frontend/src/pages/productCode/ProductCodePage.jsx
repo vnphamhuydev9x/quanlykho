@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import productCodeService from '../../services/productCodeService';
 import ProductCodeModal from './ProductCodeModal';
+import { formatCurrency } from '../../utils/format';
 
 const ProductCodePage = () => {
     const { t, i18n } = useTranslation();
@@ -98,6 +99,7 @@ const ProductCodePage = () => {
     const handleModalClose = (shouldRefresh) => {
         setModalVisible(false);
         setEditingRecord(null);
+        setViewOnly(false);
         if (shouldRefresh) {
             fetchData();
         }
@@ -117,7 +119,7 @@ const ProductCodePage = () => {
             title: 'Ngày nhập kho',
             dataIndex: 'entryDate',
             key: 'entryDate',
-            width: 120,
+            width: 130,
             render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'
         },
         {
@@ -134,36 +136,50 @@ const ProductCodePage = () => {
             ellipsis: true
         },
         {
-            title: 'Tổng Trọng lượng (kg)',
+            title: 'Tổng Trọng lượng',
             dataIndex: 'totalWeight',
             key: 'totalWeight',
             width: 150,
             align: 'right',
-            render: val => val ? new Intl.NumberFormat('de-DE').format(val) : '0'
+            render: val => val ? `${new Intl.NumberFormat('de-DE').format(val)} kg` : '0 kg'
         },
         {
-            title: 'Tổng Khối lượng (m³)',
+            title: 'Tổng Khối lượng',
             dataIndex: 'totalVolume',
             key: 'totalVolume',
             width: 150,
             align: 'right',
-            render: val => val ? new Intl.NumberFormat('de-DE').format(val) : '0'
+            render: val => val ? `${new Intl.NumberFormat('de-DE').format(val)} m³` : '0 m³'
         },
         {
-            title: 'Phí nội địa (RMB)',
+            title: 'Phí nội địa',
             dataIndex: 'domesticFeeRMB',
             key: 'domesticFeeRMB',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(val) : '0'
+            render: (val) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(val, 'RMB')}
+                </span>
+            )
         },
         {
-            title: 'Phí dỡ hàng (RMB)',
+            title: 'Phí dỡ hàng',
             dataIndex: 'unloadingFeeRMB',
             key: 'unloadingFeeRMB',
             width: 150,
             align: 'right',
-            render: (val) => val ? new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(val) : '0'
+            render: (val) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(val, 'RMB')}
+                </span>
+            )
+        },
+        {
+            title: 'Tình trạng hàng hóa',
+            key: 'merchandiseCondition',
+            width: 170,
+            render: (_, record) => record.merchandiseCondition?.name_vi || '-'
         },
         {
             title: 'Nguồn cung cấp thông tin',
@@ -181,12 +197,16 @@ const ProductCodePage = () => {
             render: val => val ? new Intl.NumberFormat('de-DE').format(val) : '0'
         },
         {
-            title: 'Tổng TQ_HN tạm tính',
+            title: 'Tổng cước TQ_HN tạm tính',
             dataIndex: 'totalTransportFeeEstimate',
             key: 'totalTransportFeeEstimate',
-            width: 180,
+            width: 220,
             align: 'right',
-            render: (val) => <span style={{ color: '#cf1322', fontWeight: 'bold' }}>{val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '0 ₫'}</span>
+            render: (val) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(val, 'VND')}
+                </span>
+            )
         },
         {
             title: 'Thao tác',
@@ -226,7 +246,7 @@ const ProductCodePage = () => {
             <div style={{ marginBottom: 16 }}>
                 <Row justify="space-between" align="middle" gutter={[16, 16]}>
                     <Col xs={24} md={12}>
-                        <h2 style={{ margin: 0 }}>Quản lý Mã hàng (Lô)</h2>
+                        <h2 style={{ margin: 0 }}>Quản lý Mã hàng</h2>
                     </Col>
                     <Col xs={24} md={12} style={{ textAlign: 'right' }}>
                         <Space wrap>

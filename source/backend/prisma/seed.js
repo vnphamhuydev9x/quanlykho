@@ -279,21 +279,87 @@ async function main() {
 
     // --- SEED MERCHANDISE CONDITIONS ---
     console.log('Seeding Merchandise Conditions...');
-    const defaultStatusName = "Nhập kho";
-    const existingDefaultStatus = await prisma.merchandiseCondition.findFirst({
-        where: { name_vi: defaultStatusName }
-    });
-    if (!existingDefaultStatus) {
-        await prisma.merchandiseCondition.create({
-            data: {
-                name_vi: defaultStatusName,
-                name_zh: "入库",
-                canLoadVehicle: true
-            }
+    const conditions = [
+        { name_vi: "Nhập kho", name_zh: "入库", canLoadVehicle: true },
+        { name_vi: "Kho TQ", name_zh: "中国仓库", canLoadVehicle: true }
+    ];
+
+    for (const cond of conditions) {
+        const existingStatus = await prisma.merchandiseCondition.findFirst({
+            where: { name_vi: cond.name_vi }
         });
-        console.log(`Created MerchandiseCondition: ${defaultStatusName}`);
+        if (!existingStatus) {
+            await prisma.merchandiseCondition.create({
+                data: cond
+            });
+            console.log(`Created MerchandiseCondition: ${cond.name_vi}`);
+        } else {
+            console.log(`MerchandiseCondition already exists: ${cond.name_vi}`);
+        }
+    }
+
+    // --- SEED PRODUCT CODES ---
+    console.log('Seeding Product Codes...');
+    const warehouseEmployees = await prisma.user.findMany({ where: { role: 'WAREHOUSE', deletedAt: null } });
+    const pCustomers = await prisma.user.findMany({ where: { type: 'CUSTOMER', deletedAt: null } });
+    const targetCondition = await prisma.merchandiseCondition.findFirst({ where: { name_vi: "Nhập kho" } });
+
+    if (warehouseEmployees.length > 0 && pCustomers.length > 0 && targetCondition) {
+        const existingCodesCount = await prisma.productCode.count();
+        if (existingCodesCount < 20) {
+            for (let i = existingCodesCount; i < 20; i++) {
+                const customer = pCustomers[i % pCustomers.length];
+                const emp = warehouseEmployees[i % warehouseEmployees.length];
+                const weight = Math.floor(Math.random() * 50) + 10;
+                const volume = (Math.random() * 2 + 0.1).toFixed(3);
+
+                await prisma.productCode.create({
+                    data: {
+                        employeeId: emp.id,
+                        customerId: customer.id,
+                        merchandiseConditionId: targetCondition.id,
+                        entryDate: new Date(Date.now() - Math.floor(Math.random() * 10000000000)),
+                        orderCode: `ORDER${new Date().getFullYear()}${String(i + 1).padStart(4, '0')}`,
+                        totalWeight: weight,
+                        totalVolume: volume,
+                        domesticFeeRMB: 10 + Math.floor(Math.random() * 50),
+                        unloadingFeeRMB: 5 + Math.floor(Math.random() * 20),
+                        infoSource: 'Mẫu Seed',
+                        totalTransportFeeEstimate: 1000000 + Math.floor(Math.random() * 500000),
+                        exchangeRate: 3500,
+                        items: {
+                            create: [
+                                {
+                                    productName: `Hàng thời trang ${i + 1}A`,
+                                    packageCount: Math.floor(Math.random() * 5) + 1,
+                                    packageUnit: 'THUNG_CARTON',
+                                    weight: weight,
+                                    volume: volume,
+                                    weightFee: 30000,
+                                    volumeFee: 3500000,
+                                    notes: 'Hệ thống tự động tạo'
+                                },
+                                {
+                                    productName: `Phụ kiện ${i + 1}B`,
+                                    packageCount: Math.floor(Math.random() * 5) + 1,
+                                    packageUnit: 'BAO_TAI',
+                                    weight: Math.floor(weight / 2.0),
+                                    volume: (volume / 2.0),
+                                    weightFee: 30000,
+                                    volumeFee: 3500000,
+                                    notes: 'Seed data 2'
+                                }
+                            ]
+                        }
+                    }
+                });
+                console.log(`Created Product Code: ORDER${new Date().getFullYear()}${String(i + 1).padStart(4, '0')}`);
+            }
+        } else {
+            console.log('Product Codes already seeded.');
+        }
     } else {
-        console.log(`MerchandiseCondition already exists: ${defaultStatusName}`);
+        console.warn('Skipping product codes (Need Employees, Customers & Conditions)');
     }
 }
 

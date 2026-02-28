@@ -11,6 +11,7 @@ import merchandiseConditionService from '../../services/merchandiseConditionServ
 import CustomNumberInput from '../../components/CustomNumberInput';
 import { PACKAGE_UNIT_OPTIONS } from '../../constants/enums';
 import ProductItemModal from './ProductItemModal';
+import { formatCurrency } from '../../utils/format';
 import { EditOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -322,36 +323,44 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                         </Col3>
 
                         <Col3>
-                            <Form.Item name="totalWeight" label="Tổng trọng lượng">
+                            <Form.Item label="Tổng trọng lượng">
                                 <Space.Compact block>
-                                    <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} isInteger={true} disabled={disabledGeneral} />
+                                    <Form.Item name="totalWeight" noStyle>
+                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} isInteger={true} disabled={disabledGeneral} />
+                                    </Form.Item>
                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kg" disabled />
                                 </Space.Compact>
                             </Form.Item>
                         </Col3>
 
                         <Col3>
-                            <Form.Item name="totalVolume" label="Tổng khối lượng">
+                            <Form.Item label="Tổng khối lượng">
                                 <Space.Compact block>
-                                    <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={disabledGeneral} />
+                                    <Form.Item name="totalVolume" noStyle>
+                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={disabledGeneral} />
+                                    </Form.Item>
                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="m³" disabled />
                                 </Space.Compact>
                             </Form.Item>
                         </Col3>
 
                         <Col3>
-                            <Form.Item name="domesticFeeRMB" label="Phí nội địa">
+                            <Form.Item label="Phí nội địa">
                                 <Space.Compact block>
-                                    <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={disabledGeneral} />
+                                    <Form.Item name="domesticFeeRMB" noStyle>
+                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={disabledGeneral} />
+                                    </Form.Item>
                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="RMB" disabled />
                                 </Space.Compact>
                             </Form.Item>
                         </Col3>
 
                         <Col3>
-                            <Form.Item name="unloadingFeeRMB" label="Phí dỡ hàng">
+                            <Form.Item label="Phí dỡ hàng">
                                 <Space.Compact block>
-                                    <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={disabledGeneral} />
+                                    <Form.Item name="unloadingFeeRMB" noStyle>
+                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={disabledGeneral} />
+                                    </Form.Item>
                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="RMB" disabled />
                                 </Space.Compact>
                             </Form.Item>
@@ -370,33 +379,36 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                         </Col3>
 
                         <Col3>
-                            <Form.Item name="merchandiseConditionId" label="Trạng thái hàng">
-                                <Select placeholder="Chọn trạng thái" disabled={disabledGeneral}>
+                            <Form.Item name="merchandiseConditionId" label="Tình trạng hàng hóa">
+                                <Select placeholder="Chọn tình trạng hàng hóa" disabled={disabledGeneral}>
                                     {conditions.map(c => (
                                         <Option key={c.id} value={c.id}>{c.name_vi}</Option>
                                     ))}
                                 </Select>
                             </Form.Item>
                         </Col3>
-
                         <Col3>
                             <Form.Item
                                 label={
                                     <Space>
-                                        Tổng TQ_HN tạm tính
+                                        Tổng cước TQ_HN tạm tính
                                         <Tooltip title="Tự động tính: Σ Max(Khối lượng × Cước khối, Trọng lượng × Cước cân) của các mặt hàng">
                                             <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
                                         </Tooltip>
                                     </Space>
                                 }
                             >
-                                <Form.Item name="totalTransportFeeEstimate" noStyle>
-                                    <Input
-                                        style={{ width: '100%', fontWeight: 'bold', color: '#cf1322' }}
-                                        disabled
-                                        value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalFeeEstimate)}
-                                    />
-                                </Form.Item>
+                                <Input
+                                    value={formatCurrency(totalFeeEstimate, 'VND')}
+                                    readOnly
+                                    style={{
+                                        textAlign: 'right',
+                                        fontWeight: 'bold',
+                                        color: '#389e0d',
+                                        backgroundColor: '#f5f5f5',
+                                        cursor: 'default'
+                                    }}
+                                />
                             </Form.Item>
                         </Col3>
                     </Row>
@@ -430,13 +442,63 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                             },
                             { title: 'Trọng lượng', dataIndex: 'weight', key: 'weight', render: val => val ? `${val} kg` : '-' },
                             { title: 'Khối lượng', dataIndex: 'volume', key: 'volume', render: val => val ? `${val} m³` : '-' },
-                            { title: 'Cước cân', dataIndex: 'weightFee', key: 'weightFee', render: val => val ? `${new Intl.NumberFormat('vi-VN').format(val)} ₫` : '-' },
-                            { title: 'Cước khối', dataIndex: 'volumeFee', key: 'volumeFee', render: val => val ? `${new Intl.NumberFormat('vi-VN').format(val)} ₫` : '-' },
-                            { title: 'Nội địa TQ', dataIndex: 'domesticFeeTQ', key: 'domesticFeeTQ', render: val => val ? `${new Intl.NumberFormat('zh-CN').format(val)} ¥` : '-' },
-                            { title: 'Kéo hàng TQ', dataIndex: 'haulingFeeTQ', key: 'haulingFeeTQ', render: val => val ? `${new Intl.NumberFormat('zh-CN').format(val)} ¥` : '-' },
-                            { title: 'Nội địa VN', dataIndex: 'domesticFeeVN', key: 'domesticFeeVN', render: val => val ? `${new Intl.NumberFormat('vi-VN').format(val)} ₫` : '-' },
-                            { title: 'Ghi chú', dataIndex: 'notes', key: 'notes', ellipsis: true },
                             {
+                                title: 'Cước cân',
+                                dataIndex: 'weightFee',
+                                key: 'weightFee',
+                                align: 'right',
+                                render: val => (
+                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                                        {formatCurrency(val, 'VND')}
+                                    </span>
+                                )
+                            },
+                            {
+                                title: 'Cước khối',
+                                dataIndex: 'volumeFee',
+                                key: 'volumeFee',
+                                align: 'right',
+                                render: val => (
+                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                                        {formatCurrency(val, 'VND')}
+                                    </span>
+                                )
+                            },
+                            {
+                                title: 'Nội địa TQ',
+                                dataIndex: 'domesticFeeTQ',
+                                key: 'domesticFeeTQ',
+                                align: 'right',
+                                render: val => (
+                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                                        {formatCurrency(val, 'RMB')}
+                                    </span>
+                                )
+                            },
+                            {
+                                title: 'Kéo hàng TQ',
+                                dataIndex: 'haulingFeeTQ',
+                                key: 'haulingFeeTQ',
+                                align: 'right',
+                                render: val => (
+                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                                        {formatCurrency(val, 'RMB')}
+                                    </span>
+                                )
+                            },
+                            {
+                                title: 'Nội địa VN',
+                                dataIndex: 'domesticFeeVN',
+                                key: 'domesticFeeVN',
+                                align: 'right',
+                                render: val => (
+                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                                        {formatCurrency(val, 'VND')}
+                                    </span>
+                                )
+                            },
+                            { title: 'Ghi chú', dataIndex: 'notes', key: 'notes', ellipsis: true },
+                            ...(viewOnly ? [] : [{
                                 title: 'Thao tác',
                                 key: 'action',
                                 align: 'center',
@@ -455,7 +517,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                         )}
                                     </Space>
                                 )
-                            }
+                            }])
                         ]}
                         scroll={{ x: 'max-content' }}
                     />

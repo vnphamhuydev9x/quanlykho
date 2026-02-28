@@ -14,6 +14,7 @@ import * as XLSX from 'xlsx';
 import { useTranslation } from 'react-i18next';
 import declarationService from '../../services/declarationService';
 import DeclarationModal from './DeclarationModal';
+import { formatCurrency } from '../../utils/format';
 
 import moment from 'moment';
 
@@ -257,24 +258,25 @@ const DeclarationPage = () => {
             title: '3. [C] Số kiện',
             dataIndex: 'packageCount',
             key: 'packageCount',
-            width: 80,
-            align: 'right'
+            width: 100,
+            align: 'right',
+            render: (value) => value ? `${value} kiện` : '-'
         },
         {
             title: '4. [D] Trọng lượng',
             dataIndex: 'weight',
             key: 'weight',
-            width: 100,
+            width: 120,
             align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+            render: (value) => value ? `${new Intl.NumberFormat('de-DE').format(value)} kg` : '-'
         },
         {
             title: '5. [E] Khối lượng',
             dataIndex: 'volume',
             key: 'volume',
-            width: 100,
+            width: 120,
             align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+            render: (value) => value ? `${new Intl.NumberFormat('de-DE').format(value)} m³` : '-'
         },
         {
             title: '6. [F] Nguồn tin',
@@ -288,7 +290,11 @@ const DeclarationPage = () => {
             key: 'domesticFeeRMB',
             width: 120,
             align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+            render: (value) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(value, 'RMB')}
+                </span>
+            )
         },
         {
             title: '8. [H] Phí kéo hàng',
@@ -296,7 +302,11 @@ const DeclarationPage = () => {
             key: 'haulingFeeRMB',
             width: 120,
             align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+            render: (value) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(value, 'RMB')}
+                </span>
+            )
         },
         {
             title: '9. [I] Phí dỡ hàng',
@@ -304,23 +314,35 @@ const DeclarationPage = () => {
             key: 'unloadingFeeRMB',
             width: 120,
             align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
+            render: (value) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(value, 'RMB')}
+                </span>
+            )
         },
         {
-            title: '10. [J] Cước (Kg)',
+            title: '10. [J] Cước cân',
             dataIndex: 'weightFee',
             key: 'weightFee',
             width: 120,
             align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '-'
+            render: (value) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(value, 'VND')}
+                </span>
+            )
         },
         {
-            title: '11. [K] Cước (m3)',
+            title: '11. [K] Cước khối',
             dataIndex: 'volumeFee',
             key: 'volumeFee',
             width: 120,
             align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '-'
+            render: (value) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(value, 'VND')}
+                </span>
+            )
         },
         {
             title: '12. [L] Tổng cước',
@@ -330,7 +352,7 @@ const DeclarationPage = () => {
             align: 'right',
             render: (value) => (
                 <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '-'}
+                    {formatCurrency(value, 'VND')}
                 </span>
             )
         },

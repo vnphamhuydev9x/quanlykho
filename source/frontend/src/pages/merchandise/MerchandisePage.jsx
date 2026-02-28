@@ -6,6 +6,7 @@ import moment from 'moment';
 import * as XLSX from 'xlsx';
 import productCodeService from '../../services/productCodeService';
 import MerchandiseModal from './MerchandiseModal';
+import { formatCurrency } from '../../utils/format';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -133,15 +134,6 @@ const MerchandisePage = () => {
         XLSX.writeFile(wb, "HangHoa_Export.xlsx");
     };
 
-    const currencyFormatter = (value) => {
-        if (!value) return '';
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-    };
-
-    const rmbFormatter = (value) => {
-        if (!value) return '';
-        return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(value);
-    };
 
     const columns = [
         { title: 'ID', dataIndex: 'id', width: 60, fixed: 'left' },
@@ -154,21 +146,46 @@ const MerchandisePage = () => {
         { title: '3. [C] Mã KH', dataIndex: 'customerCodeInput', width: 100 },
         { title: '4. [D] Tên hàng', dataIndex: 'productName', width: 150 },
         { title: '5. [E] Mã đơn', dataIndex: 'orderCode', width: 100 },
-        { title: '6. [F] Số kiện', dataIndex: 'packageCount', width: 80 },
-        { title: '8. [H] TL (Kg)', dataIndex: 'weight', width: 80 },
-        { title: '9. [I] KL (m3)', dataIndex: 'volume', width: 80 },
+        { title: '6. [F] Số kiện', dataIndex: 'packageCount', width: 100, render: val => val ? `${val} kiện` : '-' },
+        { title: '8. [H] Trọng lượng', dataIndex: 'weight', width: 120, align: 'right', render: val => val ? `${new Intl.NumberFormat('de-DE').format(val)} kg` : '-' },
+        { title: '9. [I] Khối lượng', dataIndex: 'volume', width: 120, align: 'right', render: val => val ? `${new Intl.NumberFormat('de-DE').format(val)} m³` : '-' },
         {
             title: '16. [P] Tổng cước',
             dataIndex: 'totalTransportFeeEstimate',
             width: 120,
-            render: currencyFormatter
+            align: 'right',
+            render: (val) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(val, 'VND')}
+                </span>
+            )
         },
         // ... (We can show all or a subset, showing a subset for brevity in default view. 
         // User asked for "full information" ref excel. 
         // A table with 40 columns is wide. I will let user scroll.
         // Adding more keys...)
-        { title: '11. [K] Phí NĐ RMB', dataIndex: 'domesticFeeRMB', width: 100, render: rmbFormatter },
-        { title: '12. [L] Phí kéo RMB', dataIndex: 'haulingFeeRMB', width: 100, render: rmbFormatter },
+        {
+            title: '11. [K] Phí nội địa',
+            dataIndex: 'domesticFeeRMB',
+            width: 100,
+            align: 'right',
+            render: (val) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(val, 'RMB')}
+                </span>
+            )
+        },
+        {
+            title: '12. [L] Phí kéo hàng',
+            dataIndex: 'haulingFeeRMB',
+            width: 100,
+            align: 'right',
+            render: (val) => (
+                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                    {formatCurrency(val, 'RMB')}
+                </span>
+            )
+        },
         { title: '16.1 Trạng thái xếp xe', dataIndex: 'loadingStatus', width: 120 },
         {
             title: 'Action',

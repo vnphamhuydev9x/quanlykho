@@ -1,0 +1,35 @@
+thêm mã hàng
+thiếu thông tin sale (mã đơn hàng nhân viên sale mã khách hàng)
+
+thằng chung
+Trọng lượng -> Tổng trọng lượng
+Khối lượng -> tổng khối lượng
+tem phụ rộng ra
+
+của thằng con
+4. [D] Tên mặt hàng 5. [E] Số Kiện 21. [V] Số lượng SP 22. [W] Quy cách 23. [X] Mô Tả sản phẩm 
+28. [AC] SL khai báo 29. [AD] Giá xuất hoá đơn 27. [AB] Nhu cầu khai báo 12. [L1] Đơn giá cước TQ_HN (khối) 13. [L2] Đơn giá cước TQ_HN (cân)
+thêm trọng lượng, khối lượng
+
+trạng thái của mã hàng khi tạo mới là kho trung quốc
+
+
+tab thông tin chung, thông tin trước khai hải quan, thông tin khai hải quan chính thức
+
+
+mã hàng làm đến tình trạng hàng hóa
+còn lại bê về khai báo
+    tên khai báo lên đầu
+
+
+
+
+chuyến xe 1->n mã hàng 1->n mã hàng con n->1 khai báo
+
+cho phép thực hiện đổi trạng thái manally (sau này khi đi theo trạng thái nữa)
+
+với những thằng còn lại thì follow theo trạng thái
+
+
+khách hàng: thêm cột tính tổng số mã hàng mà khách hàng đó đã đặt
+cột action thêm 1 nút "Chi tiết công nợ" show lên 1 bảng bao gồm mã hàng và số tiền cần thanh toán (hỏi AI về vụ họ có khả năng thanh toán theo 2 kiểu 1 là từng mã hàng 2 là đủ 100tr mới thanh toán 1 cục, đôi khi họ nợ 130 nhưng họ chỉ thanh toán 100tr thôi vẫn còn 30tr)

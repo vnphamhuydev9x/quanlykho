@@ -633,7 +633,7 @@ const response = await axiosInstance.get('/customers');
 *   **Quy tắc**:
     *   **Align**: `right` (Căn phải).
     *   **Style**: Màu xanh lá (`#389e0d`), in đậm (`fontWeight: 'bold'`).
-    *   **Format**: Có đơn vị tiền tệ chuẩn (VD: `1.000.000 ₫`).
+    *   **Format**: Sử dụng nhãn chữ viết tắt (VND, RMB) thay vì ký hiệu (₫, ¥). Các số phải được phân cách hàng nghìn bằng dấu chấm (.).
 *   **Code Mẫu**:
     ```jsx
     {
@@ -643,9 +643,26 @@ const response = await axiosInstance.get('/customers');
         align: 'right', // ⚠️ Bắt buộc
         render: (value) => (
             <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                {value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '0 ₫'}
+                {value ? `${new Intl.NumberFormat('de-DE').format(value)} VND` : '0 VND'}
             </span>
         ),
+    }
+    ```
+    *   Đối với RMB: `{value ? `${new Intl.NumberFormat('de-DE').format(value)} RMB` : '0 RMB'}`
+
+#### 12.5 Unit Display in Tables (Hiển thị đơn vị trong Bảng)
+*   **Quy tắc**: Với các cột có đơn vị đo lường (kg, m³, kiện...), **KHÔNG** để đơn vị trong ngoặc ở tiêu đề cột. Thay vào đó, hãy hiển thị đơn vị trực tiếp trong từng ô dữ liệu.
+*   **Lý do**: Làm tiêu đề cột gọn gàng hơn và dữ liệu trong bảng tự giải thích (self-explanatory).
+*   **Ví dụ**:
+    *   ❌ **Sai**: Tiêu đề: `Trọng lượng (kg)`, Giá trị: `14`
+    *   ✅ **Đúng**: Tiêu đề: `Trọng lượng`, Giá trị: `14 kg`
+*   **Code Mẫu**:
+    ```javascript
+    {
+        title: 'Tổng Trọng lượng',
+        dataIndex: 'totalWeight',
+        align: 'right',
+        render: val => val ? `${new Intl.NumberFormat('de-DE').format(val)} kg` : '0 kg'
     }
     ```
 

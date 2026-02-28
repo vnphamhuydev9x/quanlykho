@@ -31,3 +31,17 @@ export const formatInteger = (value, locale = 'vi-VN') => {
         maximumFractionDigits: 0
     }).format(num);
 };
+
+/**
+ * Format currency with VND/RMB label (Right aligned green style usually handled in component)
+ * @param {number|string} value - The amount to format
+ * @param {string} currency - 'VND' or 'RMB'
+ * @returns {string} Formatted string (e.g. 1.000.000 VND)
+ */
+export const formatCurrency = (value, currency = 'VND') => {
+    if (value === undefined || value === null || value === '') return `0 ${currency}`;
+    const num = parseFloat(value);
+    if (isNaN(num)) return `0 ${currency}`;
+
+    return `${new Intl.NumberFormat('de-DE').format(num)} ${currency}`;
+};

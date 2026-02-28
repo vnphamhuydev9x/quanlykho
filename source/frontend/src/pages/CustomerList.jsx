@@ -6,6 +6,7 @@ import axiosInstance from '../utils/axios';
 import * as XLSX from 'xlsx';
 import { useLocation } from 'react-router-dom';
 import { STATUS_FILTER, CUSTOMER_STATUS_FILTER_OPTIONS } from '../constants/enums';
+import { formatCurrency } from '../utils/format';
 
 const { Option } = Select;
 
@@ -263,7 +264,7 @@ const CustomerList = () => {
             align: 'right',
             render: (value) => (
                 <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {value ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '0 ₫'}
+                    {formatCurrency(value, 'VND')}
                 </span>
             ),
         },

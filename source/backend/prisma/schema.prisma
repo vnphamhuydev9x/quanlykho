@@ -343,8 +343,6 @@ model ProductCode {
   orderCode             String?   // Mã đơn hàng
   totalWeight           Int?      // Tổng trọng lượng (kg)
   totalVolume           Decimal?  @db.Decimal(15, 3) // Tổng khối lượng (m3)
-  domesticFeeRMB        Decimal?  @db.Decimal(15, 2) // Phí nội địa (RMB)
-  unloadingFeeRMB       Decimal?  @db.Decimal(15, 2) // Phí dỡ hàng (RMB)
   infoSource            String?   // Nguồn cung cấp thông tin (Kg.m3)
   totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Tổng cước vận chuyển TQ_HN tạm tính
   exchangeRate          Decimal?  @db.Decimal(15, 4) // Tỷ giá (VND/RMB)
@@ -376,6 +374,7 @@ model ProductItem {
   weightFee         Int?        // Đơn giá cước TQ_HN (cân)
   domesticFeeTQ     Decimal?    @db.Decimal(15, 2) // Phí nội địa TQ (RMB)
   haulingFeeTQ      Decimal?    @db.Decimal(15, 2) // Phí kéo hàng TQ (RMB)
+  unloadingFeeRMB   Decimal?    @db.Decimal(15, 2) // Phí dỡ hàng (RMB)
   domesticFeeVN     Int?        // Phí nội địa VN (VND)
   notes             String?     @db.Text // Ghi chú
 

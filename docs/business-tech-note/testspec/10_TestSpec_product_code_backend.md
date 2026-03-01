@@ -35,14 +35,14 @@ Trước khi chạy các test case, cần chuẩn bị sẵn các dữ liệu sa
 
 ### Scenario 3: Business Logic - Auto Calculation (Kiểm tra tính cước phí) 
 - **Mục đích**: Chắc chắn rằng BE tự động tính toán lại `totalTransportFeeEstimate` và ghi đè dữ liệu gửi từ Frontend (tránh việc Frontend hack truyền số bé).
-- **Công thức**: `Math.max(item.weight * item.weightFee, item.volume * item.volumeFee)` cộng dồn tất cả các item.
-- **Test Case 3.1**: Tạo mã hàng có 2 mặt hàng (Item):
-  - **Item 1**: Nặng (Weight=10, WeightFee=5000) -> 50.000. Khối (Volume=0.5, VolumeFee=200000) -> 100.000. (Max = 100.000).
-  - **Item 2**: Nặng (Weight=100, WeightFee=5000) -> 500.000. Khối (Volume=1, VolumeFee=200000) -> 200.000. (Max = 500.000).
+- **Công thức**: `Math.max(item.weight * item.weightFee, item.volume * item.volumeFee) + (item.domesticFeeTQ + item.haulingFeeTQ + item.unloadingFeeRMB) * exchangeRate` cộng dồn tất cả các item.
+- **Test Case 3.1**: Tạo mã hàng có tỷ giá `exchangeRate=3500` và 2 mặt hàng (Item):
+  - **Item 1**: Nặng (Weight=10, WeightFee=5000) -> 50.000. Khối (Volume=0.5, VolumeFee=200000) -> 100.000. Cước phụ (RMB): (domestic=10, hauling=5, unloading=5) -> 20 RMB * 3500 = 70.000 VND. (Tổng = 100.000 + 70.000 = 170.000).
+  - **Item 2**: Nặng (Weight=100, WeightFee=5000) -> 500.000. Khối (Volume=1, VolumeFee=200000) -> 200.000. Cước phụ (RMB): 0. (Tổng = 500.000).
   - Tình huống giả lập: Frontend cố tình gửi `totalTransportFeeEstimate` là 0.
-  - **Expect**: DB ghi lại thành công. Giá trị `totalTransportFeeEstimate` được tính trong DB phải là **600.000** (100.000 + 500.000). 
+  - **Expect**: DB ghi lại thành công. Giá trị `totalTransportFeeEstimate` được tính trong DB phải là **670.000** (170.000 + 500.000). 
 - **Test Case 3.2**: Update (PUT) mã hàng ở trên, xóa Item 1 đi, sửa Item 2 lại (Weight=100 -> Weight=10).
-  - **Expect**: Giá trị Max của Item 2 giờ là Volume (200.000). DB ghi `totalTransportFeeEstimate` là **200.000**.
+  - **Expect**: Giá trị Tổng của Item 2 giờ là Max(50.000, 200.000) = 200.000. DB ghi `totalTransportFeeEstimate` là **200.000**.
 
 ### Scenario 4: Master-Detail Database Consistency (Tính toàn vẹn Dữ liệu)
 - **Mục đích**: Thao tác CRUD lên Master phải kéo theo sự đồng bộ ở Detail (Item)

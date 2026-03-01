@@ -147,6 +147,7 @@ describe('Product Code API - Master/Detail', () => {
                     customerId: testCustomerId,
                     merchandiseConditionId: testConditionId,
                     orderCode: 'ORD_CALC_03',
+                    exchangeRate: 3500,
                     totalTransportFeeEstimate: 0, // FE hacked
                     items: [
                         {
@@ -154,7 +155,10 @@ describe('Product Code API - Master/Detail', () => {
                             weight: 10,
                             weightFee: 5000, // fee = 50.000
                             volume: 0.5,
-                            volumeFee: 200000 // fee = 100.000 (MAX is 100k)
+                            volumeFee: 200000, // fee = 100.000 (MAX is 100k)
+                            domesticFeeTQ: 10,
+                            haulingFeeTQ: 5,
+                            unloadingFeeRMB: 5 // extra = 20 * 3500 = 70.000
                         },
                         {
                             productName: 'Item 2',
@@ -168,8 +172,8 @@ describe('Product Code API - Master/Detail', () => {
             if (res.statusCode !== 201) console.log(res.body);
             expect(res.statusCode).toBe(201);
             expect(res.body.data).toBeDefined();
-            // Total should be Max(50k, 100k) + Max(500k, 200k) = 100k + 500k = 600000
-            expect(Number(res.body.data.totalTransportFeeEstimate)).toBe(600000);
+            // Total should be Max(50k, 100k) + 70k + Max(500k, 200k) = 170k + 500k = 670000
+            expect(Number(res.body.data.totalTransportFeeEstimate)).toBe(670000);
             expect(res.body.data.items).toBeDefined();
             expect(res.body.data.items.length).toBe(2);
 

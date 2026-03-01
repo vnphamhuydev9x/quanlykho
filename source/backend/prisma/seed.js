@@ -313,6 +313,15 @@ async function main() {
                 const weight = Math.floor(Math.random() * 50) + 10;
                 const volume = (Math.random() * 2 + 0.1).toFixed(3);
 
+                const item1Volume = parseFloat(volume);
+                const item1Weight = weight;
+                const item2Volume = item1Volume / 2.0;
+                const item2Weight = Math.floor(item1Weight / 2.0);
+
+                const item1Fee = Math.max(item1Weight * 30000, item1Volume * 3500000) + (10 + 5 + 5) * 3500;
+                const item2Fee = Math.max(item2Weight * 30000, item2Volume * 3500000) + (15 + 0 + 2) * 3500;
+                const totalFee = item1Fee + item2Fee;
+
                 await prisma.productCode.create({
                     data: {
                         employeeId: emp.id,
@@ -322,10 +331,8 @@ async function main() {
                         orderCode: `ORDER${new Date().getFullYear()}${String(i + 1).padStart(4, '0')}`,
                         totalWeight: weight,
                         totalVolume: volume,
-                        domesticFeeRMB: 10 + Math.floor(Math.random() * 50),
-                        unloadingFeeRMB: 5 + Math.floor(Math.random() * 20),
                         infoSource: 'Mẫu Seed',
-                        totalTransportFeeEstimate: 1000000 + Math.floor(Math.random() * 500000),
+                        totalTransportFeeEstimate: totalFee,
                         exchangeRate: 3500,
                         items: {
                             create: [
@@ -333,21 +340,29 @@ async function main() {
                                     productName: `Hàng thời trang ${i + 1}A`,
                                     packageCount: Math.floor(Math.random() * 5) + 1,
                                     packageUnit: 'THUNG_CARTON',
-                                    weight: weight,
-                                    volume: volume,
+                                    weight: item1Weight,
+                                    volume: item1Volume,
                                     weightFee: 30000,
                                     volumeFee: 3500000,
+                                    domesticFeeTQ: 10,
+                                    haulingFeeTQ: 5,
+                                    unloadingFeeRMB: 5,
+                                    domesticFeeVN: 50000,
                                     notes: 'Hệ thống tự động tạo'
                                 },
                                 {
                                     productName: `Phụ kiện ${i + 1}B`,
                                     packageCount: Math.floor(Math.random() * 5) + 1,
                                     packageUnit: 'BAO_TAI',
-                                    weight: Math.floor(weight / 2.0),
-                                    volume: (volume / 2.0),
+                                    weight: item2Weight,
+                                    volume: item2Volume,
                                     weightFee: 30000,
                                     volumeFee: 3500000,
-                                    notes: 'Seed data 2'
+                                    domesticFeeTQ: 15,
+                                    haulingFeeTQ: 0,
+                                    unloadingFeeRMB: 2,
+                                    domesticFeeVN: 20000,
+                                    notes: 'Seed data đầy đủ các loại phí'
                                 }
                             ]
                         }

@@ -104,6 +104,8 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
 
     const triggerCalculations = (itemsArray) => {
         let newTotalFee = 0;
+        const exchangeRate = parseFloat(form.getFieldValue('exchangeRate')) || 0;
+
         itemsArray.forEach((item) => {
             const weightFee = Number(item?.weightFee) || 0;
             const weight = Number(item?.weight) || 0;
@@ -112,15 +114,23 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
 
             const feeByVolume = volumeFee * volume;
             const feeByWeight = weightFee * weight;
+            const maxFeeForItem = Math.max(feeByVolume, feeByWeight);
 
-            newTotalFee += Math.max(feeByVolume, feeByWeight);
+            const domesticFeeTQ = parseFloat(item?.domesticFeeTQ) || 0;
+            const haulingFeeTQ = parseFloat(item?.haulingFeeTQ) || 0;
+            const unloadingFeeRMB = parseFloat(item?.unloadingFeeRMB) || 0;
+            const extraFeeVND = (domesticFeeTQ + haulingFeeTQ + unloadingFeeRMB) * exchangeRate;
+
+            newTotalFee += maxFeeForItem + extraFeeVND;
         });
         setTotalFeeEstimate(newTotalFee);
         form.setFieldsValue({ totalTransportFeeEstimate: newTotalFee });
     };
 
-    const handleValuesChange = () => {
-        // Items are now managed in local state, no need to watch for their changes here
+    const handleValuesChange = (changedValues, allValues) => {
+        if (changedValues.exchangeRate !== undefined) {
+            triggerCalculations(itemsData);
+        }
     };
 
     const handleAddItem = () => {
@@ -163,8 +173,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                 entryDate: values.entryDate ? values.entryDate.toISOString() : null,
                 totalWeight: Number(values.totalWeight) || 0,
                 totalVolume: parseFloat(values.totalVolume) || 0,
-                domesticFeeRMB: parseFloat(values.domesticFeeRMB) || 0,
-                unloadingFeeRMB: parseFloat(values.unloadingFeeRMB) || 0,
                 exchangeRate: parseFloat(values.exchangeRate) || 0,
                 totalTransportFeeEstimate: Number(totalFeeEstimate) || 0,
                 items: itemsData.map(item => ({
@@ -176,6 +184,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                     weightFee: Number(item.weightFee) || 0,
                     domesticFeeTQ: parseFloat(item.domesticFeeTQ) || 0,
                     haulingFeeTQ: parseFloat(item.haulingFeeTQ) || 0,
+                    unloadingFeeRMB: parseFloat(item.unloadingFeeRMB) || 0,
                     domesticFeeVN: Number(item.domesticFeeVN) || 0
                 }))
             };
@@ -345,28 +354,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                         </Col3>
 
                         <Col3>
-                            <Form.Item label="Phí nội địa">
-                                <Space.Compact block>
-                                    <Form.Item name="domesticFeeRMB" noStyle>
-                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={disabledGeneral} />
-                                    </Form.Item>
-                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="RMB" disabled />
-                                </Space.Compact>
-                            </Form.Item>
-                        </Col3>
-
-                        <Col3>
-                            <Form.Item label="Phí dỡ hàng">
-                                <Space.Compact block>
-                                    <Form.Item name="unloadingFeeRMB" noStyle>
-                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={disabledGeneral} />
-                                    </Form.Item>
-                                    <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="RMB" disabled />
-                                </Space.Compact>
-                            </Form.Item>
-                        </Col3>
-
-                        <Col3>
                             <Form.Item name="infoSource" label="Nguồn cung cấp thông tin (Kg/m³)">
                                 <Input disabled={disabledGeneral} placeholder="Ví dụ: Kho TQ báo" />
                             </Form.Item>
@@ -392,7 +379,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 label={
                                     <Space>
                                         Tổng cước TQ_HN tạm tính
-                                        <Tooltip title="Tự động tính: Σ Max(Khối lượng × Cước khối, Trọng lượng × Cước cân) của các mặt hàng">
+                                        <Tooltip title="Tự động tính: Σ [ Max(Khối lượng × Cước khối, Trọng lượng × Cước cân) + (Phí nội địa + Kéo hàng + Dỡ hàng) × Tỷ giá ] của các mặt hàng">
                                             <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
                                         </Tooltip>
                                     </Space>
@@ -479,6 +466,17 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 title: 'Kéo hàng TQ',
                                 dataIndex: 'haulingFeeTQ',
                                 key: 'haulingFeeTQ',
+                                align: 'right',
+                                render: val => (
+                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                                        {formatCurrency(val, 'RMB')}
+                                    </span>
+                                )
+                            },
+                            {
+                                title: 'Dỡ hàng',
+                                dataIndex: 'unloadingFeeRMB',
+                                key: 'unloadingFeeRMB',
                                 align: 'right',
                                 render: val => (
                                     <span style={{ color: '#389e0d', fontWeight: 'bold' }}>

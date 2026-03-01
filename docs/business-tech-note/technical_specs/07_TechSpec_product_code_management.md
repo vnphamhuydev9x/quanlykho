@@ -22,8 +22,6 @@ Hệ thống sử dụng 2 models chính: `ProductCode` (Master) và `ProductIte
 | **Mã đơn hàng** | `orderCode` | `String?` | | |
 | **Tổng trọng lượng** | `totalWeight` | `Int?` | | Integer |
 | **Tổng khối lượng** | `totalVolume` | `Decimal?` | `@db.Decimal(15,3)` | Float |
-| **Phí nội địa** | `domesticFeeRMB` | `Decimal?` | `@db.Decimal(15,2)` | Float |
-| **Phí dỡ hàng** | `unloadingFeeRMB` | `Decimal?` | `@db.Decimal(15,2)` | Float |
 | **Nguồn cung cấp thông tin**| `infoSource` | `String?` | | |
 | **Tổng cước TQ_HN tạm tính**| `totalTransportFeeEstimate`| `Decimal?` | `@db.Decimal(15,2)` | **Auto Calculated** |
 | **Tỷ giá** | `exchangeRate` | `Decimal?` | `@db.Decimal(15,4)` | Float |
@@ -44,6 +42,7 @@ Mỗi `ProductCode` có thể có nhiều `ProductItem` (quan hệ 1-N).
 | **Đơn giá cước TQ_HN (cân)**| `weightFee` | `Int?` | | Integer (VND) |
 | **Phí nội địa TQ** | `domesticFeeTQ` | `Decimal?` | `@db.Decimal(15,2)` | Float (RMB) - Lưu trữ |
 | **Phí kéo hàng TQ** | `haulingFeeTQ` | `Decimal?` | `@db.Decimal(15,2)` | Float (RMB) - Lưu trữ |
+| **Phí dỡ hàng** | `unloadingFeeRMB` | `Decimal?` | `@db.Decimal(15,2)` | Float (RMB) - Lưu trữ |
 | **Phí nội địa VN** | `domesticFeeVN` | `Int?` | | Integer (VND) - Lưu trữ |
 | **Ghi chú** | `notes` | `String?` | | Text area |
 
@@ -73,6 +72,7 @@ Base URL: `/api/product-codes`
 Logic tính toán này **phải được xử lý đồng bộ ở cả Frontend (lúc user nhập) và Backend (trước khi lưu vào DB)**.
 ```javascript
 let totalTransportFeeEstimate = 0;
+const exchangeRate = parseFloat(masterData.exchangeRate || 0);
 
 for (const item of items) {
     // 1. Cước theo khối = Đơn giá khối * Khối lượng
@@ -84,8 +84,14 @@ for (const item of items) {
     // 3. Lấy giá trị lớn hơn
     const maxFeeForItem = Math.max(feeByVolume, feeByWeight);
     
-    // 4. Cộng dồn vào tổng lô
-    totalTransportFeeEstimate += maxFeeForItem;
+    // 4. Các phí khác (RMB) quy ra tiền VNĐ
+    const domesticFeeTQ = parseFloat(item.domesticFeeTQ || 0);
+    const haulingFeeTQ = parseFloat(item.haulingFeeTQ || 0);
+    const unloadingFeeRMB = parseFloat(item.unloadingFeeRMB || 0);
+    const extraFeeVND = (domesticFeeTQ + haulingFeeTQ + unloadingFeeRMB) * exchangeRate;
+    
+    // 5. Cộng dồn vào tổng lô
+    totalTransportFeeEstimate += maxFeeForItem + extraFeeVND;
 }
 // Nếu lưu DB (Prisma), set giá trị này cho Master
 ```

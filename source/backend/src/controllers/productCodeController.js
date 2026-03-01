@@ -9,9 +9,10 @@ const CACHE_KEY_DETAIL = 'product-codes:detail';
 const VALID_PACKAGE_UNITS = ['KHONG_DONG_GOI', 'BAO_TAI', 'THUNG_CARTON', 'PALLET'];
 
 // Helper to manually calculate the transport fee estimate server-side to prevent fraud
-const calculateTotalTransportFeeEstimate = (items) => {
+const calculateTotalTransportFeeEstimate = (items, exchangeRateInput) => {
     if (!items || !Array.isArray(items)) return null;
     let total = 0;
+    const exchangeRate = parseFloat(exchangeRateInput) || 0;
 
     for (const item of items) {
         const volume = parseFloat(item.volume) || 0;
@@ -22,7 +23,14 @@ const calculateTotalTransportFeeEstimate = (items) => {
         const feeByVolume = volume * volumeFee;
         const feeByWeight = weight * weightFee;
 
-        total += Math.max(feeByVolume, feeByWeight);
+        const maxFeeForItem = Math.max(feeByVolume, feeByWeight);
+
+        const domesticFeeTQ = parseFloat(item.domesticFeeTQ || 0);
+        const haulingFeeTQ = parseFloat(item.haulingFeeTQ || 0);
+        const unloadingFeeRMB = parseFloat(item.unloadingFeeRMB || 0);
+        const extraFeeVND = (domesticFeeTQ + haulingFeeTQ + unloadingFeeRMB) * exchangeRate;
+
+        total += maxFeeForItem + extraFeeVND;
     }
 
     return total > 0 ? total : null;
@@ -173,8 +181,6 @@ const productCodeController = {
                 orderCode,
                 totalWeight,
                 totalVolume,
-                domesticFeeRMB,
-                unloadingFeeRMB,
                 infoSource,
                 exchangeRate,
                 items // Detail array
@@ -205,7 +211,7 @@ const productCodeController = {
             }
 
             // 3. Auto Calculation for transport fee
-            const calculateFee = calculateTotalTransportFeeEstimate(hasItems ? items : []);
+            const calculateFee = calculateTotalTransportFeeEstimate(hasItems ? items : [], exchangeRate);
 
             // 4. Create Master & Nested Create Detail
             const newProductCode = await prisma.productCode.create({
@@ -217,8 +223,6 @@ const productCodeController = {
                     orderCode,
                     totalWeight: totalWeight ? parseInt(totalWeight) : null,
                     totalVolume: totalVolume ? parseFloat(totalVolume) : null,
-                    domesticFeeRMB: domesticFeeRMB ? parseFloat(domesticFeeRMB) : null,
-                    unloadingFeeRMB: unloadingFeeRMB ? parseFloat(unloadingFeeRMB) : null,
                     infoSource,
                     exchangeRate: exchangeRate ? parseFloat(exchangeRate) : null,
                     totalTransportFeeEstimate: calculateFee,
@@ -234,6 +238,7 @@ const productCodeController = {
                             weightFee: i.weightFee ? parseInt(i.weightFee) : null,
                             domesticFeeTQ: i.domesticFeeTQ ? parseFloat(i.domesticFeeTQ) : null,
                             haulingFeeTQ: i.haulingFeeTQ ? parseFloat(i.haulingFeeTQ) : null,
+                            unloadingFeeRMB: i.unloadingFeeRMB ? parseFloat(i.unloadingFeeRMB) : null,
                             domesticFeeVN: i.domesticFeeVN ? parseInt(i.domesticFeeVN) : null,
                             notes: i.notes
                         }))
@@ -292,7 +297,7 @@ const productCodeController = {
             let transactionStmts = [];
 
             if (updateData.items && Array.isArray(updateData.items)) {
-                feeToSave = calculateTotalTransportFeeEstimate(updateData.items);
+                feeToSave = calculateTotalTransportFeeEstimate(updateData.items, updateData.exchangeRate !== undefined ? updateData.exchangeRate : existing.exchangeRate);
 
                 // Completely replace items details by deleting them first
                 transactionStmts.push(
@@ -311,8 +316,6 @@ const productCodeController = {
                 orderCode: updateData.orderCode,
                 totalWeight: updateData.totalWeight !== undefined ? (updateData.totalWeight ? parseInt(updateData.totalWeight) : null) : undefined,
                 totalVolume: updateData.totalVolume !== undefined ? (updateData.totalVolume ? parseFloat(updateData.totalVolume) : null) : undefined,
-                domesticFeeRMB: updateData.domesticFeeRMB !== undefined ? (updateData.domesticFeeRMB ? parseFloat(updateData.domesticFeeRMB) : null) : undefined,
-                unloadingFeeRMB: updateData.unloadingFeeRMB !== undefined ? (updateData.unloadingFeeRMB ? parseFloat(updateData.unloadingFeeRMB) : null) : undefined,
                 infoSource: updateData.infoSource,
                 exchangeRate: updateData.exchangeRate !== undefined ? (updateData.exchangeRate ? parseFloat(updateData.exchangeRate) : null) : undefined,
                 totalTransportFeeEstimate: feeToSave !== undefined ? feeToSave : undefined,
@@ -331,6 +334,7 @@ const productCodeController = {
                         weightFee: i.weightFee ? parseInt(i.weightFee) : null,
                         domesticFeeTQ: i.domesticFeeTQ ? parseFloat(i.domesticFeeTQ) : null,
                         haulingFeeTQ: i.haulingFeeTQ ? parseFloat(i.haulingFeeTQ) : null,
+                        unloadingFeeRMB: i.unloadingFeeRMB ? parseFloat(i.unloadingFeeRMB) : null,
                         domesticFeeVN: i.domesticFeeVN ? parseInt(i.domesticFeeVN) : null,
                         notes: i.notes
                     }))

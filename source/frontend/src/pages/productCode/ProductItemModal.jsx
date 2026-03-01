@@ -69,65 +69,91 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly })
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item name="packageCount" label="Số kiện">
+                        <Form.Item label="Số kiện">
                             <Space.Compact block>
-                                <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                <Form.Item name="packageCount" noStyle>
+                                    <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                </Form.Item>
                                 <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kiện" disabled />
                             </Space.Compact>
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item name="weight" label="Trọng lượng">
+                        <Form.Item label="Trọng lượng">
                             <Space.Compact block>
-                                <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                <Form.Item name="weight" noStyle>
+                                    <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                </Form.Item>
                                 <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kg" disabled />
                             </Space.Compact>
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item name="volume" label="Khối lượng">
+                        <Form.Item label="Khối lượng">
                             <Space.Compact block>
-                                <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
+                                <Form.Item name="volume" noStyle>
+                                    <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
+                                </Form.Item>
                                 <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="m³" disabled />
                             </Space.Compact>
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item name="weightFee" label="Cước cân">
+                        <Form.Item label="Cước cân">
                             <Space.Compact block>
-                                <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                <Form.Item name="weightFee" noStyle>
+                                    <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                </Form.Item>
                                 <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                             </Space.Compact>
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item name="volumeFee" label="Cước khối">
+                        <Form.Item label="Cước khối">
                             <Space.Compact block>
-                                <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                <Form.Item name="volumeFee" noStyle>
+                                    <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                </Form.Item>
                                 <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                             </Space.Compact>
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item name="domesticFeeTQ" label="Phí nội địa TQ">
+                        <Form.Item label="Phí nội địa TQ">
                             <Space.Compact block>
-                                <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
+                                <Form.Item name="domesticFeeTQ" noStyle>
+                                    <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
+                                </Form.Item>
                                 <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="RMB" disabled />
                             </Space.Compact>
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item name="haulingFeeTQ" label="Phí kéo hàng TQ">
+                        <Form.Item label="Phí kéo hàng TQ">
                             <Space.Compact block>
-                                <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
+                                <Form.Item name="haulingFeeTQ" noStyle>
+                                    <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
+                                </Form.Item>
                                 <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="RMB" disabled />
                             </Space.Compact>
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item name="domesticFeeVN" label="Phí nội địa VN">
+                        <Form.Item label="Phí dỡ hàng">
                             <Space.Compact block>
-                                <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                <Form.Item name="unloadingFeeRMB" noStyle>
+                                    <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
+                                </Form.Item>
+                                <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="RMB" disabled />
+                            </Space.Compact>
+                        </Form.Item>
+                    </Col2>
+                    <Col2>
+                        <Form.Item label="Phí nội địa VN">
+                            <Space.Compact block>
+                                <Form.Item name="domesticFeeVN" noStyle>
+                                    <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
+                                </Form.Item>
                                 <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
                             </Space.Compact>
                         </Form.Item>

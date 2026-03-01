@@ -30,7 +30,10 @@ const calculateTotalTransportFeeEstimate = (items, exchangeRateInput) => {
         const unloadingFeeRMB = parseFloat(item.unloadingFeeRMB || 0);
         const extraFeeVND = (domesticFeeTQ + haulingFeeTQ + unloadingFeeRMB) * exchangeRate;
 
-        total += maxFeeForItem + extraFeeVND;
+        const itemFeeEstimate = maxFeeForItem + extraFeeVND;
+        item.itemTransportFeeEstimate = itemFeeEstimate;
+
+        total += itemFeeEstimate;
     }
 
     return total > 0 ? total : null;
@@ -104,7 +107,13 @@ const productCodeController = {
                         customer: { select: { id: true, fullName: true, username: true } },
                         employee: { select: { id: true, fullName: true, username: true } },
                         merchandiseCondition: { select: { id: true, name_vi: true } },
-                        items: true
+                        items: {
+                            include: {
+                                declaration: {
+                                    select: { id: true }
+                                }
+                            }
+                        }
                     }
                 }),
                 prisma.productCode.count({ where })
@@ -148,7 +157,13 @@ const productCodeController = {
                     customer: { select: { id: true, fullName: true, username: true } },
                     employee: { select: { id: true, fullName: true, username: true } },
                     merchandiseCondition: { select: { id: true, name_vi: true } },
-                    items: true
+                    items: {
+                        include: {
+                            declaration: {
+                                select: { id: true }
+                            }
+                        }
+                    }
                 }
             });
 
@@ -214,39 +229,57 @@ const productCodeController = {
             const calculateFee = calculateTotalTransportFeeEstimate(hasItems ? items : [], exchangeRate);
 
             // 4. Create Master & Nested Create Detail
-            const newProductCode = await prisma.productCode.create({
-                data: {
-                    employeeId: employeeId ? parseInt(employeeId) : null,
-                    customerId: customerId ? parseInt(customerId) : null,
-                    merchandiseConditionId: merchandiseConditionId ? parseInt(merchandiseConditionId) : null,
-                    entryDate: entryDate ? new Date(entryDate) : null,
-                    orderCode,
-                    totalWeight: totalWeight ? parseInt(totalWeight) : null,
-                    totalVolume: totalVolume ? parseFloat(totalVolume) : null,
-                    infoSource,
-                    exchangeRate: exchangeRate ? parseFloat(exchangeRate) : null,
-                    totalTransportFeeEstimate: calculateFee,
-                    // Sub-table items
-                    items: hasItems ? {
-                        create: items.map(i => ({
-                            productName: i.productName,
-                            packageCount: i.packageCount ? parseInt(i.packageCount) : null,
-                            packageUnit: i.packageUnit,
-                            weight: i.weight ? parseInt(i.weight) : null,
-                            volume: i.volume ? parseFloat(i.volume) : null,
-                            volumeFee: i.volumeFee ? parseInt(i.volumeFee) : null,
-                            weightFee: i.weightFee ? parseInt(i.weightFee) : null,
-                            domesticFeeTQ: i.domesticFeeTQ ? parseFloat(i.domesticFeeTQ) : null,
-                            haulingFeeTQ: i.haulingFeeTQ ? parseFloat(i.haulingFeeTQ) : null,
-                            unloadingFeeRMB: i.unloadingFeeRMB ? parseFloat(i.unloadingFeeRMB) : null,
-                            domesticFeeVN: i.domesticFeeVN ? parseInt(i.domesticFeeVN) : null,
-                            notes: i.notes
+            const newProductCode = await prisma.$transaction(async (tx) => {
+                const pc = await tx.productCode.create({
+                    data: {
+                        employeeId: employeeId ? parseInt(employeeId) : null,
+                        customerId: customerId ? parseInt(customerId) : null,
+                        merchandiseConditionId: merchandiseConditionId ? parseInt(merchandiseConditionId) : null,
+                        entryDate: entryDate ? new Date(entryDate) : null,
+                        orderCode,
+                        totalWeight: totalWeight ? parseInt(totalWeight) : null,
+                        totalVolume: totalVolume ? parseFloat(totalVolume) : null,
+                        infoSource,
+                        exchangeRate: exchangeRate ? parseFloat(exchangeRate) : null,
+                        totalTransportFeeEstimate: calculateFee,
+                        items: hasItems ? {
+                            create: items.map(i => ({
+                                productName: i.productName,
+                                packageCount: i.packageCount ? parseInt(i.packageCount) : null,
+                                packageUnit: i.packageUnit,
+                                weight: i.weight ? parseInt(i.weight) : null,
+                                volume: i.volume ? parseFloat(i.volume) : null,
+                                volumeFee: i.volumeFee ? parseInt(i.volumeFee) : null,
+                                weightFee: i.weightFee ? parseInt(i.weightFee) : null,
+                                domesticFeeTQ: i.domesticFeeTQ ? parseFloat(i.domesticFeeTQ) : null,
+                                haulingFeeTQ: i.haulingFeeTQ ? parseFloat(i.haulingFeeTQ) : null,
+                                unloadingFeeRMB: i.unloadingFeeRMB ? parseFloat(i.unloadingFeeRMB) : null,
+                                itemTransportFeeEstimate: i.itemTransportFeeEstimate !== undefined ? parseFloat(i.itemTransportFeeEstimate) : null,
+                                notes: i.notes
+                            }))
+                        } : undefined
+                    },
+                    include: {
+                        items: {
+                            include: {
+                                declaration: {
+                                    select: { id: true }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Tự động tạo bản ghi Khai báo (Declaration) cho mỗi mặt hàng
+                if (pc.items && pc.items.length > 0) {
+                    await tx.declaration.createMany({
+                        data: pc.items.map(item => ({
+                            productCodeId: pc.id,
+                            productItemId: item.id
                         }))
-                    } : undefined
-                },
-                include: {
-                    items: true
+                    });
                 }
+                return pc;
             });
 
             // 5. Invalidate Cache
@@ -335,24 +368,46 @@ const productCodeController = {
                         domesticFeeTQ: i.domesticFeeTQ ? parseFloat(i.domesticFeeTQ) : null,
                         haulingFeeTQ: i.haulingFeeTQ ? parseFloat(i.haulingFeeTQ) : null,
                         unloadingFeeRMB: i.unloadingFeeRMB ? parseFloat(i.unloadingFeeRMB) : null,
-                        domesticFeeVN: i.domesticFeeVN ? parseInt(i.domesticFeeVN) : null,
+                        itemTransportFeeEstimate: i.itemTransportFeeEstimate !== undefined ? parseFloat(i.itemTransportFeeEstimate) : null,
                         notes: i.notes
                     }))
                 };
             }
 
-            // Add master update into transaction
-            transactionStmts.push(
-                prisma.productCode.update({
+            // Execute Transaction explicitly
+            const updatedMaster = await prisma.$transaction(async (tx) => {
+                // Execute pre-defined deletion (if items were updated)
+                for (const stmt of transactionStmts.filter(s => s !== undefined)) {
+                    // Note: Here transactionStmts contains Promises if created without await, 
+                    // but we need them executed on the 'tx' object for atomicity.
+                    // So we'll refine the logic below.
+                }
+
+                // Better way: Redraw the transaction logic to use 'tx'
+                if (updateData.items && Array.isArray(updateData.items)) {
+                    await tx.productItem.deleteMany({
+                        where: { productCodeId: parseInt(id) }
+                    });
+                }
+
+                const pc = await tx.productCode.update({
                     where: { id: parseInt(id) },
                     data: dataToUpdate,
                     include: { items: true }
-                })
-            );
+                });
 
-            // Execute Transaction explicitly
-            const results = await prisma.$transaction(transactionStmts);
-            const updatedMaster = results[results.length - 1]; // Master is the last result
+                // Tạo lại các bản ghi Khai báo cho Items mới
+                if (updateData.items && Array.isArray(updateData.items) && pc.items && pc.items.length > 0) {
+                    await tx.declaration.createMany({
+                        data: pc.items.map(item => ({
+                            productCodeId: pc.id,
+                            productItemId: item.id
+                        }))
+                    });
+                }
+
+                return pc;
+            });
 
             // 5. Invalidate Cache
             await invalidateCache(id);

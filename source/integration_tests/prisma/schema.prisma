@@ -38,7 +38,6 @@ model User {
 
   transactions        Transaction[] @relation("CustomerTransactions")
   createdTransactions Transaction[] @relation("CreatedTransactions")
-  declarations        Declaration[] @relation("CustomerDeclarations")
   productCodes        ProductCode[] @relation("CustomerProductCodes")
   employeeProductCodes ProductCode[] @relation("EmployeeProductCodes")
   notifications       Notification[] @relation("UserNotifications")
@@ -165,149 +164,38 @@ model Declaration {
   id                   Int       @id @default(autoincrement())
   
   // Relations
-  customerId           Int
-  customer             User      @relation("CustomerDeclarations", fields: [customerId], references: [id])
+  productCodeId        Int?
+  productCode          ProductCode? @relation(fields: [productCodeId], references: [id])
   
-  // 1. [A] Ngày nhập kho
-  entryDate            DateTime? // DATETIME
+  productItemId        Int?      @unique
+  productItem          ProductItem? @relation(fields: [productItemId], references: [id], onDelete: Cascade)
 
-  // 2. [B] Mã khách hàng (Store selected value or code)
-  customerCodeInput    String?   // SELECTION BOX
+  // Fields
+  images               String?   @db.Text      // Ảnh hàng hóa (JSON array, tối đa 3)
+  mainStamp            String?   @db.Text      // Tem chính
+  subStamp             String?   @db.Text      // Tem phụ
+  productQuantity      Int?                    // Số lượng sản phẩm
+  specification        String?                 // Quy cách
+  productDescription   String?   @db.Text      // Mô tả sản phẩm
+  brand                String?                 // Nhãn hiệu
+  sellerTaxCode        String?                 // Mã số thuế đơn vị bán hàng
+  sellerCompanyName    String?                 // Tên công ty bán hàng
+  declarationNeed      String?                 // Nhu cầu khai báo
+  declarationQuantity  Int?                    // Số lượng khai báo
+  invoicePriceBeforeVat Int?                   // Giá xuất hóa đơn (trước VAT) - VND
+  totalLotValueBeforeVat Int?                  // Tổng giá trị lô hàng (trước VAT) - VND - Auto Calculated
+  importTax            Decimal?  @db.Decimal(5, 2) // Thuế nhập khẩu (%)
+  vatTax               Decimal?  @db.Decimal(5, 2) // Thuế VAT (%)
+  importTaxPayable     Int?                    // Thuế nhập khẩu phải nộp - VND - Auto Calculated
+  vatTaxPayable        Int?                    // Thuế VAT phải nộp - VND - Auto Calculated
+  payableFee           Int?                    // Phí phải nộp - VND
+  notes                String?   @db.Text      // Ghi chú
+  entrustmentFee       Int?                    // Phí ủy thác - VND
+  importCostToCustomer Int?                    // Chi phí nhập khẩu hàng hóa đến tay khách hàng - VND - Auto Calculated
 
-  // 3. [C] Tên mặt hàng
-  productName          String?   // STRING
-
-  // 4. [D] Mã đơn hàng
-  orderCode            String?   // STRING
-
-  // 5. [E] Số Kiện
-  // 5. [E] Số Kiện
-  packageCount         Int?      // NUMBER
-
-  // 6. [F] Trọng lượng (Kg)
-  weight               Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 7. [G] Khối lượng (m3)
-  volume               Decimal?  @db.Decimal(15, 3) // NUMBER
-
-  // 8. [H] Nguồn cung cấp thông tin
-  infoSource           String?   // SELECTION BOX
-
-  // 9. [I] Phí nội địa (RMB)
-  domesticFeeRMB       Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 10. [J] Phí kéo hàng (RMB)
-  haulingFeeRMB        Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 11. [K] Phí dỡ hàng (RMB)
-  unloadingFeeRMB      Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 12. [L2] Đơn giá cước vận chuyển TQ_HN (Theo Kg)
-  weightFee            Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 13. [L1] Đơn giá cước vận chuyển TQ_HN (Theo m3)
-  volumeFee            Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 14. [N] Tổng cước vận chuyển TQ_HN tạm tính
-  totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // FORMULA
-
-  // 15. [O] Ghi chú
-  note                 String?   // STRING
-
-  // 16. [P] Ảnh hàng hóa
-  productImage         String?   // STRING (URL?)
-
-  // 17. [P] Tem phụ - Mới
-  subTag               String?   // STRING
-
-  // 18. [R] Số Lượng sản phẩm
-  productQuantity      Int?      // NUMBER
-
-  // 19. [S] Quy cách
-  specification        String?   // STRING
-
-  // 20. [T] Mô Tả sản phẩm
-  productDescription   String?   // STRING
-
-  // 21. [U] Nhãn Hiệu
-  brand                String?   // STRING
-
-  // 22. [V] Nhu cầu khai báo
-  declarationNeed      String?   // STRING
-
-  // 23. [W] Chính sách khai báo
-  declarationPolicy    String?   // STRING
-
-  // 24. [X] Giá xuất hoá đơn
-  invoicePrice         Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 25. [Y] THÔNG TIN CẦN BỔ SUNG
-  additionalInfo       String?   // STRING
-
-  // 26. [Z] Tên khai báo
-  declarationName      String?   // STRING
-
-  // 27. [AA] Số lượng khai báo (Input 2)
-  declarationQuantityDeclared Decimal? @db.Decimal(15, 2) // NUMBER
-
-  // 28. [AB] Đơn vị tính
-  unit                 String?   // STRING
-
-  // 29. [AC] Giá khai báo
-  declarationPrice     Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 30. [AD] Trị giá
-  value                Decimal?  @db.Decimal(15, 2) // FORMULA/NUMBER
-
-  // 31. [AE] số kiện (Declared)
-  // 31. [AE] số kiện (Declared)
-  packageCountDeclared Int?      // NUMBER
-
-  // 32. [AF] net weight
-  netWeight            Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 33. [AG] Gross weight
-  grossWeight          Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 34. [AH] CBM
-  cbm                  Decimal?  @db.Decimal(15, 3) // NUMBER
-
-  // 35. [AI] HS CODE
-  hsCode               String?   // STRING
-
-  // 36. [AJ] % thuế VAT
-  vatPercent           Decimal?  @db.Decimal(5, 2) // NUMBER
-
-  // 37. [AK] Thuế VAT phải nộp
-  vatAmount            Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 38. [AL] %Thuế NK
-  importTaxPercent     Decimal?  @db.Decimal(5, 2) // NUMBER
-
-  // 39. [AM] Thuế NK usd
-  importTaxUSD         Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 40. [AN] Thuế NK phải nộp VNĐ
-  importTaxVND         Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 41. [AO] TỶ GIÁ HẢI QUAN
-  customsExchangeRate  Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 42. [AP] Phí ktcl
-  qualityControlFee    Decimal?  @db.Decimal(15, 2) // NUMBER
-
-  // 43. [AQ] Xác nhận của PKT
-  accountingConfirmation String? // STRING
-
-  // History Tracking
-
-
-  // System fields
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime? // Soft Delete
-
-  productCodes         ProductCode[]
 
   @@map("declarations")
 }
@@ -332,19 +220,16 @@ model ProductCode {
   categoryId            Int?
   category              Category?  @relation(fields: [categoryId], references: [id])
   
-  declarationId         Int?
-  declaration           Declaration? @relation(fields: [declarationId], references: [id])
-
   manifestId            Int?
   manifest              Manifest?    @relation(fields: [manifestId], references: [id])
+
+  declarations          Declaration[]
 
   // MASTER FIELDS
   entryDate             DateTime? // Ngày nhập kho
   orderCode             String?   // Mã đơn hàng
   totalWeight           Int?      // Tổng trọng lượng (kg)
   totalVolume           Decimal?  @db.Decimal(15, 3) // Tổng khối lượng (m3)
-  domesticFeeRMB        Decimal?  @db.Decimal(15, 2) // Phí nội địa (RMB)
-  unloadingFeeRMB       Decimal?  @db.Decimal(15, 2) // Phí dỡ hàng (RMB)
   infoSource            String?   // Nguồn cung cấp thông tin (Kg.m3)
   totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Tổng cước vận chuyển TQ_HN tạm tính
   exchangeRate          Decimal?  @db.Decimal(15, 4) // Tỷ giá (VND/RMB)
@@ -374,10 +259,13 @@ model ProductItem {
   volume            Decimal?    @db.Decimal(15, 3) // Khối lượng (m3)
   volumeFee         Int?        // Đơn giá cước TQ_HN (khối)
   weightFee         Int?        // Đơn giá cước TQ_HN (cân)
-  domesticFeeTQ     Decimal?    @db.Decimal(15, 2) // Phí nội địa TQ (RMB)
-  haulingFeeTQ      Decimal?    @db.Decimal(15, 2) // Phí kéo hàng TQ (RMB)
-  domesticFeeVN     Int?        // Phí nội địa VN (VND)
+  domesticFeeTQ     Decimal?    @db.Decimal(15, 2) // Phí nội địa (RMB)
+  haulingFeeTQ      Decimal?    @db.Decimal(15, 2) // Phí kéo hàng (RMB)
+  unloadingFeeRMB   Decimal?    @db.Decimal(15, 2) // Phí dỡ hàng (RMB)
+  itemTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Cước TQ_HN tạm tính (VND)
   notes             String?     @db.Text // Ghi chú
+  
+  declaration       Declaration?
 
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt

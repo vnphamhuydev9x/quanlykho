@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Input, Select, Card, Tag, Popconfirm, message, Typography, Row, Col, Image } from 'antd';
+import { Table, Button, Space, Input, Card, Popconfirm, message, Typography, Row, Col, Image, Tooltip } from 'antd';
 import {
     PlusOutlined,
     SearchOutlined,
@@ -7,21 +7,23 @@ import {
     EditOutlined,
     DeleteOutlined,
     EyeOutlined,
-    DownloadOutlined,
-    HistoryOutlined
+    DownloadOutlined
 } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import declarationService from '../../services/declarationService';
 import DeclarationModal from './DeclarationModal';
+import ProductCodeModal from '../productCode/ProductCodeModal';
 import { formatCurrency } from '../../utils/format';
-
 import moment from 'moment';
 
-const { Option } = Select;
+const { Text } = Typography;
 
 const DeclarationPage = () => {
     const { t } = useTranslation();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [declarations, setDeclarations] = useState([]);
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({
@@ -30,20 +32,18 @@ const DeclarationPage = () => {
         total: 0
     });
 
-    // Filter State
     const [filters, setFilters] = useState({
         search: ''
     });
 
-    // Modal state
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingDeclaration, setEditingDeclaration] = useState(null);
     const [isViewMode, setIsViewMode] = useState(false);
-
-
-
-    // User Role check
     const [userRole, setUserRole] = useState('USER');
+    const [userType, setUserType] = useState('USER');
+
+    const [pcModalVisible, setPcModalVisible] = useState(false);
+    const [selectedPc, setSelectedPc] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -51,22 +51,26 @@ const DeclarationPage = () => {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 setUserRole(payload.role);
+                setUserType(payload.type);
             } catch (e) {
                 console.error("Invalid token");
             }
         }
-        fetchDeclarations();
-    }, []);
+        const queryParams = new URLSearchParams(location.search);
+        const productItemId = queryParams.get('productItemId');
+
+        fetchDeclarations(1, 20, { search: '', productItemId });
+    }, [location.search]);
 
     const fetchDeclarations = async (page = 1, pageSize = 20, currentFilters = filters) => {
         setLoading(true);
         try {
             const params = {
                 page,
-                limit: pageSize
+                limit: pageSize,
+                search: currentFilters.search,
+                productItemId: currentFilters.productItemId
             };
-            if (currentFilters.search) params.search = currentFilters.search;
-
             const response = await declarationService.getAll(params);
             if (response && response.data) {
                 setDeclarations(response.data.items);
@@ -84,12 +88,16 @@ const DeclarationPage = () => {
         }
     };
 
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const productItemId = queryParams.get('productItemId');
+        if (productItemId && declarations.length === 1) {
+            handleView(declarations[0]);
+        }
+    }, [declarations]);
+
     const handleTableChange = (pagination) => {
         fetchDeclarations(pagination.current, pagination.pageSize, filters);
-    };
-
-    const handleFilterChange = (key, value) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
     };
 
     const handleSearch = () => {
@@ -100,12 +108,6 @@ const DeclarationPage = () => {
         const newFilters = { search: '' };
         setFilters(newFilters);
         fetchDeclarations(1, pagination.pageSize, newFilters);
-    };
-
-    const handleAdd = () => {
-        setEditingDeclaration(null);
-        setIsViewMode(false);
-        setIsModalVisible(true);
     };
 
     const handleEdit = (record) => {
@@ -120,8 +122,6 @@ const DeclarationPage = () => {
         setIsModalVisible(true);
     };
 
-
-
     const handleDelete = async (id) => {
         try {
             await declarationService.delete(id);
@@ -135,80 +135,56 @@ const DeclarationPage = () => {
     const handleModalSuccess = () => {
         setIsModalVisible(false);
         setEditingDeclaration(null);
-        fetchDeclarations(1, pagination.pageSize, filters);
-        message.success(editingDeclaration ? t('declaration.updateSuccess') : t('declaration.createSuccess'));
+        fetchDeclarations(pagination.current, pagination.pageSize, filters);
+    };
+
+    const handleViewProductCode = (pcId, piId) => {
+        setSelectedPc({ id: pcId, productItemId: piId });
+        setPcModalVisible(true);
     };
 
     const handleExport = async () => {
         try {
-            const response = await declarationService.exportData();
-            const data = response.data.data; // Response data structure might be { code, message, data: [...] }
+            const response = await declarationService.export();
+            const data = response.data;
 
             if (!data || !Array.isArray(data)) {
-                console.error("Invalid data format for export", data);
                 message.error(t('error.UNKNOWN'));
                 return;
             }
 
-            // Format data for Excel
             const excelData = data.map(item => ({
                 'ID': item.id,
-                'Ngày nhập': item.entryDate ? moment(item.entryDate).format('DD/MM/YYYY') : '',
-                'Mã đơn': item.orderCode,
-                '1. [A] Mã khách hàng': item.customer?.fullName,
-                '2. [B] Tên mặt hàng': item.productName,
-                '3. [C] Số Kiện': item.packageCount,
-                '4. [D] Trọng lượng (Kg)': item.weight,
-                '5. [E] Khối lượng (m3)': item.volume,
-                '6. [F] Nguồn tin': item.infoSource,
-                '7. [G] Phí nội địa (RMB)': item.domesticFeeRMB,
-                '8. [H] Phí kéo hàng (RMB)': item.haulingFeeRMB,
-                '9. [I] Phí dỡ hàng (RMB)': item.unloadingFeeRMB,
-                '10. [J] Đơn giá cước (Kg)': item.weightFee,
-                '11. [K] Đơn giá cước (m3)': item.volumeFee,
-                '12. [L] Tổng cước TQ_HN': item.totalTransportFeeEstimate,
-                '13. [M] Ghi chú': item.note,
-                '14. [N] Ảnh hàng hóa': item.productImage,
-                // [O] Deleted
-                '16. [P] Tem phụ': item.subTag,
-                '17. [Q] Số lượng SP': item.productQuantity,
-                '18. [R] Quy cách': item.specification,
-                '19. [S] Mô Tả SP': item.productDescription,
-                '20. [T] Nhãn Hiệu': item.brand,
-                '21. [U] Nhu cầu khai báo': item.declarationNeed,
-                '22. [V] Chính sách khai báo': item.declarationPolicy,
-                '23. [W] Số lượng khai báo': item.declarationQuantity,
-                '24. [X] Giá xuất hóa đơn': item.invoicePrice,
-                '25. [Y] TT bổ sung': item.additionalInfo,
-                '26. [Z] Tên khai báo': item.declarationName,
-                '27. [AA] SL Khai báo (CT)': item.declarationQuantityDeclared,
-                '28. [AB] Đơn vị tính': item.unit,
-                '29. [AC] Giá khai báo': item.declarationPrice,
-                '30. [AD] Trị giá': item.value,
-                '31. [AE] Số kiện (CT)': item.packageCountDeclared,
-                '32. [AF] Net weight': item.netWeight,
-                '33. [AG] Gross weight': item.grossWeight,
-                '34. [AH] CBM': item.cbm,
-                '35. [AI] HS Code': item.hsCode,
-                '36. [AJ] % Thuế VAT': item.vatPercent,
-                '37. [AK] Thuế VAT': item.vatAmount,
-                '38. [AL] % Thuế NK': item.importTaxPercent,
-                '39. [AM] Thuế NK USD': item.importTaxUSD,
-                '40. [AN] Thuế NK VNĐ': item.importTaxVND,
-                '41. [AO] Tỷ giá HQ': item.customsExchangeRate,
-                '42. [AP] Phí KTCL': item.qualityControlFee,
-                '43. [AQ] Xác nhận PKT': item.accountingConfirmation,
-                [t('common.createdAt')]: moment(item.createdAt).format('DD/MM/YYYY HH:mm')
+                'ID Mã hàng': item.productCodeId,
+                'ID Mặt hàng': item.productItemId,
+                'Tên mặt hàng': item.productItem?.productName,
+                'Số lượng SP': item.productQuantity,
+                'Quy cách': item.specification,
+                'Nhãn hiệu': item.brand,
+                'MST Công ty bán': item.sellerTaxCode,
+                'Tên công ty bán': item.sellerCompanyName,
+                'Nhu cầu khai báo': item.declarationNeed,
+                'Số lượng khai báo': item.declarationQuantity,
+                'Giá xuất hóa đơn': item.invoicePriceBeforeVat,
+                'Tổng giá trị': item.totalLotValueBeforeVat,
+                'Thuế NK (%)': item.importTax,
+                'Thuế VAT (%)': item.vatTax,
+                'Tiền thuế NK': item.importTaxPayable,
+                'Tiền thuế VAT': item.vatTaxPayable,
+                'Phí phải nộp': item.payableFee,
+                'Phí ủy thác': item.entrustmentFee,
+                'Ghi chú': item.notes,
+                'Tổng chi phí NK hàng hóa': item.importCostToCustomer,
+                'Ngày tạo': moment(item.createdAt).format('DD/MM/YYYY HH:mm')
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Declarations");
             XLSX.writeFile(workbook, "Danh_Sach_Khai_Bao.xlsx");
-
-            message.success(t('common.exportSuccess') || 'Export Excel successful');
+            message.success(t('common.exportSuccess'));
         } catch (error) {
-            console.error("Export error", error);
+            console.error(error);
             message.error(t('error.UNKNOWN'));
         }
     };
@@ -218,442 +194,160 @@ const DeclarationPage = () => {
             title: 'ID',
             dataIndex: 'id',
             key: 'id',
-            width: 60,
+            width: 70,
             fixed: 'left',
         },
         {
-            title: 'Ngày nhập',
-            dataIndex: 'entryDate',
-            key: 'entryDate',
+            title: t('declaration.productCodeId'),
+            key: 'productCodeId',
             width: 100,
-            render: (value) => value ? moment(value).format('DD/MM/YYYY') : '-'
+            render: (_, record) => (
+                <Button
+                    type="link"
+                    onClick={() => handleViewProductCode(record.productCodeId)}
+                    style={{ padding: 0 }}
+                >
+                    {record.productCodeId}
+                </Button>
+            )
         },
         {
-            title: 'Mã đơn',
-            dataIndex: 'orderCode',
-            key: 'orderCode',
-            width: 120,
-        },
-        {
-            title: '1. [A] Mã KH',
+            title: t('declaration.customerCode'),
             key: 'customer',
+            width: 150,
+            render: (_, record) => record.productCode?.customer?.customerCode || record.productCode?.customer?.fullName || '-'
+        },
+        {
+            title: t('declaration.orderCode'),
+            key: 'orderCode',
+            width: 130,
+            render: (_, record) => <Text strong>{record.productCode?.orderCode || '-'}</Text>
+        },
+        {
+            title: t('declaration.entryDate'),
+            key: 'entryDate',
+            width: 120,
+            render: (_, record) => record.productCode?.entryDate ? moment(record.productCode.entryDate).format('DD/MM/YYYY') : '-'
+        },
+        {
+            title: t('declaration.productItemId'),
+            key: 'productItemId',
+            width: 100,
+            render: (_, record) => (
+                <Button
+                    type="link"
+                    onClick={() => handleViewProductCode(record.productCodeId, record.productItemId)}
+                    style={{ padding: 0 }}
+                >
+                    {record.productItemId}
+                </Button>
+            )
+        },
+        {
+            title: t('declaration.productItem'),
+            key: 'productItemName',
             width: 180,
             render: (_, record) => (
-                <Space direction="vertical" size={0}>
-                    <Typography.Text strong>{record.customer?.fullName}</Typography.Text>
-                    <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                        {record.customer?.username}
-                    </Typography.Text>
-                </Space>
+                <Tooltip title={record.productDescription}>
+                    <Text>{record.productItem?.productName || '-'}</Text>
+                </Tooltip>
             )
         },
         {
-            title: '2. [B] Tên hàng',
-            dataIndex: 'productName',
-            key: 'productName',
-            width: 150,
-            ellipsis: true
-        },
-        {
-            title: '3. [C] Số kiện',
-            dataIndex: 'packageCount',
-            key: 'packageCount',
+            title: t('declaration.images'),
+            dataIndex: 'imageUrls',
+            key: 'images',
             width: 100,
-            align: 'right',
-            render: (value) => value ? `${value} kiện` : '-'
-        },
-        {
-            title: '4. [D] Trọng lượng',
-            dataIndex: 'weight',
-            key: 'weight',
-            width: 120,
-            align: 'right',
-            render: (value) => value ? `${new Intl.NumberFormat('de-DE').format(value)} kg` : '-'
-        },
-        {
-            title: '5. [E] Khối lượng',
-            dataIndex: 'volume',
-            key: 'volume',
-            width: 120,
-            align: 'right',
-            render: (value) => value ? `${new Intl.NumberFormat('de-DE').format(value)} m³` : '-'
-        },
-        {
-            title: '6. [F] Nguồn tin',
-            dataIndex: 'infoSource',
-            key: 'infoSource',
-            width: 100,
-        },
-        {
-            title: '7. [G] Phí nội địa',
-            dataIndex: 'domesticFeeRMB',
-            key: 'domesticFeeRMB',
-            width: 120,
-            align: 'right',
-            render: (value) => (
-                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {formatCurrency(value, 'RMB')}
-                </span>
+            render: (images) => (
+                images && images.length > 0 ? (
+                    <Image.PreviewGroup>
+                        <Image width={40} src={images[0]} />
+                    </Image.PreviewGroup>
+                ) : '-'
             )
         },
         {
-            title: '8. [H] Phí kéo hàng',
-            dataIndex: 'haulingFeeRMB',
-            key: 'haulingFeeRMB',
-            width: 120,
-            align: 'right',
-            render: (value) => (
-                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {formatCurrency(value, 'RMB')}
-                </span>
-            )
-        },
-        {
-            title: '9. [I] Phí dỡ hàng',
-            dataIndex: 'unloadingFeeRMB',
-            key: 'unloadingFeeRMB',
-            width: 120,
-            align: 'right',
-            render: (value) => (
-                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {formatCurrency(value, 'RMB')}
-                </span>
-            )
-        },
-        {
-            title: '10. [J] Cước cân',
-            dataIndex: 'weightFee',
-            key: 'weightFee',
-            width: 120,
-            align: 'right',
-            render: (value) => (
-                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {formatCurrency(value, 'VND')}
-                </span>
-            )
-        },
-        {
-            title: '11. [K] Cước khối',
-            dataIndex: 'volumeFee',
-            key: 'volumeFee',
-            width: 120,
-            align: 'right',
-            render: (value) => (
-                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {formatCurrency(value, 'VND')}
-                </span>
-            )
-        },
-        {
-            title: '12. [L] Tổng cước',
-            dataIndex: 'totalTransportFeeEstimate',
-            key: 'totalTransportFeeEstimate',
-            width: 140,
-            align: 'right',
-            render: (value) => (
-                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {formatCurrency(value, 'VND')}
-                </span>
-            )
-        },
-        {
-            title: '13. [M] Ghi chú',
-            dataIndex: 'note',
-            key: 'note',
-            width: 150,
-            ellipsis: true
-        },
-        {
-            title: '14. [N] Ảnh hàng',
-            dataIndex: 'productImage',
-            key: 'productImage',
-            width: 80,
-            render: (image) => image ? <Image width={40} src={image} /> : '-'
-        },
-        {
-            title: '16. [P] Tem phụ',
-            dataIndex: 'subTag',
-            key: 'subTag',
-            width: 100,
-        },
-        {
-            title: '17. [Q] SL SP',
+            title: t('declaration.productQuantity'),
             dataIndex: 'productQuantity',
             key: 'productQuantity',
-            align: 'right',
             width: 100,
+            align: 'right',
         },
         {
-            title: '18. [R] Quy cách',
-            dataIndex: 'specification',
-            key: 'specification',
-            width: 120,
-        },
-        {
-            title: '19. [S] Mô tả SP',
-            dataIndex: 'productDescription',
-            key: 'productDescription',
-            width: 120,
-            ellipsis: true
-        },
-        {
-            title: '20. [T] Nhãn hiệu',
+            title: t('declaration.brand'),
             dataIndex: 'brand',
             key: 'brand',
-            width: 100,
-        },
-        {
-            title: '21. [U] Nhu cầu KB',
-            dataIndex: 'declarationNeed',
-            key: 'declarationNeed',
             width: 120,
         },
         {
-            title: '22. [V] Chính sách KB',
-            dataIndex: 'declarationPolicy',
-            key: 'declarationPolicy',
-            width: 120,
-        },
-        {
-            title: '23. [W] SL KB (Nháp)',
-            dataIndex: 'declarationQuantity',
-            key: 'declarationQuantity',
-            width: 100,
-        },
-        {
-            title: '24. [X] Giá xuất HĐ',
-            dataIndex: 'invoicePrice',
-            key: 'invoicePrice',
-            width: 120,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '25. [Y] TT Bổ sung',
-            dataIndex: 'additionalInfo',
-            key: 'additionalInfo',
-            width: 120,
-        },
-        {
-            title: '26. [Z] Tên khai báo',
-            dataIndex: 'declarationName',
-            key: 'declarationName',
-            width: 120,
-        },
-        {
-            title: '27. [AA] SL KB (CT)',
-            dataIndex: 'declarationQuantityDeclared',
-            key: 'declarationQuantityDeclared',
-            width: 100,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '28. [AB] Đơn vị tính',
-            dataIndex: 'unit',
-            key: 'unit',
-            width: 80,
-        },
-        {
-            title: '29. [AC] Giá khai báo',
-            dataIndex: 'declarationPrice',
-            key: 'declarationPrice',
-            width: 120,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '30. [AD] Trị giá',
-            dataIndex: 'value',
-            key: 'value',
-            width: 120,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '31. [AE] Số kiện (CT)',
-            dataIndex: 'packageCountDeclared',
-            key: 'packageCountDeclared',
-            width: 100,
-            align: 'right'
-        },
-        {
-            title: '32. [AF] Net Weight',
-            dataIndex: 'netWeight',
-            key: 'netWeight',
-            width: 100,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '33. [AG] Gross Weight',
-            dataIndex: 'grossWeight',
-            key: 'grossWeight',
-            width: 100,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '34. [AH] CBM',
-            dataIndex: 'cbm',
-            key: 'cbm',
-            width: 100,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '35. [AI] HS Code',
-            dataIndex: 'hsCode',
-            key: 'hsCode',
-            width: 120,
-        },
-        {
-            title: '36. [AJ] % VAT',
-            dataIndex: 'vatPercent',
-            key: 'vatPercent',
-            width: 80,
-            align: 'right',
-            render: (value) => value ? `${value}%` : '-'
-        },
-        {
-            title: '37. [AK] Thuế VAT',
-            dataIndex: 'vatAmount',
-            key: 'vatAmount',
-            width: 120,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '38. [AL] % Thuế NK',
-            dataIndex: 'importTaxPercent',
-            key: 'importTaxPercent',
-            width: 80,
-            align: 'right',
-            render: (value) => value ? `${value}%` : '-'
-        },
-        {
-            title: '39. [AM] Thuế NK (USD)',
-            dataIndex: 'importTaxUSD',
-            key: 'importTaxUSD',
-            width: 120,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '40. [AN] Thuế NK (VNĐ)',
-            dataIndex: 'importTaxVND',
-            key: 'importTaxVND',
-            width: 120,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '41. [AO] Tỷ giá HQ',
-            dataIndex: 'customsExchangeRate',
-            key: 'customsExchangeRate',
-            width: 100,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '42. [AP] Phí KTCL',
-            dataIndex: 'qualityControlFee',
-            key: 'qualityControlFee',
-            width: 120,
-            align: 'right',
-            render: (value) => value ? new Intl.NumberFormat('de-DE').format(value) : '-'
-        },
-        {
-            title: '43. [AQ] Xác nhận PKT',
-            dataIndex: 'accountingConfirmation',
-            key: 'accountingConfirmation',
+            title: t('declaration.totalLotValueBeforeVat'),
+            dataIndex: 'totalLotValueBeforeVat',
+            key: 'totalLotValueBeforeVat',
             width: 150,
+            align: 'right',
+            render: (val) => <Text strong style={{ color: '#096dd9' }}>{formatCurrency(val, 'VND')}</Text>
+        },
+        {
+            title: t('declaration.importCostToCustomer'),
+            dataIndex: 'importCostToCustomer',
+            key: 'importCostToCustomer',
+            width: 180,
+            align: 'right',
+            render: (val) => <Text strong style={{ color: '#cf1322', fontSize: 16 }}>{formatCurrency(val, 'VND')}</Text>
         },
         {
             title: t('common.action'),
             key: 'action',
-            width: 100,
+            width: 120,
             fixed: 'right',
             render: (_, record) => (
                 <Space size="small">
-                    <Button
-                        type="text"
-                        icon={<EyeOutlined />}
-                        onClick={() => handleView(record)}
-                        title={t('common.view')}
-                    />
+                    <Button type="text" icon={<EyeOutlined />} onClick={() => handleView(record)} />
                     {userRole === 'ADMIN' && (
                         <>
-                            <Button
-                                type="text"
-                                icon={<EditOutlined style={{ color: '#faad14' }} />}
-                                onClick={() => handleEdit(record)}
-                                title={t('common.edit')}
-                            />
-                            <Popconfirm
-                                title={t('common.confirmDelete')}
-                                onConfirm={() => handleDelete(record.id)}
-                                okText="Yes"
-                                cancelText="No"
-                            >
-                                <Button
-                                    type="text"
-                                    icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />}
-                                    title={t('common.delete')}
-                                />
+                            <Button type="text" icon={<EditOutlined style={{ color: '#faad14' }} />} onClick={() => handleEdit(record)} />
+                            <Popconfirm title={t('common.confirmDelete')} onConfirm={() => handleDelete(record.id)}>
+                                <Button type="text" icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />} />
                             </Popconfirm>
                         </>
                     )}
                 </Space>
             ),
-        },
+        }
     ];
 
     return (
         <div>
             <div style={{ marginBottom: 16 }}>
                 <Row justify="space-between" align="middle" gutter={[16, 16]}>
-                    <Col xs={24} md={24} lg={12}>
-                        <h2>{t('declaration.title')}</h2>
+                    <Col>
+                        <Typography.Title level={3} style={{ margin: 0 }}>{t('declaration.title')}</Typography.Title>
                     </Col>
-                    <Col xs={24} md={24} lg={12} style={{ textAlign: 'right' }}>
+                    <Col>
                         {userRole === 'ADMIN' && (
                             <Space wrap>
-                                <Button
-                                    icon={<DownloadOutlined />}
-                                    onClick={handleExport}
-                                    style={{ backgroundColor: '#217346', color: '#fff', borderColor: '#217346' }}
-                                >
-                                    {t('common.exportExcel') || "Export Excel"}
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    icon={<PlusOutlined />}
-                                    onClick={handleAdd}
-                                >
-                                    {t('declaration.add')}
+                                <Button icon={<DownloadOutlined />} onClick={handleExport} style={{ backgroundColor: '#217346', color: '#fff', borderColor: '#217346' }}>
+                                    {t('common.exportExcel')}
                                 </Button>
                             </Space>
                         )}
                     </Col>
                 </Row>
 
-                {/* Advanced Filter Bar */}
                 <Card size="small" style={{ marginTop: 16 }}>
                     <Row gutter={[16, 16]} align="middle">
-                        <Col xs={24} sm={24} md={24} lg={14}>
+                        <Col xs={24} md={12} lg={16}>
                             <Input
-                                placeholder={t('declaration.searchPlaceholder') || "Search by Order Code, Product Name..."}
+                                placeholder={t('declaration.searchPlaceholder')}
                                 prefix={<SearchOutlined />}
                                 value={filters.search}
-                                onChange={(e) => handleFilterChange('search', e.target.value)}
+                                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                                 onPressEnter={handleSearch}
                                 allowClear
                                 size="large"
                             />
                         </Col>
-
-                        <Col xs={24} sm={24} md={24} lg={10} style={{ textAlign: 'right' }}>
+                        <Col xs={24} md={12} lg={8} style={{ textAlign: 'right' }}>
                             <Space>
                                 <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch} size="large">
                                     {t('common.search')}
@@ -672,15 +366,13 @@ const DeclarationPage = () => {
                 dataSource={declarations}
                 rowKey="id"
                 loading={loading}
-                scroll={{ x: 2200 }}
+                scroll={{ x: 1200 }}
                 size="middle"
                 pagination={{
                     current: pagination.current,
                     pageSize: pagination.pageSize,
                     total: pagination.total,
                     showSizeChanger: true,
-                    pageSizeOptions: ['20', '30', '40', '50'],
-                    locale: { items_per_page: t('common.items_per_page') },
                     showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
                 }}
                 onChange={handleTableChange}
@@ -693,12 +385,23 @@ const DeclarationPage = () => {
                 onCancel={() => {
                     setIsModalVisible(false);
                     setEditingDeclaration(null);
-                    setIsViewMode(false);
                 }}
                 onSuccess={handleModalSuccess}
+                onViewProductCode={handleViewProductCode}
             />
 
-
+            {pcModalVisible && (
+                <ProductCodeModal
+                    visible={pcModalVisible}
+                    onClose={() => {
+                        setPcModalVisible(false);
+                        setSelectedPc(null);
+                    }}
+                    editingRecord={selectedPc}
+                    viewOnly={true}
+                    userType={userType}
+                />
+            )}
         </div>
     );
 };

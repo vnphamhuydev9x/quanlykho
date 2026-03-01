@@ -306,8 +306,8 @@ async function main() {
 
     if (warehouseEmployees.length > 0 && pCustomers.length > 0 && targetCondition) {
         const existingCodesCount = await prisma.productCode.count();
-        if (existingCodesCount < 20) {
-            for (let i = existingCodesCount; i < 20; i++) {
+        if (existingCodesCount < 40) {
+            for (let i = existingCodesCount; i < 40; i++) {
                 const customer = pCustomers[i % pCustomers.length];
                 const emp = warehouseEmployees[i % warehouseEmployees.length];
                 const weight = Math.floor(Math.random() * 50) + 10;
@@ -322,7 +322,7 @@ async function main() {
                 const item2Fee = Math.max(item2Weight * 30000, item2Volume * 3500000) + (15 + 0 + 2) * 3500;
                 const totalFee = item1Fee + item2Fee;
 
-                await prisma.productCode.create({
+                const pc = await prisma.productCode.create({
                     data: {
                         employeeId: emp.id,
                         customerId: customer.id,
@@ -334,37 +334,61 @@ async function main() {
                         infoSource: 'Mẫu Seed',
                         totalTransportFeeEstimate: totalFee,
                         exchangeRate: 3500,
-                        items: {
-                            create: [
-                                {
-                                    productName: `Hàng thời trang ${i + 1}A`,
-                                    packageCount: Math.floor(Math.random() * 5) + 1,
-                                    packageUnit: 'THUNG_CARTON',
-                                    weight: item1Weight,
-                                    volume: item1Volume,
-                                    weightFee: 30000,
-                                    volumeFee: 3500000,
-                                    domesticFeeTQ: 10,
-                                    haulingFeeTQ: 5,
-                                    unloadingFeeRMB: 5,
-                                    domesticFeeVN: 50000,
-                                    notes: 'Hệ thống tự động tạo'
-                                },
-                                {
-                                    productName: `Phụ kiện ${i + 1}B`,
-                                    packageCount: Math.floor(Math.random() * 5) + 1,
-                                    packageUnit: 'BAO_TAI',
-                                    weight: item2Weight,
-                                    volume: item2Volume,
-                                    weightFee: 30000,
-                                    volumeFee: 3500000,
-                                    domesticFeeTQ: 15,
-                                    haulingFeeTQ: 0,
-                                    unloadingFeeRMB: 2,
-                                    domesticFeeVN: 20000,
-                                    notes: 'Seed data đầy đủ các loại phí'
-                                }
-                            ]
+                    }
+                });
+
+                await prisma.productItem.create({
+                    data: {
+                        productCodeId: pc.id,
+                        productName: `Hàng thời trang ${i + 1}A`,
+                        packageCount: Math.floor(Math.random() * 5) + 1,
+                        packageUnit: 'THUNG_CARTON',
+                        weight: item1Weight,
+                        volume: item1Volume,
+                        weightFee: 30000,
+                        volumeFee: 3500000,
+                        domesticFeeTQ: 10,
+                        haulingFeeTQ: 5,
+                        unloadingFeeRMB: 5,
+                        itemTransportFeeEstimate: item1Fee,
+                        notes: 'Hệ thống tự động tạo',
+                        declaration: {
+                            create: {
+                                productCodeId: pc.id,
+                                productQuantity: 100,
+                                brand: 'Fashion Brand A',
+                                productDescription: `Mô tả hàng thời trang ${i + 1}A`,
+                                importTax: 10,
+                                vatTax: 10
+                            }
+                        }
+                    }
+                });
+
+                await prisma.productItem.create({
+                    data: {
+                        productCodeId: pc.id,
+                        productName: `Phụ kiện ${i + 1}B`,
+                        packageCount: Math.floor(Math.random() * 5) + 1,
+                        packageUnit: 'BAO_TAI',
+                        weight: item2Weight,
+                        volume: item2Volume,
+                        weightFee: 30000,
+                        volumeFee: 3500000,
+                        domesticFeeTQ: 15,
+                        haulingFeeTQ: 0,
+                        unloadingFeeRMB: 2,
+                        itemTransportFeeEstimate: item2Fee,
+                        notes: 'Seed data đầy đủ các loại phí',
+                        declaration: {
+                            create: {
+                                productCodeId: pc.id,
+                                productQuantity: 500,
+                                brand: 'Accessory B',
+                                productDescription: `Mô tả phụ kiện ${i + 1}B`,
+                                importTax: 5,
+                                vatTax: 8
+                            }
                         }
                     }
                 });

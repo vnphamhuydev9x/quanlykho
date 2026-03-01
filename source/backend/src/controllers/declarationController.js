@@ -5,52 +5,55 @@ const logger = require('../config/logger');
 const CACHE_KEY = 'declarations:list';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
-const formatImages = (images) => {
-    if (!images || !Array.isArray(images)) return [];
-    return images.map(img => {
-        if (img.startsWith('http')) return img;
-        const cleanPath = img.startsWith('/') ? img : `/${img}`;
-        return `${APP_URL}${cleanPath}`;
-    });
+const formatImagesArray = (imagesJson) => {
+    if (!imagesJson) return [];
+    try {
+        const images = JSON.parse(imagesJson);
+        if (!Array.isArray(images)) return [];
+        return images.map(img => {
+            if (img.startsWith('http')) return img;
+            const cleanPath = img.startsWith('/') ? img : `/${img}`;
+            return `${APP_URL}${cleanPath}`;
+        });
+    } catch (e) {
+        return [];
+    }
 };
-
-
 
 const declarationController = {
     getAllDeclarations: async (req, res) => {
         try {
-            const { page = 1, limit = 20, search = '' } = req.query;
+            const { page = 1, limit = 20, search = '', productCodeId } = req.query;
             const skip = (parseInt(page) - 1) * parseInt(limit);
 
-            const cacheKey = `${CACHE_KEY}:${page}:${limit}:${search}`;
+            const cacheKey = `${CACHE_KEY}:${page}:${limit}:${search}:${productCodeId || ''}`;
 
-            // 1. Check Cache
+            // Check Cache
             const cachedData = await redisClient.get(cacheKey);
             if (cachedData) {
-                logger.info('[GetAllDeclarations] Cache HIT');
                 return res.status(200).json(JSON.parse(cachedData));
             }
 
-            logger.info('[GetAllDeclarations] Cache MISS');
-
-            // 2. Build Query
-            const where = {
-                deletedAt: null // Exclude soft deleted
-            };
+            // Build Query
+            const where = { deletedAt: null };
+            if (productCodeId) {
+                where.productCodeId = parseInt(productCodeId);
+            }
+            if (req.query.productItemId) {
+                where.productItemId = parseInt(req.query.productItemId);
+            }
 
             if (search) {
                 where.OR = [
                     { id: isNaN(parseInt(search)) ? undefined : parseInt(search) },
-                    { customer: { username: { contains: search, mode: 'insensitive' } } },
-                    { customer: { fullName: { contains: search, mode: 'insensitive' } } },
-                    { customer: { phone: { contains: search, mode: 'insensitive' } } },
-                    { orderCode: { contains: search, mode: 'insensitive' } },
-                    { productName: { contains: search, mode: 'insensitive' } },
-                    { declarationName: { contains: search, mode: 'insensitive' } }
-                ].filter(condition => condition.id !== undefined || condition.customer || condition.orderCode || condition.productName || condition.declarationName);
+                    { brand: { contains: search, mode: 'insensitive' } },
+                    { sellerCompanyName: { contains: search, mode: 'insensitive' } },
+                    { productItem: { productName: { contains: search, mode: 'insensitive' } } },
+                    { productCode: { orderCode: { contains: search, mode: 'insensitive' } } }
+                ].filter(Boolean);
             }
 
-            // 3. Query DB
+            // Query DB
             const [declarations, total] = await prisma.$transaction([
                 prisma.declaration.findMany({
                     where,
@@ -58,12 +61,29 @@ const declarationController = {
                     take: parseInt(limit),
                     orderBy: { createdAt: 'desc' },
                     include: {
-                        customer: {
+                        productItem: {
                             select: {
                                 id: true,
-                                fullName: true,
-                                username: true,
-                                phone: true
+                                productName: true,
+                                itemTransportFeeEstimate: true,
+                                packageCount: true,
+                                packageUnit: true,
+                                weight: true,
+                                volume: true
+                            }
+                        },
+                        productCode: {
+                            select: {
+                                id: true,
+                                orderCode: true,
+                                entryDate: true,
+                                infoSource: true,
+                                customer: {
+                                    select: {
+                                        fullName: true,
+                                        customerCode: true
+                                    }
+                                }
                             }
                         }
                     }
@@ -71,10 +91,9 @@ const declarationController = {
                 prisma.declaration.count({ where })
             ]);
 
-            // Map images for response
             const mappedItems = declarations.map(item => ({
                 ...item,
-                productImage: item.productImage ? formatImages([item.productImage])[0] : null
+                imageUrls: formatImagesArray(item.images)
             }));
 
             const responseData = {
@@ -88,40 +107,32 @@ const declarationController = {
                 }
             };
 
-            // 4. Set Cache
-            await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData)); // Cache 5 mins
+            await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));
 
             return res.status(200).json(responseData);
-
         } catch (error) {
             logger.error(`[GetAllDeclarations] Error: ${error.message}`);
-            return res.status(500).json({ code: 99500, message: "Internal Server Error" });
+            return res.status(500).json({ code: 500, message: "Internal Server Error" });
         }
     },
 
     getDeclarationById: async (req, res) => {
         try {
             const { id } = req.params;
-
             const declaration = await prisma.declaration.findFirst({
-                where: {
-                    id: parseInt(id),
-                    deletedAt: null
-                },
+                where: { id: parseInt(id), deletedAt: null },
                 include: {
-                    customer: {
-                        select: {
-                            id: true,
-                            fullName: true,
-                            username: true,
-                            phone: true
+                    productItem: true,
+                    productCode: {
+                        include: {
+                            customer: true
                         }
                     }
                 }
             });
 
             if (!declaration) {
-                return res.status(404).json({ code: 99006, message: "Declaration not found" });
+                return res.status(404).json({ code: 404, message: "Declaration not found" });
             }
 
             return res.status(200).json({
@@ -129,118 +140,12 @@ const declarationController = {
                 message: "Success",
                 data: {
                     ...declaration,
-                    productImage: declaration.productImage ? formatImages([declaration.productImage])[0] : null
+                    imageUrls: formatImagesArray(declaration.images)
                 }
             });
-
         } catch (error) {
             logger.error(`[GetDeclarationById] Error: ${error.message}`);
-            return res.status(500).json({ code: 99500, message: "Internal Server Error" });
-        }
-    },
-
-    createDeclaration: async (req, res) => {
-        try {
-            // ADMIN only (Middleware handled)
-            const body = req.body;
-            const userId = req.user.userId;
-
-            // Handle Image Upload
-            let imagePath = body.productImage || null;
-
-            if (req.files && req.files.length > 0) {
-                const file = req.files[0];
-                const relativePath = file.path.replace(/\\/g, '/').split('/uploads/')[1];
-                imagePath = `/uploads/${relativePath}`;
-            }
-
-            // Extract all new fields
-            const data = {
-                customerId: parseInt(body.customerId),
-                entryDate: body.entryDate ? new Date(body.entryDate) : null,
-                customerCodeInput: body.customerCodeInput,
-                productName: body.productName,
-                orderCode: body.orderCode,
-                packageCount: body.packageCount ? parseInt(body.packageCount) : null,
-                weight: body.weight ? parseFloat(body.weight) : null,
-                volume: body.volume ? parseFloat(body.volume) : null,
-                infoSource: body.infoSource,
-                domesticFeeRMB: body.domesticFeeRMB ? parseFloat(body.domesticFeeRMB) : null,
-                haulingFeeRMB: body.haulingFeeRMB ? parseFloat(body.haulingFeeRMB) : null,
-                unloadingFeeRMB: body.unloadingFeeRMB ? parseFloat(body.unloadingFeeRMB) : null,
-                weightFee: body.weightFee ? parseFloat(body.weightFee) : null,
-                volumeFee: body.volumeFee ? parseFloat(body.volumeFee) : null,
-                totalTransportFeeEstimate: body.totalTransportFeeEstimate ? parseFloat(body.totalTransportFeeEstimate) : null,
-                note: body.note,
-                productImage: imagePath,
-                subTag: body.subTag,
-                productQuantity: body.productQuantity ? parseInt(body.productQuantity) : null,
-                specification: body.specification,
-                productDescription: body.productDescription,
-                brand: body.brand,
-                declarationNeed: body.declarationNeed,
-                declarationPolicy: body.declarationPolicy,
-                declarationQuantity: body.declarationQuantity,
-                invoicePrice: body.invoicePrice,
-                additionalInfo: body.additionalInfo,
-                declarationName: body.declarationName,
-                declarationQuantityDeclared: body.declarationQuantityDeclared,
-                unit: body.unit,
-                declarationPrice: body.declarationPrice,
-                value: body.value,
-                packageCountDeclared: body.packageCountDeclared ? parseInt(body.packageCountDeclared) : null,
-                netWeight: body.netWeight,
-                grossWeight: body.grossWeight,
-                cbm: body.cbm,
-                hsCode: body.hsCode,
-                vatPercent: body.vatPercent,
-                vatAmount: body.vatAmount,
-                importTaxPercent: body.importTaxPercent,
-                importTaxUSD: body.importTaxUSD,
-                importTaxVND: body.importTaxVND,
-                customsExchangeRate: body.customsExchangeRate,
-                qualityControlFee: body.qualityControlFee,
-                accountingConfirmation: body.accountingConfirmation,
-
-            };
-
-            // Basic Validation
-            if (!data.customerId) {
-                return res.status(400).json({ code: 99001, message: "Missing required field: customerId" });
-            }
-
-            // Check customer
-            const customer = await prisma.user.findFirst({
-                where: { id: data.customerId, type: 'CUSTOMER', deletedAt: null }
-            });
-            if (!customer) {
-                return res.status(404).json({ code: 99006, message: "Customer not found" });
-            }
-
-            const newDeclaration = await prisma.declaration.create({
-                data
-            });
-
-            // Invalidate Cache
-            const keys = await redisClient.keys(`${CACHE_KEY}:*`);
-            if (keys.length > 0) {
-                await redisClient.del(keys);
-            }
-
-            logger.info(`[CreateDeclaration] ID: ${newDeclaration.id} by User: ${userId}`);
-
-            return res.status(200).json({
-                code: 200,
-                message: "Success",
-                data: {
-                    ...newDeclaration,
-                    productImage: newDeclaration.productImage ? formatImages([newDeclaration.productImage])[0] : null
-                }
-            });
-
-        } catch (error) {
-            logger.error(`[CreateDeclaration] Error: ${error.message}`);
-            return res.status(500).json({ code: 99500, message: "Internal Server Error" });
+            return res.status(500).json({ code: 500, message: "Internal Server Error" });
         }
     },
 
@@ -248,192 +153,131 @@ const declarationController = {
         try {
             const { id } = req.params;
             const body = req.body;
-            const userId = req.user.userId;
 
-            // Check existence
-            const existingDeclaration = await prisma.declaration.findFirst({
-                where: { id: parseInt(id), deletedAt: null }
+            // Check existence and get product item fee
+            const existing = await prisma.declaration.findFirst({
+                where: { id: parseInt(id), deletedAt: null },
+                include: { productItem: true }
             });
 
-            if (!existingDeclaration) {
-                return res.status(404).json({ code: 99006, message: "Declaration not found" });
+            if (!existing) {
+                return res.status(404).json({ code: 404, message: "Declaration not found" });
             }
 
-            // Handle Image
-            let imagePath = body.productImage;
-
+            // Handle Images
+            let imagesJson = existing.images;
             if (req.files && req.files.length > 0) {
-                const file = req.files[0];
-                const relativePath = file.path.replace(/\\/g, '/').split('/uploads/')[1];
-                imagePath = `/uploads/${relativePath}`;
-            } else if (body.productImage === undefined) {
-                imagePath = existingDeclaration.productImage; // Keep existing
+                const newPaths = req.files.map(file => {
+                    const relativePath = file.path.replace(/\\/g, '/').split('/uploads/')[1];
+                    return `/uploads/${relativePath}`;
+                });
+                // Note: User can replace all or append, but here we append and limit to 3 if requested, 
+                // or just take the current upload as final.
+                imagesJson = JSON.stringify(newPaths.slice(0, 3));
+            } else if (body.existingImages) {
+                // If user deleted some images from UI
+                const existingImages = Array.isArray(body.existingImages) ? body.existingImages : JSON.parse(body.existingImages);
+                imagesJson = JSON.stringify(existingImages.slice(0, 3));
             }
 
-            // Prepare update data
-            const data = {
-                customerId: body.customerId ? parseInt(body.customerId) : undefined,
-                entryDate: body.entryDate ? new Date(body.entryDate) : undefined,
-                customerCodeInput: body.customerCodeInput,
-                productName: body.productName,
-                orderCode: body.orderCode,
-                packageCount: body.packageCount ? parseInt(body.packageCount) : undefined,
-                weight: body.weight ? parseFloat(body.weight) : undefined,
-                volume: body.volume ? parseFloat(body.volume) : undefined,
-                infoSource: body.infoSource,
-                domesticFeeRMB: body.domesticFeeRMB ? parseFloat(body.domesticFeeRMB) : undefined,
-                haulingFeeRMB: body.haulingFeeRMB ? parseFloat(body.haulingFeeRMB) : undefined,
-                unloadingFeeRMB: body.unloadingFeeRMB ? parseFloat(body.unloadingFeeRMB) : undefined,
-                weightFee: body.weightFee ? parseFloat(body.weightFee) : undefined,
-                volumeFee: body.volumeFee ? parseFloat(body.volumeFee) : undefined,
-                totalTransportFeeEstimate: body.totalTransportFeeEstimate ? parseFloat(body.totalTransportFeeEstimate) : undefined,
-                note: body.note,
-                productImage: imagePath,
-                subTag: body.subTag,
-                productQuantity: body.productQuantity ? parseInt(body.productQuantity) : undefined,
+            // Calculations
+            // QUAN TRỌNG: Dùng giá trị từ DB (existing) khi field không được gửi lên (undefined/null/empty)
+            // Tránh trường hợp user ấn Save mà không đổi gì → backend reset về 0 do || 0 overrride
+            const parseOrKeep = (bodyVal, existingVal, isFloat = false) => {
+                if (bodyVal === undefined || bodyVal === null || bodyVal === '') {
+                    return existingVal ?? 0;
+                }
+                const parsed = isFloat ? parseFloat(bodyVal) : parseInt(bodyVal);
+                return isNaN(parsed) ? (existingVal ?? 0) : parsed;
+            };
+
+            const invoicePriceBeforeVat = parseOrKeep(body.invoicePriceBeforeVat, existing.invoicePriceBeforeVat);
+            const declarationQuantity = parseOrKeep(body.declarationQuantity, existing.declarationQuantity);
+            const totalLotValueBeforeVat = invoicePriceBeforeVat * declarationQuantity;
+
+            const importTax = parseOrKeep(body.importTax, existing.importTax, true);
+            const vatTax = parseOrKeep(body.vatTax, existing.vatTax, true);
+
+            const importTaxPayable = Math.round(totalLotValueBeforeVat * importTax / 100);
+            const vatTaxPayable = Math.round(totalLotValueBeforeVat * vatTax / 100);
+
+            const payableFee = parseOrKeep(body.payableFee, existing.payableFee);
+            const entrustmentFee = parseOrKeep(body.entrustmentFee, existing.entrustmentFee);
+
+            const itemFee = parseFloat(existing.productItem?.itemTransportFeeEstimate || 0);
+
+            const importCostToCustomer = Math.round(itemFee + importTaxPayable + vatTaxPayable + payableFee + entrustmentFee);
+
+            const dataToUpdate = {
+                images: imagesJson,
+                mainStamp: body.mainStamp,
+                subStamp: body.subStamp,
+                productQuantity: parseInt(body.productQuantity) || null,
                 specification: body.specification,
                 productDescription: body.productDescription,
                 brand: body.brand,
+                sellerTaxCode: body.sellerTaxCode,
+                sellerCompanyName: body.sellerCompanyName,
                 declarationNeed: body.declarationNeed,
-                declarationPolicy: body.declarationPolicy,
-                declarationQuantity: body.declarationQuantity,
-                invoicePrice: body.invoicePrice,
-                additionalInfo: body.additionalInfo,
-                declarationName: body.declarationName,
-                declarationQuantityDeclared: body.declarationQuantityDeclared,
-                unit: body.unit,
-                declarationPrice: body.declarationPrice,
-                value: body.value,
-                packageCountDeclared: body.packageCountDeclared ? parseInt(body.packageCountDeclared) : undefined,
-                netWeight: body.netWeight,
-                grossWeight: body.grossWeight,
-                cbm: body.cbm,
-                hsCode: body.hsCode,
-                vatPercent: body.vatPercent,
-                vatAmount: body.vatAmount,
-                importTaxPercent: body.importTaxPercent,
-                importTaxUSD: body.importTaxUSD,
-                importTaxVND: body.importTaxVND,
-                customsExchangeRate: body.customsExchangeRate,
-                qualityControlFee: body.qualityControlFee,
-                accountingConfirmation: body.accountingConfirmation
+                declarationQuantity: parseInt(body.declarationQuantity) || 0,
+                invoicePriceBeforeVat,
+                totalLotValueBeforeVat,
+                importTax,
+                vatTax,
+                importTaxPayable,
+                vatTaxPayable,
+                payableFee,
+                notes: body.notes,
+                entrustmentFee,
+                importCostToCustomer
             };
-
-            // Clean undefined values
-            Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
-
-            // Validate Customer if changing
-            if (data.customerId && data.customerId !== existingDeclaration.customerId) {
-                const customer = await prisma.user.findFirst({
-                    where: { id: data.customerId, type: 'CUSTOMER', deletedAt: null }
-                });
-                if (!customer) {
-                    return res.status(404).json({ code: 99006, message: "Customer not found" });
-                }
-            }
 
             const updated = await prisma.declaration.update({
                 where: { id: parseInt(id) },
-                data
+                data: dataToUpdate
             });
 
             // Invalidate Cache
             const keys = await redisClient.keys(`${CACHE_KEY}:*`);
-            if (keys.length > 0) {
-                await redisClient.del(keys);
-            }
+            if (keys.length > 0) await redisClient.del(keys);
 
-            logger.info(`[UpdateDeclaration] ID: ${id} by User: ${userId}`);
-
-            return res.status(200).json({
-                code: 200,
-                message: "Success",
-                data: {
-                    ...updated,
-                    productImage: updated.productImage ? formatImages([updated.productImage])[0] : null
-                }
-            });
-
+            return res.status(200).json({ code: 200, message: "Success", data: updated });
         } catch (error) {
             logger.error(`[UpdateDeclaration] Error: ${error.message}`);
-            return res.status(500).json({ code: 99500, message: "Internal Server Error" });
+            return res.status(500).json({ code: 500, message: "Internal Server Error" });
         }
     },
 
     deleteDeclaration: async (req, res) => {
         try {
-            // ADMIN only
             const { id } = req.params;
-            const userId = req.user.userId;
-
-            const declaration = await prisma.declaration.findFirst({
-                where: {
-                    id: parseInt(id),
-                    deletedAt: null
-                }
-            });
-
-            if (!declaration) {
-                return res.status(404).json({ code: 99006, message: "Declaration not found" });
-            }
-
-            // Soft Delete
             await prisma.declaration.update({
                 where: { id: parseInt(id) },
-                data: {
-                    deletedAt: new Date()
-                }
+                data: { deletedAt: new Date() }
             });
-
-            // Invalidate Cache
             const keys = await redisClient.keys(`${CACHE_KEY}:*`);
-            if (keys.length > 0) {
-                await redisClient.del(keys);
-            }
-
-            logger.info(`[DeleteDeclaration] ID: ${id} by User: ${userId}`);
-
-            return res.status(200).json({
-                code: 200,
-                message: "Success"
-            });
-
+            if (keys.length > 0) await redisClient.del(keys);
+            return res.status(200).json({ code: 200, message: "Deleted" });
         } catch (error) {
-            logger.error(`[DeleteDeclaration] Error: ${error.message}`);
-            return res.status(500).json({ code: 99500, message: "Internal Server Error" });
+            return res.status(500).json({ code: 500, message: error.message });
         }
     },
 
-
+    // Not usually used directly but keeping for compatibility if needed
+    createDeclaration: async (req, res) => {
+        return res.status(405).json({ code: 405, message: "Declarations are created automatically via ProductCode" });
+    },
 
     getAllDeclarationsForExport: async (req, res) => {
+        // ... Similar to getAll but without pagination if needed
         try {
-            // ADMIN only
             const declarations = await prisma.declaration.findMany({
-                where: {
-                    deletedAt: null
-                },
-                orderBy: { createdAt: 'desc' },
-                include: {
-                    customer: {
-                        select: {
-                            id: true,
-                            fullName: true,
-                            username: true,
-                            phone: true
-                        }
-                    }
-                }
+                where: { deletedAt: null },
+                include: { productItem: true, productCode: { include: { customer: true } } }
             });
-
-            return res.status(200).json({
-                code: 200,
-                message: "Success",
-                data: declarations
-            });
-        } catch (error) {
-            logger.error(`[GetAllDeclarationsForExport] Error: ${error.message}`);
-            return res.status(500).json({ code: 99500, message: "Internal Server Error" });
+            return res.status(200).json({ code: 200, data: declarations });
+        } catch (e) {
+            return res.status(500).json({ message: e.message });
         }
     }
 };

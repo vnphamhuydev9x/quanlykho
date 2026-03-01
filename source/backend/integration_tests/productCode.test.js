@@ -176,6 +176,8 @@ describe('Product Code API - Master/Detail', () => {
             expect(Number(res.body.data.totalTransportFeeEstimate)).toBe(670000);
             expect(res.body.data.items).toBeDefined();
             expect(res.body.data.items.length).toBe(2);
+            expect(Number(res.body.data.items[0].itemTransportFeeEstimate)).toBe(170000);
+            expect(Number(res.body.data.items[1].itemTransportFeeEstimate)).toBe(500000);
 
             createdProductCodeId = res.body.data.id;
         });
@@ -213,6 +215,7 @@ describe('Product Code API - Master/Detail', () => {
             expect(res.statusCode).toBe(200);
             expect(res.body.data.items.length).toBe(1);
             expect(Number(res.body.data.totalTransportFeeEstimate)).toBe(200000);
+            expect(Number(res.body.data.items[0].itemTransportFeeEstimate)).toBe(200000);
             expect(res.body.data.orderCode).toBe('ORD_CALC_03_UPDATED');
 
             // Verify detail cache is invalidated

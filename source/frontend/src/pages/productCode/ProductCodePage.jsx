@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Input, Space, message, Popconfirm, Row, Col, Card, Tooltip } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import productCodeService from '../../services/productCodeService';
 import ProductCodeModal from './ProductCodeModal';
 import { formatCurrency } from '../../utils/format';
@@ -10,6 +10,7 @@ import { formatCurrency } from '../../utils/format';
 const ProductCodePage = () => {
     const { t, i18n } = useTranslation();
     const location = useLocation();
+    const navigate = useNavigate();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
@@ -32,16 +33,22 @@ const ProductCodePage = () => {
     }, []);
 
     useEffect(() => {
-        fetchData();
-    }, [pagination.current, pagination.pageSize, searchText]);
+        const queryParams = new URLSearchParams(location.search);
+        const searchId = queryParams.get('id');
+        if (searchId) {
+            fetchData(1, pagination.pageSize, searchId);
+        } else {
+            fetchData();
+        }
+    }, [pagination.current, pagination.pageSize, searchText, location.search]);
 
-    const fetchData = async () => {
+    const fetchData = async (p = pagination.current, l = pagination.pageSize, s = searchText) => {
         setLoading(true);
         try {
             const response = await productCodeService.getAll(
-                pagination.current,
-                pagination.pageSize,
-                searchText
+                p,
+                l,
+                s
             );
             setData(response.data.items);
             setPagination(prev => ({
@@ -54,6 +61,17 @@ const ProductCodePage = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const searchId = queryParams.get('id');
+        if (searchId && data.length > 0) {
+            const found = data.find(d => d.id === parseInt(searchId));
+            if (found) {
+                handleView(found);
+            }
+        }
+    }, [data, location.search]);
 
     const handleTableChange = (newPagination) => {
         setPagination(prev => ({
@@ -112,11 +130,10 @@ const ProductCodePage = () => {
             key: 'id',
             width: 70,
             fixed: 'left',
-            align: 'center',
-            sorter: (a, b) => a.id - b.id,
+            align: 'center'
         },
         {
-            title: 'Ngày nhập kho',
+            title: 'Ngày Nhập Kho',
             dataIndex: 'entryDate',
             key: 'entryDate',
             width: 130,
@@ -125,8 +142,14 @@ const ProductCodePage = () => {
         {
             title: 'Khách hàng',
             key: 'customer',
-            width: 150,
+            width: 180,
             render: (_, r) => r.customer ? `${r.customer.customerCode || r.customer.username} - ${r.customer.fullName}` : '-'
+        },
+        {
+            title: 'Nhân viên (Sale)',
+            key: 'employee',
+            width: 150,
+            render: (_, r) => r.employee ? `${r.employee.username} - ${r.employee.fullName}` : '-'
         },
         {
             title: 'Mã đơn hàng',
@@ -136,7 +159,7 @@ const ProductCodePage = () => {
             ellipsis: true
         },
         {
-            title: 'Tổng Trọng lượng',
+            title: 'Tổng trọng lượng',
             dataIndex: 'totalWeight',
             key: 'totalWeight',
             width: 150,
@@ -144,36 +167,12 @@ const ProductCodePage = () => {
             render: val => val ? `${new Intl.NumberFormat('de-DE').format(val)} kg` : '0 kg'
         },
         {
-            title: 'Tổng Khối lượng',
+            title: 'Tổng khối lượng',
             dataIndex: 'totalVolume',
             key: 'totalVolume',
             width: 150,
             align: 'right',
             render: val => val ? `${new Intl.NumberFormat('de-DE').format(val)} m³` : '0 m³'
-        },
-        {
-            title: 'Phí nội địa',
-            dataIndex: 'domesticFeeRMB',
-            key: 'domesticFeeRMB',
-            width: 150,
-            align: 'right',
-            render: (val) => (
-                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {formatCurrency(val, 'RMB')}
-                </span>
-            )
-        },
-        {
-            title: 'Phí dỡ hàng',
-            dataIndex: 'unloadingFeeRMB',
-            key: 'unloadingFeeRMB',
-            width: 150,
-            align: 'right',
-            render: (val) => (
-                <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                    {formatCurrency(val, 'RMB')}
-                </span>
-            )
         },
         {
             title: 'Tình trạng hàng hóa',
@@ -182,7 +181,7 @@ const ProductCodePage = () => {
             render: (_, record) => record.merchandiseCondition?.name_vi || '-'
         },
         {
-            title: 'Nguồn cung cấp thông tin',
+            title: 'Nguồn cung cấp thông tin (Kg/m³)',
             dataIndex: 'infoSource',
             key: 'infoSource',
             width: 180,
@@ -218,11 +217,11 @@ const ProductCodePage = () => {
                     <Tooltip title="Xem">
                         <Button type="text" icon={<EyeOutlined />} onClick={() => handleView(record)} />
                     </Tooltip>
-                    {!viewOnly && (
-                        <Tooltip title="Sửa">
-                            <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-                        </Tooltip>
-                    )}
+
+                    <Tooltip title="Sửa">
+                        <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+                    </Tooltip>
+
                     {userType !== 'CUSTOMER' && (
                         <Popconfirm
                             title="Bạn có chắc chắn muốn xoá ?"

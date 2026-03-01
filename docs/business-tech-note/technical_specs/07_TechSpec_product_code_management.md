@@ -40,10 +40,10 @@ Mỗi `ProductCode` có thể có nhiều `ProductItem` (quan hệ 1-N).
 | **Khối lượng** | `volume` | `Decimal?` | `@db.Decimal(15,3)` | Float |
 | **Đơn giá cước TQ_HN (khối)**| `volumeFee` | `Int?` | | Integer (VND) |
 | **Đơn giá cước TQ_HN (cân)**| `weightFee` | `Int?` | | Integer (VND) |
-| **Phí nội địa TQ** | `domesticFeeTQ` | `Decimal?` | `@db.Decimal(15,2)` | Float (RMB) - Lưu trữ |
-| **Phí kéo hàng TQ** | `haulingFeeTQ` | `Decimal?` | `@db.Decimal(15,2)` | Float (RMB) - Lưu trữ |
+| **Phí nội địa** | `domesticFeeTQ` | `Decimal?` | `@db.Decimal(15,2)` | Float (RMB) - Lưu trữ |
+| **Phí kéo hàng** | `haulingFeeTQ` | `Decimal?` | `@db.Decimal(15,2)` | Float (RMB) - Lưu trữ |
 | **Phí dỡ hàng** | `unloadingFeeRMB` | `Decimal?` | `@db.Decimal(15,2)` | Float (RMB) - Lưu trữ |
-| **Phí nội địa VN** | `domesticFeeVN` | `Int?` | | Integer (VND) - Lưu trữ |
+| **Cước TQ_HN tạm tính**| `itemTransportFeeEstimate`| `Decimal?` | `@db.Decimal(15,2)` | Float (VND) - **Auto Calculated** |
 | **Ghi chú** | `notes` | `String?` | | Text area |
 
 ---
@@ -65,7 +65,7 @@ Base URL: `/api/product-codes`
 - **Relation Check (DB Query)**: Trước khi lưu, phải check `employeeId`, `customerId`, `merchandiseConditionId` có thực sự tồn tại ở các table tương ứng hay không.
 - **Enum Check (Hard-coded)**: Kiểm tra `items[].packageUnit` có nằm trong mảng các giá trị hợp lệ được định nghĩa ở server (vd: `['KHONG_DONG_GOI', 'BAO_TAI', 'THUNG_CARTON', 'PALLET']`).
 - **Data Type Rules**: 
-  - `weight`, `packageCount`, `volumeFee`, `weightFee`, `domesticFeeVN` phải parse chuẩn là **Integer** (không lấy thập phân).
+  - `weight`, `packageCount`, `volumeFee`, `weightFee` phải parse chuẩn là **Integer** (không lấy thập phân).
   - Các trường phí RMB, Tỷ giá, Khối lượng parse thành Decimal/Float.
 
 ### 3.3 Thuật toán tính `totalTransportFeeEstimate` (Cước TQ_HN tạm tính)
@@ -90,8 +90,12 @@ for (const item of items) {
     const unloadingFeeRMB = parseFloat(item.unloadingFeeRMB || 0);
     const extraFeeVND = (domesticFeeTQ + haulingFeeTQ + unloadingFeeRMB) * exchangeRate;
     
-    // 5. Cộng dồn vào tổng lô
-    totalTransportFeeEstimate += maxFeeForItem + extraFeeVND;
+    // 5. Tính cước riêng cho mặt hàng này
+    const itemFeeEstimate = maxFeeForItem + extraFeeVND;
+    item.itemTransportFeeEstimate = itemFeeEstimate; // Lưu vào Detail DB
+
+    // 6. Cộng dồn vào tổng lô
+    totalTransportFeeEstimate += itemFeeEstimate;
 }
 // Nếu lưu DB (Prisma), set giá trị này cho Master
 ```
@@ -101,10 +105,14 @@ for (const item of items) {
 - **GET `/:id`**: Lấy chi tiết Master kèm `include: { items: true }`.
 - **POST `/`**:
   - Request Body: Gửi Object Master bao gồm array `items`.
-  - Transaction: Dùng `$transaction` hoặc Prisma nested write (`create: { items: { create: [...] } }`) để đảm bảo tính toàn vẹn.
+  - Transaction: Dùng `$transaction` để đảm bảo:
+    - Tạo `ProductCode`
+    - Tạo danh sách `ProductItem`
+    - Đồng thời tự động tạo các bản ghi `Declaration` tương ứng cho từng `ProductItem`. Truyền cả `productCodeId` và `productItemId` vào `Declaration` (Lưu ý: duplicate dữ liệu `productCodeId` này có mục đích tăng performance khi query Declaration theo ProductCode).
 - **PUT `/:id`**:
-  - Cách xử lý Detail (`items`): Thường sử dụng phương án xoá toàn bộ `items` cũ của `productCodeId` và insert array `items` mới vào để dễ code, hoặc truyền theo cơ chế `upsert`.
-- **DELETE `/:id`**: Soft delete Master (Các Detail item có thể bị xóa mềm theo tùy config Prisma hoặc xoá cứng do `onDelete: Cascade` tuỳ thuộc vào requirement, nhưng khuyến nghị keep detail nếu master bị soft delete).
+  - Cách xử lý Detail (`items`): Thực hiện xoá items cũ / thêm items mới / hoặc cập nhật.
+  - Tức là nếu có `ProductItem` mới được sinh ra, phải đồng thời sinh ra bản ghi `Declaration` cho nó.
+- **DELETE `/:id`**: Soft delete Master. `Declaration` cũng cần được xử lý phù hợp.
 
 ---
 

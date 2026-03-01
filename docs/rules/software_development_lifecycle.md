@@ -18,6 +18,9 @@ Tài liệu này mô tả chi tiết quy trình phát triển và bảo trì h�
 3.  **Test Specification (Test Spec - Kịch bản kiểm thử)**
     *   **Thư mục**: `docs/business-tech-note/testspec/`
     *   **Mục đích**: Xác định các kịch bản kiểm thử (Test Scenarios & Test Cases) dựa vào BRD và Tech Spec để định hướng cho hệ thống Automation Test dưới Backend theo phương pháp hộp đen. Bộ Test Spec này sẽ vạch rõ các Output cho từng Input cụ thể, đảm bảo Validation, Business Logic tính toán, Caching, và Phân quyền (RBAC) trả về kết quả chính xác như kỳ vọng.
+    *   **⚠️ YÊU CẦU BẮT BUỘC — Granular Test Case**: Mỗi Test Case **phải** có đủ 4 thành phần: **TC-ID định danh** (VD: `TC-DECL-UPDATE-01`), **Input cụ thể** (fields & values), **Expected HTTP Status**, **Expected DB State**. Test Spec viết chung chung ở cấp Scenario mà thiếu Input/Output chi tiết là **KHÔNG ĐẠT CHUẨN**.
+    *   **Phạm vi bắt buộc của mỗi Endpoint**: Mỗi API phải có Test Case cho: Happy Path (200/201), No Token (401), Wrong Role (403), Not Found (404), Missing Required Field (400), Business Logic Calculation (verify DB), Cache Invalidation (verify Redis).
+    *   **Tham chiếu**: Xem template đầy đủ tại `docs/rules/test_spec_writing_guide.md`.
 
 ---
 
@@ -28,12 +31,14 @@ Tài liệu này mô tả chi tiết quy trình phát triển và bảo trì h�
     *   **Implement logic**: Viết code tại Controller, Middleware, Service Repository và đảm bảo các API chạy tuân thủ đúng định nghĩa Contract có trong Tech Spec.
 
 2.  **Viết và Chạy Integration Test (Kiểm thử Tích hợp Đen - Black-box testing)**
-    *   **Tài liệu tham khảo bắt buộc**: Đọc kỹ `deploy/deployment_test_guide.md`
+    *   **Tài liệu tham khảo bắt buộc**: Đọc kỹ `deploy/deployment_test_guide.md` và `docs/rules/test_spec_writing_guide.md`
     *   **Thư mục Test**: `source/integration_tests/`
     *   **Cách thức hoạt động**:
         *   Sử dụng Docker (`docker-compose.test.yml`) chạy một nền tảng CSDL và Redis riêng dùng dành riêng để chạy Test, ngăn chặn hoàn toàn việc sửa/xoá lầm dữ liệu của hệ thống thật (hoặc môi trường Staging/Dev chung).
         *   Bài test Integration phải viết theo dạng **hộp đen (Black-box)** sử dụng Supertest và Jest, có nghĩa là Test Scripts đóng vai trò như Client. Sẽ gửi các gói tin HTTP (Req) trực tiếp vào Root Endpoints của System và đánh giá Output (Res), chứ **tuyệt đối không mock hay bypass các Service/Function nội bộ** bên dưới.
         *   Tất cả các Cases nằm trong file Test Spec tương ứng phải chạy và Pass 100%. Luôn dọn dẹp Database (Reset db / Flush redis) sau mỗi lần Test xong hoặc trước mỗi Use Case để hoàn trả môi trường sạch sẽ (`beforeAll` / `afterAll`).
+    *   **⚠️ Convention TC-ID (BẮT BUỘC)**: Mỗi `it()` block PHẢI có comment dòng đầu chứa TC-ID tương ứng từ Test Spec. Ví dụ: `// [TC-DECL-UPDATE-01] Happy Path`. Quy tắc này đảm bảo truy vết 2 chiều giữa Spec và Code.
+    *   **🚦 Điều kiện chốt cứng**: Không được phép chuyển sang **Giai đoạn 3 (Frontend)** khi Integration Test chưa **100% PASS**. Không được dùng `it.skip()` để "né" test case lỗi.
 
 ---
 
@@ -60,6 +65,15 @@ Giai đoạn xây dựng giao diện UI (ReactJS) chỉ được phép chạy kh
 *   Mô hình hệ thống của chúng ta là Code sinh ra từ mô tả ngôn ngữ con người chứ không phải là Code sinh Code. Nếu giữa chừng trong tiến trình làm hoặc sau này muốn sửa lại / thêm bớt các logic tính phí, thay đổi flow: **BẮT BUỘC** bạn phải bắt đầu quy trình vòng lặp lại từ đầu.
     `Cập nhật lại file BRD` ➡️ `Cập nhật Tech Spec` ➡️ `Cập nhật Test Spec` ➡️ `Sửa logic Test chạy cho Pass (nếu Fail)` ➡️ `Sửa logic code BE` ➡️ `Làm lại UI Frontend`.
 *   Việc _Tiện tay_ nhảy vào sửa ngay Code mà _Quên_ cập nhật sửa đổi đó lên hệ thống Tài liệu (*Tài liệu hết đát - Out of date document*) là nguyên nhân trí mạng hàng đầu dẫn đến sự sụp đổ kiến trúc của một dự án. Việc này khiến luồng suy luận của AI Generated Code hoặc các Engineer Transfer về sau bị gãy mạch, họ sẽ không hiểu logic nghiệp vụ ngầm định dẫn đến Overwrite hoặc tạo ra Big Bugs cho hệ thống mới.
+
+### ⚠️ Checklist bắt buộc khi Schema Prisma thay đổi
+Khi có bất kỳ thay đổi nào trên `schema.prisma` (thêm/xóa/đổi tên field), **PHẢI** thực hiện theo thứ tự:
+1.  `schema.prisma` đã được cập nhật và migration chạy thành công.
+2.  **Tech Spec** (Data Dictionary) cập nhật tên/kiểu trường mới.
+3.  **Test Spec** rà soát: xóa/sửa Test Case dùng field cũ, thêm Test Case cho field mới.
+4.  **Integration Test file** rà soát: sửa tất cả `prisma.create / createMany` còn dùng field cũ.
+5.  Chạy lại toàn bộ test suite của module: `npm run test -- --testPathPattern=<module>.test.js`
+6.  **100% PASS** → Được phép tiếp tục.
 
 ---
 *Tài liệu này được định danh làm Rule cho mọi thành viên thuộc hệ sinh thái (bao gồm Software Engineers và quy chuẩn cho mọi Agent AI Dev) nhằm đảm bảo chúng ta làm việc trên một pipeline nhất quán, Test-driven và Architecture-first.*

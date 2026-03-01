@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Select, Row, Col, message, Spin, DatePicker, Button, Tooltip, Space, Divider, Typography, Table, Popconfirm } from 'antd';
-import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, ReloadOutlined, EyeOutlined, EditOutlined, FileSearchOutlined, FormOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 import productCodeService from '../../services/productCodeService';
@@ -12,7 +13,8 @@ import CustomNumberInput from '../../components/CustomNumberInput';
 import { PACKAGE_UNIT_OPTIONS } from '../../constants/enums';
 import ProductItemModal from './ProductItemModal';
 import { formatCurrency } from '../../utils/format';
-import { EditOutlined } from '@ant-design/icons';
+import DeclarationModal from '../declaration/DeclarationModal';
+import declarationService from '../../services/declarationService';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -22,6 +24,7 @@ const Col3 = ({ children }) => <Col xs={24} md={8}>{children}</Col>;
 
 const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType }) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -35,6 +38,12 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
     const [itemModalVisible, setItemModalVisible] = useState(false);
     const [editingItemIndex, setEditingItemIndex] = useState(-1);
 
+    const [declarationModalVisible, setDeclarationModalVisible] = useState(false);
+    const [selectedDeclaration, setSelectedDeclaration] = useState(null);
+    // State riêng: mode của ProductItemModal và DeclarationModal — độc lập với viewOnly của ProductCode
+    const [itemViewOnly, setItemViewOnly] = useState(false);
+    const [declarationViewMode, setDeclarationViewMode] = useState(false);
+
     const disabledGeneral = viewOnly || (userType === 'CUSTOMER');
 
     const fetchDropdownData = React.useCallback(async () => {
@@ -45,15 +54,11 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                 employeeService.getAll({ limit: 0, _t: timestamp }),
                 merchandiseConditionService.getAll({ limit: 0, _t: timestamp })
             ]);
-            console.log()
-
-            console.log("Fetched customers:", custRes.data.customers?.length);
 
             const rawCustomers = custRes.data?.customers || custRes.data?.items || custRes.data || custRes.customers || custRes.items || [];
             const rawEmployees = empRes.data?.employees || empRes.data?.items || empRes.data || empRes.employees || empRes.items || [];
             const rawConditions = condRes.data?.items || condRes.data?.conditions || condRes.data || condRes.items || condRes.conditions || [];
 
-            console.log('rawCustomers', rawCustomers);
             // Force pure new arrays to guarantee React re-rendering
             setCustomers([...rawCustomers]);
             setEmployees([...rawEmployees]);
@@ -93,8 +98,15 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                 ...data,
                 entryDate: data.entryDate ? dayjs(data.entryDate) : null,
             });
-            setItemsData(data.items && data.items.length > 0 ? data.items : []);
-            setTotalFeeEstimate(data.totalTransportFeeEstimate || 0);
+            const recalculatedItems = triggerCalculations(data.items && data.items.length > 0 ? data.items : []);
+
+            // Auto open item if productItemId is provided
+            if (editingRecord.productItemId) {
+                const itemIdx = recalculatedItems.findIndex(it => it.id === editingRecord.productItemId);
+                if (itemIdx > -1) {
+                    handleEditItem(itemIdx);
+                }
+            }
         } catch (error) {
             message.error(t('common.loadError', 'Lỗi tải dữ liệu'));
         } finally {
@@ -106,7 +118,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
         let newTotalFee = 0;
         const exchangeRate = parseFloat(form.getFieldValue('exchangeRate')) || 0;
 
-        itemsArray.forEach((item) => {
+        const recalculatedItems = itemsArray.map((item) => {
             const weightFee = Number(item?.weightFee) || 0;
             const weight = Number(item?.weight) || 0;
             const volumeFee = Number(item?.volumeFee) || 0;
@@ -121,10 +133,18 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
             const unloadingFeeRMB = parseFloat(item?.unloadingFeeRMB) || 0;
             const extraFeeVND = (domesticFeeTQ + haulingFeeTQ + unloadingFeeRMB) * exchangeRate;
 
-            newTotalFee += maxFeeForItem + extraFeeVND;
+            const itemFee = maxFeeForItem + extraFeeVND;
+            newTotalFee += itemFee;
+            return {
+                ...item,
+                itemTransportFeeEstimate: itemFee
+            };
         });
+
+        setItemsData(recalculatedItems);
         setTotalFeeEstimate(newTotalFee);
         form.setFieldsValue({ totalTransportFeeEstimate: newTotalFee });
+        return recalculatedItems;
     };
 
     const handleValuesChange = (changedValues, allValues) => {
@@ -135,18 +155,25 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
 
     const handleAddItem = () => {
         setEditingItemIndex(-1);
+        setItemViewOnly(false);
+        setItemModalVisible(true);
+    };
+
+    const handleViewItem = (index) => {
+        setEditingItemIndex(index);
+        setItemViewOnly(true);
         setItemModalVisible(true);
     };
 
     const handleEditItem = (index) => {
         setEditingItemIndex(index);
+        setItemViewOnly(false);
         setItemModalVisible(true);
     };
 
     const handleDeleteItem = (index) => {
         const newItems = [...itemsData];
         newItems.splice(index, 1);
-        setItemsData(newItems);
         triggerCalculations(newItems);
     };
 
@@ -157,7 +184,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
         } else {
             newItems.push(item);
         }
-        setItemsData(newItems);
         triggerCalculations(newItems);
         setItemModalVisible(false);
     };
@@ -184,8 +210,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                     weightFee: Number(item.weightFee) || 0,
                     domesticFeeTQ: parseFloat(item.domesticFeeTQ) || 0,
                     haulingFeeTQ: parseFloat(item.haulingFeeTQ) || 0,
-                    unloadingFeeRMB: parseFloat(item.unloadingFeeRMB) || 0,
-                    domesticFeeVN: Number(item.domesticFeeVN) || 0
+                    unloadingFeeRMB: parseFloat(item.unloadingFeeRMB) || 0
                 }))
             };
 
@@ -213,31 +238,26 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
 
     return (
         <Modal
-            title={editingRecord ? t('productCode.edit', 'Sửa Mã Hàng') : t('productCode.add', 'Thêm Mã Hàng Mới')}
             open={visible}
-            onOk={handleSubmit}
+            title={viewOnly ? t('productCode.view', 'Xem Mã Hàng') : (editingRecord ? t('productCode.edit', 'Sửa Mã Hàng') : t('productCode.add', 'Thêm Mã Hàng Mới'))}
             onCancel={() => onClose()}
-            confirmLoading={submitting}
-            width={1200}
+            width={1500}
             style={{ top: 20 }}
             maskClosable={false}
-            footer={
-                <Space>
-                    <Button onClick={() => onClose()}>{t('common.cancel', 'Huỷ')}</Button>
-                    {!viewOnly && (
-                        <Button type="primary" loading={submitting} onClick={handleSubmit}>
-                            {t('common.save', 'Lưu lại')}
-                        </Button>
-                    )}
-                </Space>
-            }
+            footer={[
+                <Button key="close" onClick={() => onClose()}>{t('common.cancel', 'Huỷ')}</Button>,
+                !viewOnly && (
+                    <Button key="save" type="primary" loading={submitting} onClick={handleSubmit}>
+                        {t('common.save', 'Lưu lại')}
+                    </Button>
+                )
+            ].filter(Boolean)}
         >
             <Spin spinning={loading}>
                 <Form
                     form={form}
                     layout="vertical"
                     onValuesChange={handleValuesChange}
-                    disabled={viewOnly}
                 >
                     <Divider orientation="left">Thông tin chung</Divider>
                     <Row gutter={16}>
@@ -379,7 +399,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 label={
                                     <Space>
                                         Tổng cước TQ_HN tạm tính
-                                        <Tooltip title="Tự động tính: Σ [ Max(Khối lượng × Cước khối, Trọng lượng × Cước cân) + (Phí nội địa + Kéo hàng + Dỡ hàng) × Tỷ giá ] của các mặt hàng">
+                                        <Tooltip title="Tự động tính: Tổng Cước TQ_HN tạm tính của các mặt hàng">
                                             <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
                                         </Tooltip>
                                     </Space>
@@ -416,10 +436,11 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                         size="small"
                         rowKey={(item, idx) => item.id || idx}
                         columns={[
-                            { title: 'Tên mặt hàng', dataIndex: 'productName', key: 'productName', fixed: 'left' },
+                            { title: 'ID', dataIndex: 'id', key: 'id', width: 70, render: val => val || '-', fixed: 'left' },
+                            { title: 'Tên mặt hàng', dataIndex: 'productName', key: 'productName' },
                             { title: 'Số kiện', dataIndex: 'packageCount', key: 'packageCount', render: val => val ? `${val} kiện` : '-' },
                             {
-                                title: 'ĐVT',
+                                title: 'Đơn vị kiện',
                                 dataIndex: 'packageUnit',
                                 key: 'packageUnit',
                                 render: val => {
@@ -428,7 +449,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 }
                             },
                             { title: 'Trọng lượng', dataIndex: 'weight', key: 'weight', render: val => val ? `${val} kg` : '-' },
-                            { title: 'Khối lượng', dataIndex: 'volume', key: 'volume', render: val => val ? `${val} m³` : '-' },
                             {
                                 title: 'Cước cân',
                                 dataIndex: 'weightFee',
@@ -440,6 +460,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                     </span>
                                 )
                             },
+                            { title: 'Khối lượng', dataIndex: 'volume', key: 'volume', render: val => val ? `${val} m³` : '-' },
                             {
                                 title: 'Cước khối',
                                 dataIndex: 'volumeFee',
@@ -452,29 +473,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 )
                             },
                             {
-                                title: 'Nội địa TQ',
-                                dataIndex: 'domesticFeeTQ',
-                                key: 'domesticFeeTQ',
-                                align: 'right',
-                                render: val => (
-                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                                        {formatCurrency(val, 'RMB')}
-                                    </span>
-                                )
-                            },
-                            {
-                                title: 'Kéo hàng TQ',
-                                dataIndex: 'haulingFeeTQ',
-                                key: 'haulingFeeTQ',
-                                align: 'right',
-                                render: val => (
-                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
-                                        {formatCurrency(val, 'RMB')}
-                                    </span>
-                                )
-                            },
-                            {
-                                title: 'Dỡ hàng',
+                                title: 'Phí dỡ hàng',
                                 dataIndex: 'unloadingFeeRMB',
                                 key: 'unloadingFeeRMB',
                                 align: 'right',
@@ -485,9 +484,38 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 )
                             },
                             {
-                                title: 'Nội địa VN',
-                                dataIndex: 'domesticFeeVN',
-                                key: 'domesticFeeVN',
+                                title: 'Phí kéo hàng',
+                                dataIndex: 'haulingFeeTQ',
+                                key: 'haulingFeeTQ',
+                                align: 'right',
+                                render: val => (
+                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                                        {formatCurrency(val, 'RMB')}
+                                    </span>
+                                )
+                            },
+                            {
+                                title: 'Phí nội địa',
+                                dataIndex: 'domesticFeeTQ',
+                                key: 'domesticFeeTQ',
+                                align: 'right',
+                                render: val => (
+                                    <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
+                                        {formatCurrency(val, 'RMB')}
+                                    </span>
+                                )
+                            },
+                            {
+                                title: (
+                                    <Space>
+                                        Cước TQ_HN tạm tính
+                                        <Tooltip title="Tự động tính: Max(Khối lượng × Cước khối, Trọng lượng × Cước cân) + (Phí nội địa + Phí kéo hàng + Phí dỡ hàng) × Tỷ giá">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                ),
+                                dataIndex: 'itemTransportFeeEstimate',
+                                key: 'itemTransportFeeEstimate',
                                 align: 'right',
                                 render: val => (
                                     <span style={{ color: '#389e0d', fontWeight: 'bold' }}>
@@ -496,26 +524,93 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 )
                             },
                             { title: 'Ghi chú', dataIndex: 'notes', key: 'notes', ellipsis: true },
-                            ...(viewOnly ? [] : [{
-                                title: 'Thao tác',
-                                key: 'action',
+                            {
+                                title: 'Quản lý khai báo',
+                                key: 'declaration',
                                 align: 'center',
                                 fixed: 'right',
-                                render: (_, record, idx) => (
-                                    <Space size="middle">
-                                        <Tooltip title="Sửa">
-                                            <Button type="text" icon={<EditOutlined />} onClick={() => handleEditItem(idx)} />
+                                width: 130,
+                                render: (_, record) => (
+                                    <Space size="small">
+                                        <Tooltip title="Xem khai báo">
+                                            <Button
+                                                type="text"
+                                                icon={<FileSearchOutlined style={{ color: '#1890ff' }} />}
+                                                onClick={async () => {
+                                                    if (record.declaration?.id) {
+                                                        setLoading(true);
+                                                        try {
+                                                            const res = await declarationService.getById(record.declaration.id);
+                                                            setSelectedDeclaration(res.data);
+                                                            setDeclarationViewMode(true);
+                                                            setDeclarationModalVisible(true);
+                                                        } catch (e) {
+                                                            message.error(t('common.loadError'));
+                                                        } finally {
+                                                            setLoading(false);
+                                                        }
+                                                    } else {
+                                                        message.warning(t('declaration.notFound'));
+                                                    }
+                                                }}
+                                            />
                                         </Tooltip>
                                         {!viewOnly && (
-                                            <Popconfirm title="Xoá mặt hàng này?" onConfirm={() => handleDeleteItem(idx)}>
-                                                <Tooltip title="Xoá">
-                                                    <Button type="text" danger icon={<DeleteOutlined />} />
-                                                </Tooltip>
-                                            </Popconfirm>
+                                            <Tooltip title="Sửa khai báo">
+                                                <Button
+                                                    type="text"
+                                                    icon={<FormOutlined style={{ color: '#faad14' }} />}
+                                                    onClick={async () => {
+                                                        if (record.declaration?.id) {
+                                                            setLoading(true);
+                                                            try {
+                                                                const res = await declarationService.getById(record.declaration.id);
+                                                                setSelectedDeclaration(res.data);
+                                                                setDeclarationViewMode(false);
+                                                                setDeclarationModalVisible(true);
+                                                            } catch (e) {
+                                                                message.error(t('common.loadError'));
+                                                            } finally {
+                                                                setLoading(false);
+                                                            }
+                                                        } else {
+                                                            message.warning(t('declaration.notFound'));
+                                                        }
+                                                    }}
+                                                />
+                                            </Tooltip>
                                         )}
                                     </Space>
                                 )
-                            }])
+                            },
+                            {
+                                title: t('common.action'),
+                                key: 'action',
+                                align: 'center',
+                                fixed: 'right',
+                                width: 120,
+                                render: (_, record, index) => (
+                                    <Space size="small">
+                                        <Tooltip title="Xem mặt hàng">
+                                            <Button
+                                                type="text"
+                                                icon={<EyeOutlined />}
+                                                onClick={() => handleViewItem(index)}
+                                            />
+                                        </Tooltip>
+                                        {!viewOnly && (
+                                            <>
+                                                <Tooltip title="Sửa mặt hàng">
+                                                    <Button type="text" icon={<EditOutlined style={{ color: '#faad14' }} />} onClick={() => handleEditItem(index)} />
+                                                </Tooltip>
+                                                <Popconfirm title="Bạn có chắc chắn muốn xóa mặt hàng này?" onConfirm={() => handleDeleteItem(index)}>
+                                                    <Button type="text" icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />} />
+                                                </Popconfirm>
+                                            </>
+                                        )}
+                                    </Space>
+                                )
+                            },
                         ]}
                         scroll={{ x: 'max-content' }}
                     />
@@ -528,7 +623,42 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                     onClose={() => setItemModalVisible(false)}
                     onSave={handleSaveItem}
                     initialValues={editingItemIndex > -1 ? itemsData[editingItemIndex] : null}
-                    viewOnly={viewOnly}
+                    viewOnly={itemViewOnly}
+                    exchangeRate={form.getFieldValue('exchangeRate') || 0}
+                    onViewDeclaration={async (id) => {
+                        setLoading(true);
+                        try {
+                            const res = await declarationService.getById(id);
+                            setSelectedDeclaration(res.data);
+                            // Khai báo từ ProductItemModal → dùng mode của item
+                            setDeclarationViewMode(itemViewOnly);
+                            setDeclarationModalVisible(true);
+                        } catch (e) {
+                            message.error(t('common.loadError'));
+                        } finally {
+                            setLoading(false);
+                        }
+                    }}
+                />
+            )}
+            {declarationModalVisible && (
+                <DeclarationModal
+                    visible={declarationModalVisible}
+                    declaration={selectedDeclaration}
+                    isViewMode={declarationViewMode}
+                    onCancel={() => {
+                        setDeclarationModalVisible(false);
+                        setSelectedDeclaration(null);
+                    }}
+                    onSuccess={() => {
+                        setDeclarationModalVisible(false);
+                        setSelectedDeclaration(null);
+                        loadEditData();
+                    }}
+                    onViewProductCode={() => {
+                        // Already in ProductCodeModal, just close DeclarationModal
+                        setDeclarationModalVisible(false);
+                    }}
                 />
             )}
         </Modal>

@@ -14,6 +14,8 @@ Màn **Mã hàng** cho phép quản lý thông tin các lô hàng vận chuyển
 1. **Đối tượng quản lý chính (Mã hàng - Master)**: Giữ vai trò lô quản lý tổng.
 2. **Đối tượng con (Danh sách mặt hàng - Detail)**: Quản lý chi tiết từng món hàng, kiện hàng đóng góp vào cấu thành Mã hàng đó.
 
+> **Lưu ý Quan Trọng Về Tích Hợp (Integration)**: Khi tạo mới một "Mã hàng" kèm theo danh sách các "Mặt hàng", hệ thống sẽ **đồng thời tạo mới tự động** một bản ghi "Khai báo" (Declaration) tương ứng cho **mỗi mặt hàng** đó, để thuận tiện cho chuỗi cung ứng phía sau.
+
 ---
 
 ## 2. Thông Tin Chi Tiết Các Trường Dữ Liệu
@@ -34,12 +36,10 @@ Màn **Mã hàng** cho phép quản lý thông tin các lô hàng vận chuyển
 | 9 | **Tỷ giá** | Float | | Tỷ giá RMB / VND |
 | 10 | **Trạng thái hàng** | Selection box | | Lấy thông tin từ tình trạng hàng hóa (trong menu cài đặt, tức là tham chiếu Table/Entity) |
 
-**Cơ chế Tính toán cho [10] Tổng cước vận chuyển TQ_HN tạm tính:**
-Hệ thống lấy thông tin từ danh sách mặt hàng của mã hàng, dựa vào công thức với từng mặt hàng:
-- So sánh `(Đơn giá cước TQ_HN (khối) × Khối lượng của mặt hàng)` VÀ `(Đơn giá cước TQ_HN (cân) × Trọng lượng của mặt hàng)`.
-- Lấy kết quả LỚN HƠN của mặt hàng đó.
-- Cộng thêm với `(Phí nội địa TQ + Phí kéo hàng TQ + Phí dỡ hàng) × Tỷ giá` vào kết quả lớn hơn đó.
-- Cước tổng lô = Cộng dồn tổng các số tiền của tất cả các mặt hàng sau khi đã tính như trên.
+**Cơ chế Tính toán cho [8] Tổng cước vận chuyển TQ_HN tạm tính:**
+Hệ thống lấy thông tin từ danh sách mặt hàng của mã hàng, dựa vào cước tính toán của từng mặt hàng:
+- Với mỗi mặt hàng: Tính **Cước TQ_HN tạm tính** = `MAX(Khối lượng × Cước khối, Trọng lượng × Cước cân) + (Phí nội địa + Phí kéo hàng + Phí dỡ hàng) × Tỷ giá`.
+- Cước tổng lô (**Tổng cước TQ_HN tạm tính**) = Cộng dồn tổng các `Cước TQ_HN tạm tính` của tất cả các mặt hàng.
 
 ### 2.2 Danh Sách Các Mặt Hàng (Detail)
 Mỗi mã hàng bao gồm một tập hợp các đối tượng Mặt hàng, thông tin bao gồm:
@@ -53,10 +53,10 @@ Mỗi mã hàng bao gồm một tập hợp các đối tượng Mặt hàng, th
 | 5 | **Khối lượng** | Float | | Đơn vị: m³ |
 | 6 | **Đơn giá cước TQ_HN (khối)**| Integer | | Đơn vị: VND |
 | 7 | **Đơn giá cước TQ_HN (cân)** | Integer | | Đơn vị: VND |
-| 8 | **Phí nội địa TQ** | Float | | Đơn vị: RMB. Hiện tại chưa tham gia tính toán (note lại để sau này không bỏ sót) |
-| 9 | **Phí kéo hàng TQ** | Float | | Đơn vị: RMB. |
+| 8 | **Phí nội địa** | Float | | Đơn vị: RMB. |
+| 9 | **Phí kéo hàng** | Float | | Đơn vị: RMB. |
 | 10 | **Phí dỡ hàng** | Float | | Đơn vị: RMB. |
-| 11 | **Phí nội địa VN** | Integer | | Đơn vị: VND. Hiện tại chưa tham gia tính toán |
+| 11 | **Cước TQ_HN tạm tính** | Float | Disabled | Tự động tính toán theo công thức từ các loại phí của mặt hàng. Đơn vị: VND |
 | 12 | **Ghi chú** | Text Area | | Các chú thích về mặt hàng (String) |
 
 ---

@@ -1,24 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SyncOutlined, EyeOutlined, DownloadOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { useEffect, useState } from 'react';
+import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card, Tabs } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SyncOutlined, EyeOutlined, DownloadOutlined, SearchOutlined, ReloadOutlined, UserOutlined, ProfileOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../utils/axios';
 import * as XLSX from 'xlsx';
 import { useLocation } from 'react-router-dom';
-import { STATUS_FILTER, CUSTOMER_STATUS_FILTER_OPTIONS } from '../constants/enums';
+import { CUSTOMER_STATUS_FILTER_OPTIONS } from '../constants/enums';
 import { formatCurrency } from '../utils/format';
+import ProductCodeTable from '../components/ProductCodeTable';
 
 const { Option } = Select;
+
+const TAB_KEYS = { INFO: 'info', PRODUCT_CODES: 'productCodes' };
 
 const CustomerList = () => {
     const { t } = useTranslation();
     const [customers, setCustomers] = useState([]);
-    const [employees, setEmployees] = useState([]); // List of Sale employees
+    const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState(null);
     const [isViewMode, setIsViewMode] = useState(false);
+    const [activeTab, setActiveTab] = useState(TAB_KEYS.INFO);
     const [form] = Form.useForm();
     const [userRole, setUserRole] = useState('');
     const location = useLocation();
@@ -31,48 +35,33 @@ const CustomerList = () => {
         }
     }, []);
 
+    // Reset tab về Info mỗi khi modal mở
+    useEffect(() => {
+        if (isModalVisible) setActiveTab(TAB_KEYS.INFO);
+    }, [isModalVisible]);
 
-    // Pagination & Search State
-    const [pagination, setPagination] = useState({
-        current: 1,
-        pageSize: 20,
-        total: 0
-    });
-
-    // Advanced Search State
-    const [filters, setFilters] = useState({
-        search: '',
-        status: undefined, // undefined = All
-        saleId: undefined  // undefined = All
-    });
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
+    const [filters, setFilters] = useState({ search: '', status: undefined, saleId: undefined });
 
     const fetchCustomers = async (page = 1, limit = 20, currentFilters = filters) => {
         setLoading(true);
         try {
             const { search, status, saleId } = currentFilters;
-
             const params = {
                 page,
                 limit,
                 search: search || undefined,
                 status: status || undefined,
-                saleId: saleId || undefined
+                saleId: saleId || undefined,
             };
-
             const response = await axiosInstance.get('/customers', { params });
-            const { customers, total, page: currentPage } = response.data.data;
-            setCustomers(customers);
-            setPagination(prev => ({
-                ...prev,
-                current: currentPage,
-                pageSize: limit,
-                total: total
-            }));
+            const { customers: list, total, page: currentPage } = response.data.data;
+            setCustomers(list);
+            setPagination(prev => ({ ...prev, current: currentPage, pageSize: limit, total }));
         } catch (error) {
-            console.error(error);
-            if (error.response && error.response.data && error.response.data.code) {
+            if (error.response?.data?.code) {
                 message.error(t(`error.${error.response.data.code}`));
-            } else if (error.response && error.response.status === 403) {
+            } else if (error.response?.status === 403) {
                 message.error(t('error.99008'));
             } else {
                 message.error(t('error.UNKNOWN'));
@@ -82,16 +71,11 @@ const CustomerList = () => {
         }
     };
 
-    // Fetch employees for the Sale selection
     const fetchEmployees = async () => {
         try {
-            // Fetch all employees for dropdown (limit=0 means unlimited)
             const response = await axiosInstance.get('/employees', { params: { limit: 0 } });
-            // Handle paginated response structure
-            const employeeData = response.data.data.employees || [];
-            setEmployees(employeeData);
-        } catch (error) {
-            console.error("Failed to fetch employees for selector", error);
+            setEmployees(response.data.data.employees || []);
+        } catch {
             setEmployees([]);
         }
     };
@@ -115,22 +99,16 @@ const CustomerList = () => {
         fetchCustomers(newPagination.current, newPagination.pageSize, filters);
     };
 
-    // Filter Handlers
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
     };
 
     const handleSearch = () => {
-        // Reset to page 1 when searching
         fetchCustomers(1, pagination.pageSize, filters);
     };
 
     const handleClearFilter = () => {
-        const newFilters = {
-            search: '',
-            status: undefined,
-            saleId: undefined
-        };
+        const newFilters = { search: '', status: undefined, saleId: undefined };
         setFilters(newFilters);
         fetchCustomers(1, pagination.pageSize, newFilters);
     };
@@ -138,15 +116,8 @@ const CustomerList = () => {
     const handleAdd = () => {
         setEditingCustomer(null);
         form.resetFields();
-        // Default status active
-        form.setFieldsValue({ status: true });
-        setIsModalVisible(true);
-    };
-
-    const handleEdit = (record) => {
-        setEditingCustomer(record);
+        form.setFieldsValue({ isActive: true });
         setIsViewMode(false);
-        form.setFieldsValue(record); // record already has isActive boolean
         setIsModalVisible(true);
     };
 
@@ -157,12 +128,17 @@ const CustomerList = () => {
         setIsModalVisible(true);
     };
 
+    const handleSwitchToEdit = () => {
+        setIsViewMode(false);
+        setActiveTab(TAB_KEYS.INFO);
+    };
+
     const handleDelete = async (id) => {
         try {
             await axiosInstance.delete(`/customers/${id}`);
             message.success(t('customer.deleteSuccess'));
             fetchCustomers(pagination.current, pagination.pageSize);
-        } catch (error) {
+        } catch {
             message.error(t('error.UNKNOWN'));
         }
     };
@@ -173,9 +149,8 @@ const CustomerList = () => {
             const newPassword = response.data.data.newPassword;
             message.success(t('customer.resetPasswordSuccess', { password: newPassword }));
         } catch (error) {
-            if (error.response && error.response.data && error.response.data.code) {
-                const errorCode = error.response.data.code;
-                message.error(t(`error.${errorCode}`));
+            if (error.response?.data?.code) {
+                message.error(t(`error.${error.response.data.code}`));
             } else {
                 message.error(t('error.UNKNOWN'));
             }
@@ -194,43 +169,34 @@ const CustomerList = () => {
             setIsModalVisible(false);
             fetchCustomers(pagination.current, pagination.pageSize);
         } catch (error) {
-            console.error(error);
-            if (error.response && error.response.data && error.response.data.code) {
+            if (error.response?.data?.code) {
                 message.error(t(`error.${error.response.data.code}`));
             } else {
                 message.error(t('error.UNKNOWN'));
             }
         }
-    }
-
+    };
 
     const handleExport = async () => {
         try {
             setExportLoading(true);
             const response = await axiosInstance.get('/customers/export-data');
             const data = response.data.data;
-
-            // Map data to localized headers and values
             const exportData = data.map(item => ({
                 [t('common.id')]: item.id,
                 [t('profile.customerUsername')]: item.username,
                 [t('customer.fullName')]: item.fullName,
                 [t('customer.phone')]: item.phone,
                 [t('customer.address')]: item.address,
-                [t('customer.status')]: item.isActive ? t('customer.active') : t('customer.inactive')
+                [t('customer.status')]: item.isActive ? t('customer.active') : t('customer.inactive'),
             }));
-
             const worksheet = XLSX.utils.json_to_sheet(exportData);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "KhachHang");
-
-            // Generate filename with date
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'KhachHang');
             const date = new Date().toISOString().slice(0, 10);
             XLSX.writeFile(workbook, `DanhSachKhachHang_${date}.xlsx`);
-
             message.success(t('customer.exportSuccess'));
-        } catch (error) {
-            console.error("Export Error", error);
+        } catch {
             message.error(t('error.UNKNOWN'));
         } finally {
             setExportLoading(false);
@@ -238,24 +204,16 @@ const CustomerList = () => {
     };
 
     const columns = [
+        { title: t('common.id'), dataIndex: 'id', key: 'id', width: 80, fixed: 'left' },
+        { title: t('profile.customerUsername'), dataIndex: 'username', key: 'username', fixed: 'left', width: 150 },
+        { title: t('customer.fullName'), dataIndex: 'fullName', key: 'fullName' },
         {
-            title: t('common.id'),
-            dataIndex: 'id',
-            key: 'id',
-            width: 80,
-            fixed: 'left',
-        },
-        {
-            title: t('profile.customerUsername'),
-            dataIndex: 'username',
-            key: 'username',
-            fixed: 'left',
-            width: 150,
-        },
-        {
-            title: t('customer.fullName'),
-            dataIndex: 'fullName',
-            key: 'fullName',
+            title: t('customer.totalOrders'),
+            dataIndex: 'totalOrders',
+            key: 'totalOrders',
+            align: 'center',
+            width: 120,
+            render: (value) => `${value ?? 0} đơn`,
         },
         {
             title: t('customer.totalPaid'),
@@ -268,16 +226,8 @@ const CustomerList = () => {
                 </span>
             ),
         },
-        {
-            title: t('customer.phone'),
-            dataIndex: 'phone',
-            key: 'phone',
-        },
-        {
-            title: t('customer.address'),
-            dataIndex: 'address',
-            key: 'address',
-        },
+        { title: t('customer.phone'), dataIndex: 'phone', key: 'phone' },
+        { title: t('customer.address'), dataIndex: 'address', key: 'address' },
         {
             title: t('customer.sale'),
             dataIndex: 'saleId',
@@ -285,7 +235,7 @@ const CustomerList = () => {
             render: (saleId) => {
                 const emp = employees.find(e => e.id === saleId);
                 return emp ? emp.fullName || emp.username : '-';
-            }
+            },
         },
         {
             title: t('customer.status'),
@@ -304,17 +254,110 @@ const CustomerList = () => {
             render: (_, record) => (
                 <Space size="middle">
                     <Button icon={<EyeOutlined />} onClick={() => handleView(record)} title={t('common.view')} />
-                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} title={t('customer.edit')} />
                     <Popconfirm title={t('common.confirmResetPassword')} onConfirm={() => handleResetPassword(record.id)}>
                         <Button icon={<SyncOutlined />} style={{ color: '#fa541c', borderColor: '#fa541c' }} title={t('customer.resetPassword')} />
                     </Popconfirm>
-                    <Popconfirm title={t('common.confirmDelete')} onConfirm={() => handleDelete(record.id)}>
-                        <Button icon={<DeleteOutlined />} danger title={t('common.delete')} />
-                    </Popconfirm>
+                    {userRole === 'ADMIN' && (
+                        <Popconfirm title={t('common.confirmDelete')} onConfirm={() => handleDelete(record.id)}>
+                            <Button icon={<DeleteOutlined />} danger title={t('common.delete')} />
+                        </Popconfirm>
+                    )}
                 </Space>
             ),
         },
     ];
+
+    // Form dùng chung cho cả view và edit/create
+    const customerForm = (
+        <Form form={form} layout="vertical" onFinish={handleSave}>
+            <Form.Item
+                name="username"
+                label={t('profile.customerUsername')}
+                rules={[{ required: true, message: t('validation.required') }]}
+            >
+                <Input disabled={!!editingCustomer} placeholder={t('customer.customerCodePlaceholder')} />
+            </Form.Item>
+
+            {!editingCustomer && (
+                <Form.Item
+                    name="password"
+                    label={t('profile.newPassword')}
+                    rules={[{ required: true, message: t('validation.required') }]}
+                >
+                    <Input.Password />
+                </Form.Item>
+            )}
+
+            <Form.Item
+                name="fullName"
+                label={t('customer.fullName')}
+                rules={[{ required: true, message: t('validation.required') }]}
+            >
+                <Input disabled={isViewMode} />
+            </Form.Item>
+
+            <Form.Item name="phone" label={t('customer.phone')}>
+                <Input disabled={isViewMode} />
+            </Form.Item>
+
+            <Form.Item name="address" label={t('customer.address')}>
+                <Input disabled={isViewMode} />
+            </Form.Item>
+
+            <Form.Item name="saleId" label={t('customer.sale')}>
+                <Select
+                    allowClear
+                    placeholder={t('customer.sale')}
+                    disabled={isViewMode}
+                    showSearch
+                    filterOption={(input, option) =>
+                        (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                    }
+                >
+                    {employees.map(emp => (
+                        <Option key={emp.id} value={emp.id}>
+                            {emp.fullName || emp.username} ({t(`roles.${emp.role}`)})
+                        </Option>
+                    ))}
+                </Select>
+            </Form.Item>
+
+            <Form.Item name="isActive" label={t('customer.status')} valuePropName="checked" initialValue={true}>
+                <Switch
+                    checkedChildren={t('customer.active')}
+                    unCheckedChildren={t('customer.inactive')}
+                    disabled={isViewMode}
+                />
+            </Form.Item>
+
+            {!isViewMode && (
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" block>
+                        {t('common.save')}
+                    </Button>
+                </Form.Item>
+            )}
+        </Form>
+    );
+
+    // Modal footer: chỉ hiển thị khi ở view mode (edit mode dùng submit button bên trong form)
+    const modalFooter = isViewMode ? [
+        ...(userRole === 'ADMIN' ? [
+            <Button key="edit" type="primary" icon={<EditOutlined />} onClick={handleSwitchToEdit}>
+                {t('customer.edit')}
+            </Button>,
+        ] : []),
+        <Button key="close" onClick={() => setIsModalVisible(false)}>
+            {t('common.close')}
+        </Button>,
+    ] : null;
+
+    const modalTitle = isViewMode
+        ? t('common.view')
+        : (editingCustomer ? t('customer.edit') : t('customer.add'));
+
+    // Modal rộng hơn khi view (để hiện bảng mã hàng)
+    const modalWidth = isViewMode ? 900 : 520;
 
     return (
         <div>
@@ -328,10 +371,11 @@ const CustomerList = () => {
                             {userRole === 'ADMIN' && (
                                 <Button
                                     icon={<DownloadOutlined />}
+                                    loading={exportLoading}
                                     onClick={handleExport}
                                     style={{ backgroundColor: '#217346', color: '#fff', borderColor: '#217346' }}
                                 >
-                                    {t('common.exportExcel') || "Export Excel"}
+                                    {t('common.exportExcel') || 'Export Excel'}
                                 </Button>
                             )}
                             <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
@@ -341,12 +385,11 @@ const CustomerList = () => {
                     </Col>
                 </Row>
 
-                {/* Advanced Filter Bar */}
                 <Card size="small" style={{ marginTop: 16 }}>
                     <Row gutter={[16, 16]} align="middle">
                         <Col xs={24} sm={24} md={24} lg={24}>
                             <Input
-                                placeholder={t('customer.title') + " (" + t('customer.fullName') + ", " + t('profile.customerUsername') + ", " + t('customer.phone') + ")"}
+                                placeholder={`${t('customer.title')} (${t('customer.fullName')}, ${t('profile.customerUsername')}, ${t('customer.phone')})`}
                                 prefix={<SearchOutlined />}
                                 value={filters.search}
                                 onChange={e => handleFilterChange('search', e.target.value)}
@@ -418,96 +461,58 @@ const CustomerList = () => {
                     ...pagination,
                     showSizeChanger: true,
                     pageSizeOptions: ['20', '30', '40', '50'],
-                    locale: { items_per_page: t('common.items_per_page') }, // Shorten text
-                    showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`, // Compact total
+                    locale: { items_per_page: t('common.items_per_page') },
+                    showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
                 }}
                 onChange={handleTableChange}
             />
 
             <Modal
-                title={isViewMode ? t('common.view') : (editingCustomer ? t('customer.edit') : t('customer.add'))}
+                title={modalTitle}
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
-                footer={null}
+                footer={modalFooter}
+                width={modalWidth}
+                destroyOnClose
             >
-                <Form form={form} layout="vertical" onFinish={handleSave}>
-
-
-                    <Form.Item
-                        name="username"
-                        label={t('profile.customerUsername')}
-                        rules={[{ required: true, message: t('validation.required') }]}
-                    >
-                        <Input
-                            disabled={!!editingCustomer}
-                            placeholder={t('customer.customerCodePlaceholder')}
-                        />
-                    </Form.Item>
-
-                    {!editingCustomer && (
-                        <Form.Item
-                            name="password"
-                            label={t('profile.newPassword')}
-                            rules={[{ required: true, message: t('validation.required') }]}
-                        >
-                            <Input.Password disabled={isViewMode} />
-                        </Form.Item>
-                    )}
-
-                    <Form.Item
-                        name="fullName"
-                        label={t('customer.fullName')}
-                        rules={[{ required: true, message: t('validation.required') }]}
-                    >
-                        <Input disabled={isViewMode} />
-                    </Form.Item>
-
-                    <Form.Item name="phone" label={t('customer.phone')}>
-                        <Input disabled={isViewMode} />
-                    </Form.Item>
-
-                    <Form.Item name="address" label={t('customer.address')}>
-                        <Input disabled={isViewMode} />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="saleId"
-                        label={t('customer.sale')}
-                    >
-                        <Select
-                            allowClear
-                            placeholder={t('customer.sale')}
-                            disabled={isViewMode}
-                            showSearch
-                            filterOption={(input, option) =>
-                                (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
-                            }
-                        >
-                            {employees.map(emp => (
-                                <Option key={emp.id} value={emp.id}>
-                                    {emp.fullName || emp.username} ({t(`roles.${emp.role}`)})
-                                </Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                        name="isActive"
-                        label={t('customer.status')}
-                        valuePropName="checked"
-                        initialValue={true}
-                    >
-                        <Switch checkedChildren={t('customer.active')} unCheckedChildren={t('customer.inactive')} disabled={isViewMode} />
-                    </Form.Item>
-
-                    {!isViewMode && (
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit" block>
-                                {t('common.save')}
-                            </Button>
-                        </Form.Item>
-                    )}
-                </Form>
+                {isViewMode ? (
+                    // View mode: Tabs layout
+                    <Tabs
+                        activeKey={activeTab}
+                        onChange={setActiveTab}
+                        items={[
+                            {
+                                key: TAB_KEYS.INFO,
+                                label: (
+                                    <span><UserOutlined />{t('customer.tabInfo') || 'Thông tin'}</span>
+                                ),
+                                children: customerForm,
+                            },
+                            {
+                                key: TAB_KEYS.PRODUCT_CODES,
+                                label: (
+                                    <span>
+                                        <ProfileOutlined />
+                                        {t('customer.tabProductCodes') || 'Mã hàng'}
+                                        {editingCustomer?.totalOrders != null && ` (${editingCustomer.totalOrders} đơn)`}
+                                    </span>
+                                ),
+                                children: (
+                                    <ProductCodeTable
+                                        customerId={editingCustomer?.id}
+                                        userRole={userRole}
+                                        showFilters
+                                        showPagination
+                                        showActions
+                                    />
+                                ),
+                            },
+                        ]}
+                    />
+                ) : (
+                    // Create / Edit mode: form thẳng
+                    customerForm
+                )}
             </Modal>
         </div>
     );

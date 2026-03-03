@@ -1,11 +1,10 @@
 import axiosInstance from '../utils/axios';
 
 const productCodeService = {
-    getAll: async (page = 1, limit = 20, search = '', status = '') => {
+    getAll: async (page = 1, limit = 20, search = '', status = '', customerId = undefined) => {
         const params = { page, limit, search };
-        if (status) {
-            params.status = status;
-        }
+        if (status) params.status = status;
+        if (customerId) params.customerId = customerId;
         const response = await axiosInstance.get('/product-codes', { params });
         return response.data;
     },

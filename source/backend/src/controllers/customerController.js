@@ -117,6 +117,9 @@ const customerController = {
                     transactions: {
                         where: { status: 'SUCCESS' },
                         select: { amount: true }
+                    },
+                    _count: {
+                        select: { productCodes: true }
                     }
                 }
             };
@@ -131,11 +134,12 @@ const customerController = {
                 prisma.user.count({ where })
             ]);
 
-            // Calculate totalPaid
+            // Calculate totalPaid and totalOrders
             const customers = customersRaw.map(c => {
                 const totalPaid = c.transactions.reduce((sum, t) => sum + Number(t.amount), 0);
-                const { transactions, ...rest } = c; // Remove transactions from response to keep it clean
-                return { ...rest, totalPaid };
+                const totalOrders = c._count.productCodes;
+                const { transactions, _count, ...rest } = c;
+                return { ...rest, totalPaid, totalOrders };
             });
 
             const responseData = {

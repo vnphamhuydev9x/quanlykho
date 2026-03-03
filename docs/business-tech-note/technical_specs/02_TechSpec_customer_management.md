@@ -24,6 +24,7 @@ Sử dụng model `User` với `UserType.CUSTOMER`.
 | **Nhân viên phụ trách** | `saleId` | Quan hệ N-1 với bảng `User` (Sale). |
 | **Trạng thái** | `isActive` | |
 | **Loại TK** | `type` | Luôn set là `CUSTOMER` |
+| **Tổng đơn hàng** | (Calculated) | Đếm số bản ghi `ProductCode` có `customerId=User.id` (real-time via Prisma `_count`). |
 | **Tổng tiền** | (Calculated) | Tính tổng `amount` từ bảng `Transaction` có `customerId=User.id` và `status=SUCCESS`. |
 
 ### 2.2 Index Strategy
@@ -45,6 +46,7 @@ Base URL: `/api/customers`
   - `saleId`: ID nhân viên phụ trách.
 - **Response**:
   - Trả về danh sách User có `type=CUSTOMER`.
+  - Field `totalOrders`: Backend đếm real-time số `ProductCode` liên kết với từng khách hàng (via Prisma `_count`). Xem chi tiết tại mục 3.9.
   - Field `totalPaid`: Backend tính toán (aggregate sum từ bảng `Transaction`) hoặc Frontend gọi API riêng nếu cần tối ưu.
     - *Giải pháp*: Nên include `transactions` (có filter status=SUCCESS) và tính tổng ở Backend trước khi trả về, hoặc dùng `_sum` aggregate của Prisma.
 
@@ -92,6 +94,45 @@ Base URL: `/api/customers`
   - Query DB lấy thông tin các ID này.
   - Sử dụng thư viện `exceljs` để tạo file buffer.
   - Trả về file stream với header `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
+
+### 3.9 Logic tính `totalOrders`
+Đếm số mã hàng (`ProductCode`) thuộc khách hàng sử dụng **Prisma `_count`** — không tạo cột riêng trong DB, không cần trigger hay cron job.
+
+#### Khi lấy Danh sách Khách hàng (`GET /`)
+Thêm `_count` vào block `select` của Prisma query:
+```javascript
+const customers = await prisma.user.findMany({
+  where: { type: 'CUSTOMER', ... },
+  select: {
+    id: true,
+    username: true,
+    fullName: true,
+    // ... các trường khác
+    _count: {
+      select: { productCodes: true }
+    }
+  }
+});
+
+// Map sang response:
+const result = customers.map(c => ({
+  ...c,
+  totalOrders: c._count.productCodes,
+}));
+```
+
+#### Chiến lược Caching cho `totalOrders`
+Tương tự `totalPaid`: `totalOrders` là **dynamic data** — thay đổi mỗi khi có CRUD trên `ProductCode`. Do đó áp dụng cùng nguyên tắc với mục 5:
+- **Không cache** `totalOrders` trong Redis cùng với static user data.
+- Luôn tính real-time kèm theo mỗi request danh sách.
+- Khi CRUD `ProductCode`: invalidate cache `customers:list:*` để buộc query lại lần sau.
+
+#### Lý do chọn `_count` thay vì denormalized column
+- Không cần cột `totalOrders` trong bảng `User` — tránh drift dữ liệu.
+- Prisma tự sinh `COUNT(*)` tối ưu trong cùng 1 query, không tốn thêm round-trip.
+- Dataset quy mô vừa: `COUNT` trên index `customerId` của bảng `ProductCode` cực nhanh.
+
+---
 
 ### 3.8 Logic tính `totalPaid`
 Ở giai đoạn này với quy mô vừa phải, chúng ta nên dùng **Real-time Query (On-the-fly Calculation)** thay vì lưu cứng vào bảng `User` để đảm bảo dữ liệu luôn chính xác (Single Source of Truth). PostgreSQL xử lý aggregation rất nhanh.
@@ -152,7 +193,9 @@ Khi API `GET /api/customers` được gọi:
 - **Khi thêm/sửa/xóa Khách hàng (User Info):**
     - Xóa cache `customers:list:*`.
     - Xóa cache `customers:detail:${id}`.
-- **Khi thêm/sửa/xóa Giao dịch (Transaction):**
+- **Khi thêm/sửa/xóa Mã hàng (ProductCode) — ảnh hưởng `totalOrders`:**
+    - Xóa cache `customers:list:*` để buộc query lại `_count` cho khách hàng liên quan.
+- **Khi thêm/sửa/xóa Giao dịch (Transaction) — ảnh hưởng `totalPaid`:**
     - **Không cần làm gì cả** với danh sách khách hàng! (Vì `totalPaid` luôn được tính lại ở Bước 2).
     - Chỉ cần invalidate cache của chính Transaction đó (nếu có).
 

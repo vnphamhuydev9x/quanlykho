@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import ProductCodeTable from '../../components/ProductCodeTable';
 import {
     Table, Button, Space, Tag, message, Spin, Descriptions,
     Modal, Typography, Row, Col, Card, Popconfirm, Divider
@@ -155,36 +156,6 @@ const ManifestDetailPage = () => {
         }
     ];
 
-    // Columns cho modal chọn mã hàng
-    const availableColumns = [
-        { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
-        { title: 'Mã đơn hàng', dataIndex: 'orderCode', key: 'orderCode', width: 150 },
-        {
-            title: 'Khách hàng',
-            key: 'customer',
-            render: (_, r) => r.customer
-                ? `${r.customer.customerCode || ''} ${r.customer.fullName}`.trim()
-                : '—'
-        },
-        {
-            title: 'Tổng cân',
-            dataIndex: 'totalWeight',
-            key: 'totalWeight',
-            width: 110,
-            align: 'right',
-            render: (v) => v ? `${new Intl.NumberFormat('de-DE').format(v)} kg` : '0 kg'
-        },
-        {
-            title: 'Tổng khối',
-            dataIndex: 'totalVolume',
-            key: 'totalVolume',
-            width: 110,
-            align: 'right',
-            render: (v) => v
-                ? `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(v)} m³`
-                : '0 m³'
-        }
-    ];
 
     if (loading && !manifest) {
         return (
@@ -313,18 +284,16 @@ const ManifestDetailPage = () => {
                         ✓ Đã chọn {selectedPCKeys.length} mã hàng
                     </div>
                 )}
-                <Table
-                    columns={availableColumns}
+                <ProductCodeTable
                     dataSource={availablePCs}
-                    rowKey="id"
-                    loading={loadingAvailable}
-                    size="small"
-                    pagination={{ pageSize: 10 }}
+                    externalLoading={loadingAvailable}
                     rowSelection={{
                         selectedRowKeys: selectedPCKeys,
                         onChange: (keys) => setSelectedPCKeys(keys),
                     }}
-                    scroll={{ x: 'max-content' }}
+                    showFilters={false}
+                    showPagination={false}
+                    showActions={false}
                 />
             </Modal>
         </div>

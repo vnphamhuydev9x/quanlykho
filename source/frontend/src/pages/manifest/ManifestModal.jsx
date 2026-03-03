@@ -5,12 +5,13 @@ import {
     Typography, Divider, Alert
 } from 'antd';
 import {
-    TruckOutlined, PlusOutlined, DeleteOutlined, EyeOutlined,
+    TruckOutlined, PlusOutlined, DeleteOutlined,
     UndoOutlined, WarningOutlined, CheckCircleOutlined, EditOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import manifestService from '../../services/manifestService';
 import productCodeService from '../../services/productCodeService';
+import ProductCodeTable from '../../components/ProductCodeTable';
 import employeeService from '../../services/employeeService';
 import { MANIFEST_STATUS_OPTIONS } from '../../constants/enums';
 
@@ -355,29 +356,6 @@ const ManifestModal = ({
         }
     ];
 
-    // ─── Columns modal chọn PC ────────────────────────────────────────
-    const availableColumns = [
-        { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
-        { title: 'Mã đơn', dataIndex: 'orderCode', key: 'orderCode', width: 140 },
-        {
-            title: 'Khách hàng',
-            key: 'customer',
-            render: (_, r) => r.customer?.fullName || '—'
-        },
-        {
-            title: 'Tổng cân',
-            dataIndex: 'totalWeight',
-            width: 110,
-            render: v => v ? `${new Intl.NumberFormat('de-DE').format(v)} kg` : '0 kg'
-        },
-        {
-            title: 'Tổng khối',
-            dataIndex: 'totalVolume',
-            width: 110,
-            render: v => v ? `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(v)} m³` : '0 m³'
-        }
-    ];
-
     // ─── Modal title ──────────────────────────────────────────────────
     const modalTitle = isCreate
         ? 'Tạo chuyến xe mới'
@@ -574,18 +552,16 @@ const ManifestModal = ({
                         <CheckCircleOutlined /> Đã chọn {selectedAddKeys.length} mã hàng
                     </div>
                 )}
-                <Table
-                    columns={availableColumns}
+                <ProductCodeTable
                     dataSource={availablePCs}
-                    rowKey="id"
-                    loading={loadingAvailable}
-                    size="small"
-                    pagination={{ pageSize: 8 }}
+                    externalLoading={loadingAvailable}
                     rowSelection={{
                         selectedRowKeys: selectedAddKeys,
                         onChange: keys => setSelectedAddKeys(keys),
                     }}
-                    scroll={{ x: 'max-content' }}
+                    showFilters={false}
+                    showPagination={false}
+                    showActions={false}
                 />
             </Modal>
         </>

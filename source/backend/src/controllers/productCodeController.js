@@ -64,10 +64,10 @@ const invalidateCache = async (id = null) => {
 const productCodeController = {
     getAllProductCodes: async (req, res) => {
         try {
-            const { page = 1, limit = 20, search = '' } = req.query;
+            const { page = 1, limit = 20, search = '', customerId } = req.query;
             const skip = (parseInt(page) - 1) * parseInt(limit);
 
-            const cacheKey = `${CACHE_KEY_LIST}:${page}:${limit}:${search}`;
+            const cacheKey = `${CACHE_KEY_LIST}:${page}:${limit}:${search}:${customerId || 'all'}`;
 
             // 1. Check Cache
             const cachedData = await redisClient.get(cacheKey);
@@ -80,6 +80,10 @@ const productCodeController = {
 
             // 2. Build Query
             const where = { deletedAt: null };
+
+            if (customerId) {
+                where.customerId = parseInt(customerId);
+            }
 
             if (search) {
                 const searchNum = parseInt(search);

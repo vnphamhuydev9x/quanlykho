@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, message, Switch } from 'antd';
+import { Modal, Form, Input, Select, message, Switch, Button } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
 
-const WarehouseModal = ({ visible, onCancel, onSuccess, editingWarehouse }) => {
+const WarehouseModal = ({ visible, onCancel, onSuccess, editingWarehouse, viewOnly = false, userRole = 'USER', onSwitchToEdit }) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
 
@@ -42,17 +43,21 @@ const WarehouseModal = ({ visible, onCancel, onSuccess, editingWarehouse }) => {
     return (
         <Modal
             open={visible}
-            title={editingWarehouse ? t('common.edit') + " " + t('menu.warehouse') : t('warehouse.add') + " " + t('menu.warehouse')}
-            okText={t('common.save')}
-            cancelText={t('common.cancel')}
+            title={viewOnly ? ('Xem ' + t('menu.warehouse')) : (editingWarehouse ? t('common.edit') + " " + t('menu.warehouse') : t('warehouse.add') + " " + t('menu.warehouse'))}
             onCancel={onCancel}
-            onOk={handleOk}
+            footer={[
+                viewOnly && userRole === 'ADMIN' && (
+                    <Button key="edit" type="primary" icon={<EditOutlined />} onClick={() => onSwitchToEdit?.()}>
+                        Chỉnh sửa
+                    </Button>
+                ),
+                <Button key="close" onClick={onCancel}>{t('common.cancel')}</Button>,
+                !viewOnly && (
+                    <Button key="ok" type="primary" onClick={handleOk}>{t('common.save')}</Button>
+                )
+            ].filter(Boolean)}
         >
-            <Form
-                form={form}
-                layout="vertical"
-                name="warehouse_form"
-            >
+            <Form form={form} layout="vertical" name="warehouse_form" disabled={viewOnly}>
                 <Form.Item
                     name="name"
                     label={t('warehouse.name')}

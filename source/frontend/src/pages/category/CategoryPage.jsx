@@ -30,6 +30,7 @@ const CategoryPage = () => {
     // Modal state
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
+    const [viewOnly, setViewOnly] = useState(false);
 
     // User Role check
     const [userRole, setUserRole] = useState('USER');
@@ -145,13 +146,13 @@ const CategoryPage = () => {
             render: (_, record) => (
                 <Space size="middle">
                     <Button
-                        icon={<EditOutlined />}
+                        icon={<EyeOutlined />}
                         onClick={() => {
                             setEditingCategory(record);
+                            setViewOnly(true);
                             setIsModalVisible(true);
                         }}
-                        disabled={userRole !== 'ADMIN'}
-                        title={t('common.edit')}
+                        title={t('common.view')}
                     />
                     {userRole === 'ADMIN' && (
                         <Popconfirm
@@ -260,9 +261,13 @@ const CategoryPage = () => {
                 onCancel={() => {
                     setIsModalVisible(false);
                     setEditingCategory(null);
+                    setViewOnly(false);
                 }}
                 onSuccess={handleCreateUpdate}
                 editingCategory={editingCategory}
+                viewOnly={viewOnly}
+                userRole={userRole}
+                onSwitchToEdit={() => setViewOnly(false)}
             />
         </div>
     );

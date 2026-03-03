@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Input, Card, Popconfirm, message, Typography, Row, Col, Image, Tooltip } from 'antd';
+import { Table, Button, Space, Input, Card, Popconfirm, message, Typography, Row, Col, Image, Tooltip, Tag } from 'antd';
 import {
     PlusOutlined,
     SearchOutlined,
@@ -15,7 +15,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import declarationService from '../../services/declarationService';
 import DeclarationModal from './DeclarationModal';
 import ProductCodeModal from '../productCode/ProductCodeModal';
+import ManifestModal from '../manifest/ManifestModal';
 import { formatCurrency } from '../../utils/format';
+import { MANIFEST_STATUS_OPTIONS } from '../../constants/enums';
 import moment from 'moment';
 
 const { Text } = Typography;
@@ -44,6 +46,10 @@ const DeclarationPage = () => {
 
     const [pcModalVisible, setPcModalVisible] = useState(false);
     const [selectedPc, setSelectedPc] = useState(null);
+
+    // Quick Peek — ManifestModal (Rule 16)
+    const [peekManifestId, setPeekManifestId] = useState(null);
+    const [peekManifestVisible, setPeekManifestVisible] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -296,20 +302,47 @@ const DeclarationPage = () => {
             render: (val) => <Text strong style={{ color: '#cf1322', fontSize: 16 }}>{formatCurrency(val, 'VND')}</Text>
         },
         {
+            title: 'Tình trạng xếp xe',
+            key: 'vehicleStatus',
+            width: 150,
+            render: (_, record) => {
+                const vs = record.productCode?.vehicleStatus;
+                const mid = record.productCode?.manifestId;
+                const opt = MANIFEST_STATUS_OPTIONS.find(o => o.value === vs);
+                return (
+                    <Space size={4}>
+                        {opt ? (
+                            <Tag
+                                color={opt.color}
+                                style={mid ? { cursor: 'pointer' } : undefined}
+                                onClick={mid ? () => { setPeekManifestId(mid); setPeekManifestVisible(true); } : undefined}
+                            >
+                                {opt.label}{mid && ' ↗'}
+                            </Tag>
+                        ) : (
+                            <Tag color="default">Chưa xếp xe</Tag>
+                        )}
+                        {record.productCode?.vehicleStatusOverridden && (
+                            <Tooltip title="Trạng thái đã chỉnh thủ công">
+                                <span style={{ color: '#faad14', fontSize: 11 }}>⚠</span>
+                            </Tooltip>
+                        )}
+                    </Space>
+                );
+            }
+        },
+        {
             title: t('common.action'),
             key: 'action',
-            width: 120,
+            width: 90,
             fixed: 'right',
             render: (_, record) => (
                 <Space size="small">
                     <Button type="text" icon={<EyeOutlined />} onClick={() => handleView(record)} />
                     {userRole === 'ADMIN' && (
-                        <>
-                            <Button type="text" icon={<EditOutlined style={{ color: '#faad14' }} />} onClick={() => handleEdit(record)} />
-                            <Popconfirm title={t('common.confirmDelete')} onConfirm={() => handleDelete(record.id)}>
-                                <Button type="text" icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />} />
-                            </Popconfirm>
-                        </>
+                        <Popconfirm title={t('common.confirmDelete')} onConfirm={() => handleDelete(record.id)}>
+                            <Button type="text" icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />} />
+                        </Popconfirm>
                     )}
                 </Space>
             ),
@@ -382,6 +415,8 @@ const DeclarationPage = () => {
                 visible={isModalVisible}
                 declaration={editingDeclaration}
                 isViewMode={isViewMode}
+                userRole={userRole}
+                onSwitchToEdit={() => setIsViewMode(false)}
                 onCancel={() => {
                     setIsModalVisible(false);
                     setEditingDeclaration(null);
@@ -400,6 +435,17 @@ const DeclarationPage = () => {
                     editingRecord={selectedPc}
                     viewOnly={true}
                     userType={userType}
+                />
+            )}
+
+            {/* Quick Peek — Manifest (Rule 16) */}
+            {peekManifestVisible && (
+                <ManifestModal
+                    visible={peekManifestVisible}
+                    mode="view"
+                    manifestId={peekManifestId}
+                    onClose={() => setPeekManifestVisible(false)}
+                    onSuccess={() => setPeekManifestVisible(false)}
                 />
             )}
         </div>

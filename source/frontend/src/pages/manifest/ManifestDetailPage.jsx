@@ -1,255 +1,333 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Space, Card, Row, Col, Typography, Modal, message, Tag, Descriptions, Divider, Checkbox } from 'antd';
-import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, ExportOutlined, ReloadOutlined } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
-import moment from 'moment';
-import * as XLSX from 'xlsx';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    Table, Button, Space, Tag, message, Spin, Descriptions,
+    Modal, Typography, Row, Col, Card, Popconfirm, Divider
+} from 'antd';
+import {
+    ArrowLeftOutlined, PlusOutlined, DeleteOutlined,
+    TruckOutlined, ReloadOutlined
+} from '@ant-design/icons';
+import { useNavigate, useParams } from 'react-router-dom';
+import dayjs from 'dayjs';
 import manifestService from '../../services/manifestService';
 import productCodeService from '../../services/productCodeService';
+import { MANIFEST_STATUS_OPTIONS } from '../../constants/enums';
+import { formatCurrency } from '../../utils/format';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+
+const getStatusOption = (status) =>
+    MANIFEST_STATUS_OPTIONS.find(o => o.value === status) || { label: status, color: 'default' };
 
 const ManifestDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+
     const [manifest, setManifest] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // For Add Items Modal
-    const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-    const [availableItems, setAvailableItems] = useState([]);
-    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-    const [addLoading, setAddLoading] = useState(false);
+    // Modal thêm mã hàng
+    const [addModalVisible, setAddModalVisible] = useState(false);
+    const [availablePCs, setAvailablePCs] = useState([]);
+    const [loadingAvailable, setLoadingAvailable] = useState(false);
+    const [selectedPCKeys, setSelectedPCKeys] = useState([]);
+    const [addingItems, setAddingItems] = useState(false);
 
-    useEffect(() => {
-        fetchManifestDetail();
-    }, [id]);
-
-    const fetchManifestDetail = async () => {
+    const fetchManifest = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await manifestService.getById(id);
-            setManifest(data);
-        } catch (error) {
-            message.error('Lỗi khi tải chi tiết chuyến xe');
+            const res = await manifestService.getById(id);
+            setManifest(res.data || res);
+        } catch {
+            message.error('Lỗi khi tải thông tin chuyến xe');
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
 
-    const fetchAvailableItems = async () => {
-        setAddLoading(true);
+    useEffect(() => { fetchManifest(); }, [fetchManifest]);
+
+    // Fetch danh sách mã hàng chưa có xe để thêm vào
+    const fetchAvailablePCs = async () => {
+        setLoadingAvailable(true);
         try {
-            // Get items with status CHO_XEP_XE and no manifestId
-            // TODO: Ensure backend supports filtering by status and manifestId=null
-            // Temporary: Get CHO_XEP_XE. Ideally backend should support this specific query.
-            const response = await productCodeService.getAll({
-                page: 1, limit: 1000,
-                status: 'CHO_XEP_XE'
-            });
-            // Filter out items already in this manifest (though status should prevent this)
-            // or items already in another manifest (status check handles this)
-            const items = response.data?.items || [];
-            // Client side filter if needed:
-            const filtered = items.filter(item => !item.manifestId);
-            setAvailableItems(filtered);
-        } catch (error) {
-            message.error('Lỗi khi tải danh sách hàng chờ xếp');
+            // Lấy tất cả ProductCode không có manifestId
+            const res = await productCodeService.getAll(1, 200, '');
+            const all = res.data?.items || res.items || res.data || [];
+            // Lọc những cái chưa có xe
+            setAvailablePCs(all.filter(pc => !pc.manifestId));
+        } catch {
+            message.error('Lỗi khi tải danh sách mã hàng');
         } finally {
-            setAddLoading(false);
+            setLoadingAvailable(false);
         }
     };
 
     const handleOpenAddModal = () => {
-        setIsAddModalVisible(true);
-        setSelectedRowKeys([]);
-        fetchAvailableItems();
+        setSelectedPCKeys([]);
+        fetchAvailablePCs();
+        setAddModalVisible(true);
     };
 
     const handleAddItems = async () => {
-        if (selectedRowKeys.length === 0) {
-            message.warning('Vui lòng chọn ít nhất 1 kiện hàng');
+        if (selectedPCKeys.length === 0) {
+            message.warning('Chưa chọn mã hàng nào');
             return;
         }
+        setAddingItems(true);
         try {
-            await manifestService.addItems(id, selectedRowKeys);
-            message.success('Đã thêm hàng vào chuyến');
-            setIsAddModalVisible(false);
-            fetchManifestDetail();
-        } catch (error) {
-            message.error('Lỗi khi thêm hàng');
+            await manifestService.addItems(id, selectedPCKeys);
+            message.success(`Đã thêm ${selectedPCKeys.length} mã hàng vào xe`);
+            setAddModalVisible(false);
+            fetchManifest();
+        } catch (err) {
+            message.error(err.response?.data?.message || 'Lỗi khi thêm mã hàng');
+        } finally {
+            setAddingItems(false);
         }
     };
 
-    const handleRemoveItem = (itemId) => {
-        Modal.confirm({
-            title: 'Xóa khỏi chuyến',
-            content: 'Bạn có chắc muốn xóa kiện hàng này khỏi chuyến xe?',
-            onOk: async () => {
-                try {
-                    await manifestService.removeItems(id, [itemId]);
-                    message.success('Đã xóa kiện hàng khỏi chuyến');
-                    fetchManifestDetail();
-                } catch (error) {
-                    message.error('Lỗi khi xóa hàng');
-                }
-            }
-        });
-    };
-
-    const handleExportExcel = () => {
-        if (!manifest || !manifest.productCodes || manifest.productCodes.length === 0) {
-            message.warning('Không có dữ liệu để xuất');
-            return;
+    const handleRemoveItem = async (pcId) => {
+        try {
+            await manifestService.removeItems(id, [pcId]);
+            message.success('Đã xóa mã hàng khỏi xe');
+            fetchManifest();
+        } catch {
+            message.error('Lỗi khi xóa mã hàng khỏi xe');
         }
-
-        const excelData = manifest.productCodes.map((item, index) => ({
-            'STT': index + 1,
-            '1. [A] Mã KH': item.customerCodeInput || item.customer?.customerCode || '',
-            '2. [B] Tên hàng': item.productName,
-            '3. [C] Mã đơn': item.orderCode,
-            '4. [D] Số kiện': item.packageCount,
-            '5. [E] Đóng gói': item.packing,
-            '6. [F] Trọng lượng (Kg)': item.weight,
-            '7. [G] Khối lượng (m3)': item.volume,
-            '8. [H] Ảnh': item.images && item.images.length > 0 ? 'Có ảnh' : 'Không',
-            // Note: Excel cannot easily display implementation images directly without complex lib. 
-            // Just indicating presence or URL.
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(excelData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "XepXe");
-        XLSX.writeFile(wb, `XepXe_${manifest.name}.xlsx`);
     };
 
-    // Columns for Main Table (8 Columns Simplified)
-    const columns = [
-        { title: '#', render: (t, r, i) => i + 1, width: 50, fixed: 'left' },
-        { title: '1. [A] Mã KH', dataIndex: 'customerCodeInput', width: 100, render: (t, r) => t || r.customer?.customerCode },
-        { title: '2. [B] Tên hàng', dataIndex: 'productName', width: 150 },
-        { title: '3. [C] Mã đơn', dataIndex: 'orderCode', width: 120 },
-        { title: '4. [D] Số kiện', dataIndex: 'packageCount', width: 80 },
-        { title: '5. [E] Đóng gói', dataIndex: 'packing', width: 100 },
-        { title: '6. [F] TL (Kg)', dataIndex: 'weight', width: 80 },
-        { title: '7. [G] KL (m3)', dataIndex: 'volume', width: 80 },
+    // Columns cho danh sách mã hàng trong xe
+    const pcColumns = [
+        { title: 'ID', dataIndex: 'id', key: 'id', width: 70, align: 'center' },
+        { title: 'Mã đơn hàng', dataIndex: 'orderCode', key: 'orderCode', width: 150 },
         {
-            title: '8. [H] Ảnh',
-            dataIndex: 'images',
-            width: 100,
-            render: (imgs) => (imgs && imgs.length > 0) ? <Tag color="blue">Có ảnh</Tag> : null
+            title: 'Khách hàng',
+            key: 'customer',
+            width: 180,
+            render: (_, r) => r.customer
+                ? `${r.customer.customerCode || ''} ${r.customer.fullName}`.trim()
+                : '—'
         },
         {
-            title: '',
+            title: 'Tổng cân (kg)',
+            dataIndex: 'totalWeight',
+            key: 'totalWeight',
+            width: 130,
+            align: 'right',
+            render: (v) => v ? new Intl.NumberFormat('de-DE').format(v) + ' kg' : '0 kg'
+        },
+        {
+            title: 'Tổng khối (m³)',
+            dataIndex: 'totalVolume',
+            key: 'totalVolume',
+            width: 130,
+            align: 'right',
+            render: (v) => v
+                ? new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + ' m³'
+                : '0,00 m³'
+        },
+        {
+            title: 'Ngày nhập kho',
+            dataIndex: 'entryDate',
+            key: 'entryDate',
+            width: 130,
+            render: (d) => d ? dayjs(d).format('DD/MM/YYYY') : '—'
+        },
+        {
+            title: 'Thao tác',
             key: 'action',
+            width: 100,
             fixed: 'right',
+            align: 'center',
             render: (_, record) => (
-                <Button danger type="text" icon={<DeleteOutlined />} onClick={() => handleRemoveItem(record.id)} />
+                <Popconfirm
+                    title="Xóa mã hàng khỏi xe?"
+                    description="Mã hàng sẽ không bị xóa, chỉ được tách khỏi chuyến xe này."
+                    onConfirm={() => handleRemoveItem(record.id)}
+                    okText="Xóa"
+                    okButtonProps={{ danger: true }}
+                    cancelText="Hủy"
+                >
+                    <Button danger icon={<DeleteOutlined />} size="small" />
+                </Popconfirm>
             )
         }
     ];
 
-    // Columns for Add Modal Table
-    const addColumns = [
-        { title: 'Mã KH', dataIndex: 'customerCodeInput', width: 100 },
-        { title: 'Tên hàng', dataIndex: 'productName', width: 150 },
-        { title: 'Mã đơn', dataIndex: 'orderCode', width: 120 },
-        { title: 'Số kiện', dataIndex: 'packageCount', width: 80 },
+    // Columns cho modal chọn mã hàng
+    const availableColumns = [
+        { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
+        { title: 'Mã đơn hàng', dataIndex: 'orderCode', key: 'orderCode', width: 150 },
+        {
+            title: 'Khách hàng',
+            key: 'customer',
+            render: (_, r) => r.customer
+                ? `${r.customer.customerCode || ''} ${r.customer.fullName}`.trim()
+                : '—'
+        },
+        {
+            title: 'Tổng cân',
+            dataIndex: 'totalWeight',
+            key: 'totalWeight',
+            width: 110,
+            align: 'right',
+            render: (v) => v ? `${new Intl.NumberFormat('de-DE').format(v)} kg` : '0 kg'
+        },
+        {
+            title: 'Tổng khối',
+            dataIndex: 'totalVolume',
+            key: 'totalVolume',
+            width: 110,
+            align: 'right',
+            render: (v) => v
+                ? `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(v)} m³`
+                : '0 m³'
+        }
     ];
 
-    return (
-        <Card>
-            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/manifests')} style={{ marginBottom: 16 }}>
-                Quay lại
-            </Button>
+    if (loading && !manifest) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+                <Spin size="large" />
+            </div>
+        );
+    }
 
+    const statusOpt = manifest ? getStatusOption(manifest.status) : null;
+
+    return (
+        <div style={{ padding: 24 }}>
+            {/* Header */}
+            <Row align="middle" justify="space-between" style={{ marginBottom: 16 }}>
+                <Col>
+                    <Space size="middle">
+                        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/manifests')}>
+                            Quay lại
+                        </Button>
+                        <Space>
+                            <TruckOutlined style={{ fontSize: 20, color: '#1677ff' }} />
+                            <Title level={4} style={{ margin: 0 }}>
+                                {manifest?.licensePlate || 'Đang tải...'}
+                            </Title>
+                            {statusOpt && <Tag color={statusOpt.color} style={{ fontSize: 13 }}>{statusOpt.label}</Tag>}
+                        </Space>
+                    </Space>
+                </Col>
+                <Col>
+                    <Space>
+                        <Button icon={<ReloadOutlined />} onClick={fetchManifest}>Làm mới</Button>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddModal}>
+                            Thêm mã hàng
+                        </Button>
+                    </Space>
+                </Col>
+            </Row>
+
+            {/* Thông tin xe */}
             {manifest && (
-                <>
-                    <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+                <Card style={{ marginBottom: 16 }}>
+                    <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small">
+                        <Descriptions.Item label="Biển số xe">
+                            <strong>{manifest.licensePlate}</strong>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Người gọi xe">
+                            {manifest.caller
+                                ? `${manifest.caller.username} — ${manifest.caller.fullName}`
+                                : '—'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Ngày xếp xe">
+                            {manifest.date ? dayjs(manifest.date).format('DD/MM/YYYY') : '—'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Trạng thái">
+                            {statusOpt && <Tag color={statusOpt.color}>{statusOpt.label}</Tag>}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Ghi chú">
+                            {manifest.note || '—'}
+                        </Descriptions.Item>
+                    </Descriptions>
+
+                    <Divider style={{ margin: '12px 0' }} />
+
+                    {/* Tổng hợp */}
+                    <Row gutter={32}>
                         <Col>
-                            <Title level={3}>{manifest.name}</Title>
-                            <Descriptions size="small" column={2}>
-                                <Descriptions.Item label="Ngày xếp">{moment(manifest.date).format('DD/MM/YYYY')}</Descriptions.Item>
-                                <Descriptions.Item label="Trạng thái">
-                                    <Tag color={manifest.status === 'OPEN' ? 'green' : 'blue'}>{manifest.status}</Tag>
-                                </Descriptions.Item>
-                                <Descriptions.Item label="Ghi chú">{manifest.note}</Descriptions.Item>
-                            </Descriptions>
+                            <Text type="secondary">Số mã hàng</Text>
+                            <div><Text strong style={{ fontSize: 18, color: '#1677ff' }}>{manifest.totalProductCodes ?? 0}</Text></div>
                         </Col>
                         <Col>
-                            <Space>
-                                <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddModal}>
-                                    Thêm hàng
-                                </Button>
-                                <Button icon={<ExportOutlined />} onClick={handleExportExcel}>
-                                    Xuất Excel
-                                </Button>
-                                <Button icon={<ReloadOutlined />} onClick={fetchManifestDetail} />
-                            </Space>
+                            <Text type="secondary">Tổng cân</Text>
+                            <div>
+                                <Text strong style={{ fontSize: 18, color: '#389e0d' }}>
+                                    {new Intl.NumberFormat('de-DE').format(manifest.totalWeight ?? 0)} kg
+                                </Text>
+                            </div>
+                        </Col>
+                        <Col>
+                            <Text type="secondary">Tổng khối</Text>
+                            <div>
+                                <Text strong style={{ fontSize: 18, color: '#389e0d' }}>
+                                    {new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(manifest.totalVolume ?? 0)} m³
+                                </Text>
+                            </div>
                         </Col>
                     </Row>
-
-                    <Divider />
-
-                    <Table
-                        columns={columns}
-                        dataSource={manifest.productCodes || []}
-                        rowKey="id"
-                        loading={loading}
-                        scroll={{ x: 'max-content' }}
-                        pagination={false}
-                        bordered
-                        summary={(pageData) => {
-                            let totalPackage = 0;
-                            let totalWeight = 0;
-                            let totalVolume = 0;
-
-                            pageData.forEach(({ packageCount, weight, volume }) => {
-                                totalPackage += Number(packageCount) || 0;
-                                totalWeight += Number(weight) || 0;
-                                totalVolume += Number(volume) || 0;
-                            });
-
-                            return (
-                                <Table.Summary fixed>
-                                    <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 'bold' }}>
-                                        <Table.Summary.Cell index={0} colSpan={4}>Tổng cộng</Table.Summary.Cell>
-                                        <Table.Summary.Cell index={1}>{totalPackage}</Table.Summary.Cell>
-                                        <Table.Summary.Cell index={2}></Table.Summary.Cell>
-                                        <Table.Summary.Cell index={3}>{totalWeight.toFixed(2)}</Table.Summary.Cell>
-                                        <Table.Summary.Cell index={4}>{totalVolume.toFixed(3)}</Table.Summary.Cell>
-                                        <Table.Summary.Cell index={5} colSpan={2}></Table.Summary.Cell>
-                                    </Table.Summary.Row>
-                                </Table.Summary>
-                            );
-                        }}
-                    />
-                </>
+                </Card>
             )}
 
-            <Modal
-                title="Thêm hàng vào chuyến xe"
-                open={isAddModalVisible}
-                onOk={handleAddItems}
-                onCancel={() => setIsAddModalVisible(false)}
-                width={800}
-                okText="Thêm đã chọn"
-                cancelText="Hủy"
-            >
+            {/* Danh sách mã hàng trong xe */}
+            <Card title={<><TruckOutlined style={{ marginRight: 6 }} />Danh sách mã hàng trong xe</>}>
                 <Table
-                    rowSelection={{
-                        selectedRowKeys,
-                        onChange: (keys) => setSelectedRowKeys(keys),
-                    }}
-                    columns={addColumns}
-                    dataSource={availableItems}
+                    columns={pcColumns}
+                    dataSource={manifest?.productCodes || []}
                     rowKey="id"
-                    loading={addLoading}
-                    pagination={{ pageSize: 10 }}
+                    loading={loading}
+                    pagination={{ pageSize: 20, showSizeChanger: true }}
+                    scroll={{ x: 'max-content' }}
                     size="small"
                 />
+            </Card>
+
+            {/* Modal thêm mã hàng */}
+            <Modal
+                title="Thêm mã hàng vào xe"
+                open={addModalVisible}
+                onCancel={() => setAddModalVisible(false)}
+                onOk={handleAddItems}
+                okText={`Thêm ${selectedPCKeys.length > 0 ? `(${selectedPCKeys.length})` : ''}`}
+                cancelText="Hủy"
+                confirmLoading={addingItems}
+                width={800}
+                maskClosable={false}
+            >
+                {selectedPCKeys.length > 0 && (
+                    <div style={{
+                        background: '#e6f4ff',
+                        border: '1px solid #91caff',
+                        borderRadius: 6,
+                        padding: '8px 14px',
+                        marginBottom: 12,
+                        color: '#1677ff',
+                        fontWeight: 500
+                    }}>
+                        ✓ Đã chọn {selectedPCKeys.length} mã hàng
+                    </div>
+                )}
+                <Table
+                    columns={availableColumns}
+                    dataSource={availablePCs}
+                    rowKey="id"
+                    loading={loadingAvailable}
+                    size="small"
+                    pagination={{ pageSize: 10 }}
+                    rowSelection={{
+                        selectedRowKeys: selectedPCKeys,
+                        onChange: (keys) => setSelectedPCKeys(keys),
+                    }}
+                    scroll={{ x: 'max-content' }}
+                />
             </Modal>
-        </Card>
+        </div>
     );
 };
 

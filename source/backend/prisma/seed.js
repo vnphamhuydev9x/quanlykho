@@ -3,179 +3,129 @@ const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function pickUnique(arr, n) {
+    const shuffled = [...arr].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(n, arr.length));
+}
+
+// ─── Product item pool (đa dạng loại hàng & đơn vị kiện) ─────────────────────
+const PRODUCT_POOL = [
+    // Thời trang
+    { name: 'Áo phông cotton', unit: 'THUNG_CARTON', brand: 'Fashion Co', importTax: 12, vatTax: 10 },
+    { name: 'Quần jean denim', unit: 'THUNG_CARTON', brand: 'Denim Plus', importTax: 12, vatTax: 10 },
+    { name: 'Váy đầm thời trang', unit: 'THUNG_CARTON', brand: 'Lady Style', importTax: 12, vatTax: 10 },
+    { name: 'Áo khoác hoodie', unit: 'BAO_TAI', brand: 'Urban Wear', importTax: 12, vatTax: 10 },
+    { name: 'Quần short thể thao', unit: 'BAO_TAI', brand: 'Sport Max', importTax: 12, vatTax: 10 },
+    { name: 'Áo sơ mi nam', unit: 'THUNG_CARTON', brand: 'Men Style', importTax: 12, vatTax: 10 },
+    // Giày dép
+    { name: 'Giày thể thao nam', unit: 'THUNG_CARTON', brand: 'RunFast', importTax: 10, vatTax: 10 },
+    { name: 'Dép sandal nữ', unit: 'BAO_TAI', brand: 'SandStep', importTax: 10, vatTax: 10 },
+    { name: 'Giày da công sở', unit: 'PALLET', brand: 'Office Leather', importTax: 10, vatTax: 10 },
+    { name: 'Bốt cổ cao nữ', unit: 'THUNG_CARTON', brand: 'BootChic', importTax: 10, vatTax: 10 },
+    { name: 'Giày lười vải', unit: 'THUNG_CARTON', brand: 'CasualStep', importTax: 10, vatTax: 10 },
+    // Điện tử / phụ kiện
+    { name: 'Tai nghe Bluetooth', unit: 'THUNG_CARTON', brand: 'SoundPro', importTax: 8, vatTax: 10 },
+    { name: 'Sạc dự phòng 20000mAh', unit: 'THUNG_CARTON', brand: 'PowerBank Pro', importTax: 8, vatTax: 10 },
+    { name: 'Đèn LED trang trí', unit: 'THUNG_CARTON', brand: 'BrightLife', importTax: 5, vatTax: 10 },
+    { name: 'Cáp sạc đa năng', unit: 'BAO_TAI', brand: 'CableMax', importTax: 5, vatTax: 10 },
+    { name: 'Phụ kiện điện thoại', unit: 'KHONG_DONG_GOI', brand: 'MobiGear', importTax: 5, vatTax: 10 },
+    { name: 'Bàn phím cơ mini', unit: 'THUNG_CARTON', brand: 'TypePro', importTax: 8, vatTax: 10 },
+    // Túi xách / phụ kiện thời trang
+    { name: 'Túi xách da PU', unit: 'THUNG_CARTON', brand: 'PU Luxe', importTax: 12, vatTax: 10 },
+    { name: 'Ví da cầm tay', unit: 'KHONG_DONG_GOI', brand: 'WalletCraft', importTax: 12, vatTax: 10 },
+    { name: 'Thắt lưng da nam', unit: 'THUNG_CARTON', brand: 'BeltPro', importTax: 12, vatTax: 10 },
+    { name: 'Mũ lưỡi trai', unit: 'BAO_TAI', brand: 'CapStyle', importTax: 12, vatTax: 10 },
+    { name: 'Khăn quàng cổ', unit: 'BAO_TAI', brand: 'ScarfZone', importTax: 12, vatTax: 10 },
+    // Đồ gia dụng
+    { name: 'Chăn ga gối cao cấp', unit: 'PALLET', brand: 'SleepWell', importTax: 5, vatTax: 10 },
+    { name: 'Đèn ngủ cảm ứng', unit: 'THUNG_CARTON', brand: 'NightLight', importTax: 5, vatTax: 10 },
+    { name: 'Khung ảnh nghệ thuật', unit: 'THUNG_CARTON', brand: 'ArtFrame', importTax: 5, vatTax: 10 },
+    { name: 'Bình giữ nhiệt', unit: 'THUNG_CARTON', brand: 'ThermoKeep', importTax: 5, vatTax: 10 },
+    // Đồ chơi
+    { name: 'Xe đồ chơi điều khiển', unit: 'THUNG_CARTON', brand: 'RCZone', importTax: 5, vatTax: 10 },
+    { name: 'Búp bê thời trang', unit: 'BAO_TAI', brand: 'DollWorld', importTax: 5, vatTax: 10 },
+    { name: 'Đồ xếp hình sáng tạo', unit: 'THUNG_CARTON', brand: 'BuildKid', importTax: 5, vatTax: 10 },
+    { name: 'Thú nhồi bông', unit: 'BAO_TAI', brand: 'SoftToy', importTax: 5, vatTax: 10 },
+    // Mỹ phẩm
+    { name: 'Kem dưỡng da mặt', unit: 'THUNG_CARTON', brand: 'SkinGlow', importTax: 8, vatTax: 10 },
+    { name: 'Son môi thời trang', unit: 'KHONG_DONG_GOI', brand: 'LipColor', importTax: 8, vatTax: 10 },
+    { name: 'Nước hoa mini set', unit: 'THUNG_CARTON', brand: 'PerfumeCo', importTax: 8, vatTax: 10 },
+    // Hàng sỉ / bao bì lớn
+    { name: 'Vải thun cuộn', unit: 'PALLET', brand: 'FabricRoll', importTax: 5, vatTax: 8 },
+    { name: 'Hạt nhựa nguyên liệu', unit: 'BAO_TAI', brand: 'PlasticRaw', importTax: 5, vatTax: 8 },
+];
+
+const EXCHANGE_RATE = 3500;
+const WEIGHT_FEE = 30000;
+const VOLUME_FEE = 3500000;
+
 async function main() {
-    // Default password for all seeded users: 123456
     const password = await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD || '123456', 10);
 
+    // ─── SEED USERS ───────────────────────────────────────────────────────────
     const users = [
-        // Role: ADMIN (2 users)
-        {
-            username: 'admin',
-            fullName: 'Administrator',
-            email: 'admin@3t.com',
-            role: 'ADMIN',
-            phone: '0909000001'
-        },
-        {
-            username: 'manager_vu',
-            fullName: 'Vũ Quản Lý',
-            email: 'vu.manager@3t.com',
-            role: 'ADMIN',
-            phone: '0909000002'
-        },
-
-        // Role: SALE (2 users)
-        {
-            username: 'sale_thuy',
-            fullName: 'Nguyễn Thị Thủy',
-            email: 'thuy.sale@3t.com',
-            role: 'SALE',
-            phone: '0909000011'
-        },
-        {
-            username: 'sale_hung',
-            fullName: 'Phạm Văn Hùng',
-            email: 'hung.sale@3t.com',
-            role: 'SALE',
-            phone: '0909000012'
-        },
-
-        // Role: WAREHOUSE (2 users)
-        {
-            username: 'kho_an',
-            fullName: 'Trần Văn An',
-            email: 'an.kho@3t.com',
-            role: 'WAREHOUSE',
-            phone: '0909000021'
-        },
-        {
-            username: 'kho_binh',
-            fullName: 'Lê Văn Bình',
-            email: 'binh.kho@3t.com',
-            role: 'WAREHOUSE',
-            phone: '0909000022'
-        },
-
-        // Role: ACCOUNTANT (2 users)
-        {
-            username: 'ketoan_lan',
-            fullName: 'Hoàng Thị Lan',
-            email: 'lan.kt@3t.com',
-            role: 'ACCOUNTANT',
-            phone: '0909000031'
-        },
-        {
-            username: 'ketoan_hoa',
-            fullName: 'Vũ Thị Hoa',
-            email: 'hoa.kt@3t.com',
-            role: 'ACCOUNTANT',
-            phone: '0909000032'
-        },
+        { username: 'admin', fullName: 'Administrator', email: 'admin@3t.com', role: 'ADMIN', phone: '0909000001' },
+        { username: 'manager_vu', fullName: 'Vũ Quản Lý', email: 'vu.manager@3t.com', role: 'ADMIN', phone: '0909000002' },
+        { username: 'sale_thuy', fullName: 'Nguyễn Thị Thủy', email: 'thuy.sale@3t.com', role: 'SALE', phone: '0909000011' },
+        { username: 'sale_hung', fullName: 'Phạm Văn Hùng', email: 'hung.sale@3t.com', role: 'SALE', phone: '0909000012' },
+        { username: 'kho_an', fullName: 'Trần Văn An', email: 'an.kho@3t.com', role: 'WAREHOUSE', phone: '0909000021' },
+        { username: 'kho_binh', fullName: 'Lê Văn Bình', email: 'binh.kho@3t.com', role: 'WAREHOUSE', phone: '0909000022' },
+        { username: 'ketoan_lan', fullName: 'Hoàng Thị Lan', email: 'lan.kt@3t.com', role: 'ACCOUNTANT', phone: '0909000031' },
+        { username: 'ketoan_hoa', fullName: 'Vũ Thị Hoa', email: 'hoa.kt@3t.com', role: 'ACCOUNTANT', phone: '0909000032' },
     ];
 
-    console.log('Start seeding...');
-
+    console.log('Seeding Users...');
     for (const u of users) {
-        const existing = await prisma.user.findFirst({
-            where: {
-                username: u.username,
-                deletedAt: null
-            }
-        });
-
+        const existing = await prisma.user.findFirst({ where: { username: u.username, deletedAt: null } });
         if (!existing) {
             await prisma.user.create({
-                data: {
-                    username: u.username,
-                    password: password,
-                    fullName: u.fullName,
-                    email: u.email,
-                    phone: u.phone,
-                    role: u.role,
-                    type: 'EMPLOYEE',
-                    isActive: true
-                }
+                data: { ...u, password, type: 'EMPLOYEE', isActive: true }
             });
-            console.log(`Created User: ${u.username} (${u.role})`);
+            console.log(`  Created User: ${u.username} (${u.role})`);
         } else {
-            console.log(`User already exists: ${u.username}`);
+            console.log(`  Exists: ${u.username}`);
         }
     }
 
-    // --- SEED CATEGORIES ---
+    // ─── SEED CATEGORIES ─────────────────────────────────────────────────────
     const categories = [
-        "Quần áo thời trang",
-        "Giày dép",
-        "Linh kiện điện tử",
-        "Đồ gia dụng",
-        "Mỹ phẩm",
-        "Thực phẩm chức năng",
-        "Phụ kiện điện thoại",
-        "Túi xách",
-        "Đồ chơi trẻ em",
-        "Máy móc công nghiệp"
+        'Quần áo thời trang', 'Giày dép', 'Linh kiện điện tử', 'Đồ gia dụng',
+        'Mỹ phẩm', 'Thực phẩm chức năng', 'Phụ kiện điện thoại', 'Túi xách',
+        'Đồ chơi trẻ em', 'Máy móc công nghiệp'
     ];
 
     console.log('Seeding Categories...');
     for (const catName of categories) {
-        const existingCat = await prisma.category.findFirst({
-            where: {
-                name: catName,
-                deletedAt: null
-            }
-        });
-
-        if (!existingCat) {
-            await prisma.category.create({
-                data: {
-                    name: catName,
-                    status: 'AVAILABLE'
-                }
-            });
-            console.log(`Created Category: ${catName}`);
-        } else {
-            console.log(`Category already exists: ${catName}`);
+        const existing = await prisma.category.findFirst({ where: { name: catName, deletedAt: null } });
+        if (!existing) {
+            await prisma.category.create({ data: { name: catName, status: 'AVAILABLE' } });
+            console.log(`  Created Category: ${catName}`);
         }
     }
 
-    // --- SEED WAREHOUSES ---
+    // ─── SEED WAREHOUSES ─────────────────────────────────────────────────────
     const warehouses = [
-        "Kho Hà Nội",
-        "Kho Sài Gòn",
-        "Kho Quảng Châu (TQ)",
-        "Kho Bằng Tường (TQ)",
-        "Kho Đông Hưng (TQ)"
+        'Kho Hà Nội', 'Kho Sài Gòn', 'Kho Quảng Châu (TQ)',
+        'Kho Bằng Tường (TQ)', 'Kho Đông Hưng (TQ)'
     ];
 
     console.log('Seeding Warehouses...');
     for (const whName of warehouses) {
-        const existingWh = await prisma.warehouse.findFirst({
-            where: {
-                name: whName,
-                deletedAt: null
-            }
-        });
-
-        if (!existingWh) {
-            await prisma.warehouse.create({
-                data: {
-                    name: whName,
-                    status: 'AVAILABLE'
-                }
-            });
-            console.log(`Created Warehouse: ${whName}`);
-        } else {
-            console.log(`Warehouse already exists: ${whName}`);
+        const existing = await prisma.warehouse.findFirst({ where: { name: whName, deletedAt: null } });
+        if (!existing) {
+            await prisma.warehouse.create({ data: { name: whName, status: 'AVAILABLE' } });
+            console.log(`  Created Warehouse: ${whName}`);
         }
     }
 
-    // --- SEED CUSTOMERS ---
+    // ─── SEED CUSTOMERS ──────────────────────────────────────────────────────
     console.log('Seeding Customers...');
-
-    // Get Sale users to assign
-    const sales = await prisma.user.findMany({
-        where: { role: 'SALE', deletedAt: null }
-    });
+    const sales = await prisma.user.findMany({ where: { role: 'SALE', deletedAt: null } });
 
     if (sales.length > 0) {
         const customers = [
@@ -193,135 +143,89 @@ async function main() {
 
         for (let i = 0; i < customers.length; i++) {
             const c = customers[i];
-            // Round robin assignment
-            const saleUser = sales[i % sales.length];
-
-            const existingCus = await prisma.user.findFirst({
-                where: {
-                    username: c.username,
-                    deletedAt: null
-                }
-            });
-
-            if (!existingCus) {
+            const existing = await prisma.user.findFirst({ where: { username: c.username, deletedAt: null } });
+            if (!existing) {
                 await prisma.user.create({
                     data: {
-                        username: c.username,
-                        password: password,
-                        fullName: c.fullName,
-                        email: c.email,
-                        phone: c.phone,
-                        role: 'USER',
-                        type: 'CUSTOMER',
-                        customerCode: c.customerCode,
-                        address: c.address,
-                        saleId: saleUser.id,
+                        ...c, password,
+                        role: 'USER', type: 'CUSTOMER',
+                        saleId: sales[i % sales.length].id,
                         isActive: true
                     }
                 });
-                console.log(`Created Customer: ${c.username} (${c.customerCode}) - Sale: ${saleUser.username}`);
+                console.log(`  Created Customer: ${c.username} (${c.customerCode})`);
             } else {
-                console.log(`Customer already exists: ${c.username}`);
+                console.log(`  Exists: ${c.username}`);
             }
         }
     } else {
-        console.warn('No SALE users found to assign to customers. Skipping customer seeding.');
+        console.warn('  No SALE users — skipping customers.');
     }
 
-    // --- SEED TRANSACTIONS (DEPOSITS) ---
+    // ─── SEED TRANSACTIONS ───────────────────────────────────────────────────
     console.log('Seeding Transactions...');
-
-    // Get seeded customers
-    const dbCustomers = await prisma.user.findMany({
-        where: { type: 'CUSTOMER', deletedAt: null }
-    });
-
-    // Get Accountants
-    const accountants = await prisma.user.findMany({
-        where: { role: 'ACCOUNTANT', deletedAt: null }
-    });
+    const dbCustomers = await prisma.user.findMany({ where: { type: 'CUSTOMER', deletedAt: null } });
+    const accountants = await prisma.user.findMany({ where: { role: 'ACCOUNTANT', deletedAt: null } });
 
     if (dbCustomers.length > 0 && accountants.length > 0) {
         for (const cus of dbCustomers) {
-            // Check if customer already has transactions to avoid duplicate seeding on re-runs
-            const existingTrans = await prisma.transaction.findFirst({
-                where: { customerId: cus.id }
-            });
-
-            if (!existingTrans) {
-                // Create 1-3 random transactions
-                const numTrans = Math.floor(Math.random() * 3) + 1;
-
+            const existing = await prisma.transaction.findFirst({ where: { customerId: cus.id } });
+            if (!existing) {
+                const numTrans = randInt(1, 3);
                 for (let k = 0; k < numTrans; k++) {
-                    const amount = (Math.floor(Math.random() * 10) + 1) * 1000000; // 1M - 10M
+                    const amount = randInt(1, 10) * 1000000;
                     const accountant = accountants[Math.floor(Math.random() * accountants.length)];
-
                     await prisma.transaction.create({
                         data: {
-                            amount: amount,
-                            content: `Nạp tiền lần ${k + 1}`,
+                            amount, content: `Nạp tiền lần ${k + 1}`,
                             status: 'SUCCESS',
-                            customerId: cus.id,
-                            createdById: accountant.id
+                            customerId: cus.id, createdById: accountant.id
                         }
                     });
-                    console.log(`Created Transaction: ${cus.username} +${amount.toLocaleString()} (by ${accountant.username})`);
                 }
+                console.log(`  Created ${numTrans} transactions for: ${cus.username}`);
             } else {
-                console.log(`Transactions already exist for: ${cus.username}`);
+                console.log(`  Transactions exist: ${cus.username}`);
             }
         }
-    } else {
-        console.warn('Skipping transactions (Need Customers & Accountants)');
     }
 
-    console.log('Seeding finished.');
-
-    // --- SEED MERCHANDISE CONDITIONS ---
+    // ─── SEED MERCHANDISE CONDITIONS ─────────────────────────────────────────
     console.log('Seeding Merchandise Conditions...');
     const conditions = [
-        { name_vi: "Nhập kho", name_zh: "入库", canLoadVehicle: true },
-        { name_vi: "Kho TQ", name_zh: "中国仓库", canLoadVehicle: true }
+        { name_vi: 'Nhập kho', name_zh: '入库', canLoadVehicle: true },
+        { name_vi: 'Kho TQ', name_zh: '中国仓库', canLoadVehicle: true },
+        { name_vi: 'Đang vận chuyển', name_zh: '运输中', canLoadVehicle: false },
+        { name_vi: 'Đã giao', name_zh: '已交付', canLoadVehicle: false },
     ];
-
     for (const cond of conditions) {
-        const existingStatus = await prisma.merchandiseCondition.findFirst({
-            where: { name_vi: cond.name_vi }
-        });
-        if (!existingStatus) {
-            await prisma.merchandiseCondition.create({
-                data: cond
-            });
-            console.log(`Created MerchandiseCondition: ${cond.name_vi}`);
-        } else {
-            console.log(`MerchandiseCondition already exists: ${cond.name_vi}`);
+        const existing = await prisma.merchandiseCondition.findFirst({ where: { name_vi: cond.name_vi } });
+        if (!existing) {
+            await prisma.merchandiseCondition.create({ data: cond });
+            console.log(`  Created MerchandiseCondition: ${cond.name_vi}`);
         }
     }
 
-    // --- SEED PRODUCT CODES ---
+    // ─── SEED PRODUCT CODES ──────────────────────────────────────────────────
     console.log('Seeding Product Codes...');
-    const warehouseEmployees = await prisma.user.findMany({ where: { role: 'WAREHOUSE', deletedAt: null } });
+    const warehouseEmps = await prisma.user.findMany({ where: { role: 'WAREHOUSE', deletedAt: null } });
     const pCustomers = await prisma.user.findMany({ where: { type: 'CUSTOMER', deletedAt: null } });
-    const targetCondition = await prisma.merchandiseCondition.findFirst({ where: { name_vi: "Nhập kho" } });
+    const targetCondition = await prisma.merchandiseCondition.findFirst({ where: { name_vi: 'Nhập kho' } });
 
-    if (warehouseEmployees.length > 0 && pCustomers.length > 0 && targetCondition) {
-        const existingCodesCount = await prisma.productCode.count();
-        if (existingCodesCount < 40) {
-            for (let i = existingCodesCount; i < 40; i++) {
+    if (warehouseEmps.length > 0 && pCustomers.length > 0 && targetCondition) {
+        const existingCount = await prisma.productCode.count();
+        const TARGET_COUNT = 40;
+
+        if (existingCount < TARGET_COUNT) {
+            for (let i = existingCount; i < TARGET_COUNT; i++) {
                 const customer = pCustomers[i % pCustomers.length];
-                const emp = warehouseEmployees[i % warehouseEmployees.length];
-                const weight = Math.floor(Math.random() * 50) + 10;
-                const volume = (Math.random() * 2 + 0.1).toFixed(3);
+                const emp = warehouseEmps[i % warehouseEmps.length];
 
-                const item1Volume = parseFloat(volume);
-                const item1Weight = weight;
-                const item2Volume = item1Volume / 2.0;
-                const item2Weight = Math.floor(item1Weight / 2.0);
+                // Random 1–4 mặt hàng, không trùng tên trong cùng mã hàng
+                const numItems = randInt(1, 4);
+                const selectedProducts = pickUnique(PRODUCT_POOL, numItems);
 
-                const item1Fee = Math.max(item1Weight * 30000, item1Volume * 3500000) + (10 + 5 + 5) * 3500;
-                const item2Fee = Math.max(item2Weight * 30000, item2Volume * 3500000) + (15 + 0 + 2) * 3500;
-                const totalFee = item1Fee + item2Fee;
-
+                // Tạo product code trước để lấy ID
                 const pc = await prisma.productCode.create({
                     data: {
                         employeeId: emp.id,
@@ -329,77 +233,145 @@ async function main() {
                         merchandiseConditionId: targetCondition.id,
                         entryDate: new Date(Date.now() - Math.floor(Math.random() * 10000000000)),
                         orderCode: `ORDER${new Date().getFullYear()}${String(i + 1).padStart(4, '0')}`,
-                        totalWeight: weight,
-                        totalVolume: volume,
+                        totalWeight: 0,
+                        totalVolume: 0,
                         infoSource: 'Mẫu Seed',
-                        totalTransportFeeEstimate: totalFee,
-                        exchangeRate: 3500,
+                        totalTransportFeeEstimate: 0,
+                        exchangeRate: EXCHANGE_RATE,
                     }
                 });
 
-                await prisma.productItem.create({
-                    data: {
-                        productCodeId: pc.id,
-                        productName: `Hàng thời trang ${i + 1}A`,
-                        packageCount: Math.floor(Math.random() * 5) + 1,
-                        packageUnit: 'THUNG_CARTON',
-                        weight: item1Weight,
-                        volume: item1Volume,
-                        weightFee: 30000,
-                        volumeFee: 3500000,
-                        domesticFeeTQ: 10,
-                        haulingFeeTQ: 5,
-                        unloadingFeeRMB: 5,
-                        itemTransportFeeEstimate: item1Fee,
-                        notes: 'Hệ thống tự động tạo',
-                        declaration: {
-                            create: {
-                                productCodeId: pc.id,
-                                productQuantity: 100,
-                                brand: 'Fashion Brand A',
-                                productDescription: `Mô tả hàng thời trang ${i + 1}A`,
-                                importTax: 10,
-                                vatTax: 10
+                let pcTotalWeight = 0;
+                let pcTotalVolume = 0;
+                let pcTotalFee = 0;
+
+                for (const prod of selectedProducts) {
+                    const weight = randInt(5, 35);
+                    const volume = parseFloat((Math.random() * 1.8 + 0.1).toFixed(3));
+                    const packageCount = randInt(1, 20);
+                    const domesticFeeTQ = randInt(5, 25);
+                    const haulingFeeTQ = randInt(0, 15);
+                    const unloadingFeeRMB = randInt(1, 10);
+                    const itemFee = Math.max(weight * WEIGHT_FEE, volume * VOLUME_FEE)
+                        + (domesticFeeTQ + haulingFeeTQ + unloadingFeeRMB) * EXCHANGE_RATE;
+
+                    pcTotalWeight += weight;
+                    pcTotalVolume += volume;
+                    pcTotalFee += itemFee;
+
+                    await prisma.productItem.create({
+                        data: {
+                            productCodeId: pc.id,
+                            productName: prod.name,
+                            packageCount,
+                            packageUnit: prod.unit,
+                            weight,
+                            volume,
+                            weightFee: WEIGHT_FEE,
+                            volumeFee: VOLUME_FEE,
+                            domesticFeeTQ,
+                            haulingFeeTQ,
+                            unloadingFeeRMB,
+                            itemTransportFeeEstimate: Math.round(itemFee),
+                            notes: 'Seed data',
+                            declaration: {
+                                create: {
+                                    productCodeId: pc.id,
+                                    productQuantity: randInt(50, 500),
+                                    brand: prod.brand,
+                                    productDescription: `Mô tả ${prod.name}`,
+                                    importTax: prod.importTax,
+                                    vatTax: prod.vatTax,
+                                }
                             }
                         }
+                    });
+                }
+
+                // Cập nhật tổng trên product code
+                await prisma.productCode.update({
+                    where: { id: pc.id },
+                    data: {
+                        totalWeight: Math.round(pcTotalWeight),
+                        totalVolume: parseFloat(pcTotalVolume.toFixed(3)),
+                        totalTransportFeeEstimate: Math.round(pcTotalFee),
                     }
                 });
 
-                await prisma.productItem.create({
-                    data: {
-                        productCodeId: pc.id,
-                        productName: `Phụ kiện ${i + 1}B`,
-                        packageCount: Math.floor(Math.random() * 5) + 1,
-                        packageUnit: 'BAO_TAI',
-                        weight: item2Weight,
-                        volume: item2Volume,
-                        weightFee: 30000,
-                        volumeFee: 3500000,
-                        domesticFeeTQ: 15,
-                        haulingFeeTQ: 0,
-                        unloadingFeeRMB: 2,
-                        itemTransportFeeEstimate: item2Fee,
-                        notes: 'Seed data đầy đủ các loại phí',
-                        declaration: {
-                            create: {
-                                productCodeId: pc.id,
-                                productQuantity: 500,
-                                brand: 'Accessory B',
-                                productDescription: `Mô tả phụ kiện ${i + 1}B`,
-                                importTax: 5,
-                                vatTax: 8
-                            }
-                        }
-                    }
-                });
-                console.log(`Created Product Code: ORDER${new Date().getFullYear()}${String(i + 1).padStart(4, '0')}`);
+                console.log(`  Created ProductCode: ${pc.orderCode} — ${numItems} mặt hàng (${selectedProducts.map(p => p.unit).join(', ')})`);
             }
         } else {
-            console.log('Product Codes already seeded.');
+            console.log('  Product Codes already seeded (≥ 40).');
         }
     } else {
-        console.warn('Skipping product codes (Need Employees, Customers & Conditions)');
+        console.warn('  Skipping product codes (Need Employees, Customers & Conditions).');
     }
+
+    // ─── SEED MANIFESTS (XẾP XE) ─────────────────────────────────────────────
+    console.log('Seeding Manifests...');
+    const admins = await prisma.user.findMany({ where: { role: 'ADMIN', deletedAt: null } });
+
+    const manifestDefs = [
+        { licensePlate: '51C-123.45', status: 'CHO_XEP_XE',     note: 'Xe đang chờ xếp hàng tại kho TQ' },
+        { licensePlate: '29A-456.78', status: 'DA_XEP_XE',      note: 'Đã xếp hàng xong, chuẩn bị xuất phát' },
+        { licensePlate: '43B-789.01', status: 'DANG_KIEM_HOA',  note: 'Đang kiểm tra hải quan cửa khẩu Bằng Tường' },
+        { licensePlate: '92C-234.56', status: 'CHO_THONG_QUAN', note: 'Chờ cấp phép thông quan' },
+        { licensePlate: '30E-567.89', status: 'DA_THONG_QUAN',  note: 'Đã thông quan, đang vận chuyển về HN' },
+        { licensePlate: '51G-890.12', status: 'DA_NHAP_KHO_VN', note: 'Đã nhập kho Hà Nội' },
+    ];
+
+    const existingManifestCount = await prisma.manifest.count();
+    if (existingManifestCount === 0 && admins.length > 0) {
+        // Lấy tất cả product codes chưa có xe, để lại 5 cái không xếp (= Chưa xếp xe)
+        const allPcs = await prisma.productCode.findMany({
+            where: { manifestId: null, deletedAt: null },
+            orderBy: { id: 'asc' }
+        });
+        const pcsToAssign = allPcs.slice(0, Math.max(0, allPcs.length - 5));
+        const perManifest = Math.ceil(pcsToAssign.length / manifestDefs.length);
+
+        let pcIdx = 0;
+        for (let m = 0; m < manifestDefs.length; m++) {
+            const def = manifestDefs[m];
+            const chunk = pcsToAssign.slice(pcIdx, pcIdx + perManifest);
+            pcIdx += perManifest;
+
+            const caller = admins[m % admins.length];
+            // Ngày xếp xe: trải đều trong 3 tháng gần đây
+            const daysAgo = (manifestDefs.length - m) * 14;
+            const manifestDate = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+
+            const manifest = await prisma.manifest.create({
+                data: {
+                    licensePlate: def.licensePlate,
+                    callerId: caller.id,
+                    date: manifestDate,
+                    status: def.status,
+                    note: def.note,
+                }
+            });
+
+            // Gán product codes vào manifest này
+            for (const pc of chunk) {
+                await prisma.productCode.update({
+                    where: { id: pc.id },
+                    data: {
+                        manifestId: manifest.id,
+                        vehicleStatus: def.status,
+                    }
+                });
+            }
+
+            console.log(`  Created Manifest: ${def.licensePlate} [${def.status}] — ${chunk.length} mã hàng`);
+        }
+        console.log(`  ${allPcs.length - pcsToAssign.length} mã hàng giữ nguyên (Chưa xếp xe)`);
+    } else if (existingManifestCount > 0) {
+        console.log('  Manifests already seeded.');
+    } else {
+        console.warn('  Skipping manifests (Need ADMIN users).');
+    }
+
+    console.log('\nSeeding finished.');
 }
 
 main()

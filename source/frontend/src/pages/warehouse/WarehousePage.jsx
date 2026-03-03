@@ -31,6 +31,7 @@ const WarehousePage = () => {
     // Modal state
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingWarehouse, setEditingWarehouse] = useState(null);
+    const [viewOnly, setViewOnly] = useState(false);
 
     // User Role check
     const [userRole, setUserRole] = useState('USER');
@@ -146,13 +147,13 @@ const WarehousePage = () => {
             render: (_, record) => (
                 <Space size="middle">
                     <Button
-                        icon={<EditOutlined />}
+                        icon={<EyeOutlined />}
                         onClick={() => {
                             setEditingWarehouse(record);
+                            setViewOnly(true);
                             setIsModalVisible(true);
                         }}
-                        disabled={userRole !== 'ADMIN'}
-                        title={t('common.edit')}
+                        title={t('common.view')}
                     />
                     {userRole === 'ADMIN' && (
                         <Popconfirm
@@ -260,9 +261,13 @@ const WarehousePage = () => {
                 onCancel={() => {
                     setIsModalVisible(false);
                     setEditingWarehouse(null);
+                    setViewOnly(false);
                 }}
                 onSuccess={handleCreateUpdate}
                 editingWarehouse={editingWarehouse}
+                viewOnly={viewOnly}
+                userRole={userRole}
+                onSwitchToEdit={() => setViewOnly(false)}
             />
         </div>
     );

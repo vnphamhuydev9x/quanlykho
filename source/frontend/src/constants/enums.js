@@ -137,3 +137,14 @@ export const ROLES_OPTIONS = [
     { value: ROLES.KHO_VN, labelKey: 'roles.KHO_VN' },
     { value: ROLES.CHUNG_TU, labelKey: 'roles.CHUNG_TU' }
 ];
+
+// Manifest Status Options (Xếp xe)
+export const MANIFEST_STATUS_OPTIONS = [
+    { value: 'CHO_XEP_XE', label: 'Chờ xếp xe', color: 'default' },
+    { value: 'DA_XEP_XE', label: 'Đã xếp xe', color: 'blue' },
+    { value: 'DANG_KIEM_HOA', label: 'Đang kiểm hóa', color: 'orange' },
+    { value: 'CHO_THONG_QUAN', label: 'Chờ thông quan', color: 'gold' },
+    { value: 'DA_THONG_QUAN', label: 'Đã thông quan', color: 'green' },
+    { value: 'DA_NHAP_KHO_VN', label: 'Đã nhập kho VN', color: 'purple' },
+];
+

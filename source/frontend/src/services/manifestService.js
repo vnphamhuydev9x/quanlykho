@@ -11,6 +11,7 @@ const manifestService = {
         return response.data;
     },
 
+    // productCodeIds tùy chọn khi tạo mới
     create: async (data) => {
         const response = await axiosInstance.post('/manifests', data);
         return response.data;
@@ -33,6 +34,32 @@ const manifestService = {
 
     removeItems: async (id, productCodeIds) => {
         const response = await axiosInstance.post(`/manifests/${id}/remove-items`, { productCodeIds });
+        return response.data;
+    },
+
+    // v3 — Override vehicleStatus thủ công cho 1 mã hàng
+    updateVehicleStatus: async (manifestId, pcId, vehicleStatus) => {
+        const response = await axiosInstance.patch(
+            `/manifests/${manifestId}/product-codes/${pcId}/vehicle-status`,
+            { vehicleStatus }
+        );
+        return response.data;
+    },
+
+    // v3 — Khôi phục vehicleStatus về trạng thái xe
+    resetVehicleStatus: async (manifestId, pcId) => {
+        const response = await axiosInstance.patch(
+            `/manifests/${manifestId}/product-codes/${pcId}/reset-vehicle-status`
+        );
+        return response.data;
+    },
+
+    // v3 — Bulk override vehicleStatus cho nhiều mã hàng
+    bulkUpdateVehicleStatus: async (manifestId, productCodeIds, vehicleStatus) => {
+        const response = await axiosInstance.patch(
+            `/manifests/${manifestId}/product-codes/bulk-vehicle-status`,
+            { productCodeIds, vehicleStatus }
+        );
         return response.data;
     }
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, Row, Col, message, Spin, DatePicker, Button, Tooltip, Space, Divider, Typography, Table, Popconfirm } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, message, Spin, DatePicker, Button, Tooltip, Space, Divider, Typography, Table, Popconfirm, Tag } from 'antd';
 import { PlusOutlined, DeleteOutlined, ReloadOutlined, EyeOutlined, EditOutlined, FileSearchOutlined, FormOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -10,11 +10,12 @@ import customerService from '../../services/customerService';
 import employeeService from '../../services/employeeService';
 import merchandiseConditionService from '../../services/merchandiseConditionService';
 import CustomNumberInput from '../../components/CustomNumberInput';
-import { PACKAGE_UNIT_OPTIONS } from '../../constants/enums';
+import { PACKAGE_UNIT_OPTIONS, MANIFEST_STATUS_OPTIONS } from '../../constants/enums';
 import ProductItemModal from './ProductItemModal';
 import { formatCurrency } from '../../utils/format';
 import DeclarationModal from '../declaration/DeclarationModal';
 import declarationService from '../../services/declarationService';
+import ManifestModal from '../manifest/ManifestModal';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -22,7 +23,7 @@ const { Text } = Typography;
 
 const Col3 = ({ children }) => <Col xs={24} md={8}>{children}</Col>;
 
-const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType }) => {
+const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType, userRole, onSwitchToEdit }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [form] = Form.useForm();
@@ -43,6 +44,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
     // State riêng: mode của ProductItemModal và DeclarationModal — độc lập với viewOnly của ProductCode
     const [itemViewOnly, setItemViewOnly] = useState(false);
     const [declarationViewMode, setDeclarationViewMode] = useState(false);
+
+    // Quick Peek — ManifestModal
+    const [peekManifestId, setPeekManifestId] = useState(null);
+    const [peekManifestVisible, setPeekManifestVisible] = useState(false);
 
     const disabledGeneral = viewOnly || (userType === 'CUSTOMER');
 
@@ -245,7 +250,14 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
             style={{ top: 20 }}
             maskClosable={false}
             footer={[
-                <Button key="close" onClick={() => onClose()}>{t('common.cancel', 'Huỷ')}</Button>,
+                viewOnly && userRole === 'ADMIN' && (
+                    <Button key="edit" type="primary" icon={<EditOutlined />}
+                        onClick={() => onSwitchToEdit?.()}
+                    >
+                        Chỉnh sửa mã hàng
+                    </Button>
+                ),
+                <Button key="close" onClick={() => onClose()}>{t('common.cancel', 'Hủy')}</Button>,
                 !viewOnly && (
                     <Button key="save" type="primary" loading={submitting} onClick={handleSubmit}>
                         {t('common.save', 'Lưu lại')}
@@ -418,6 +430,37 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 />
                             </Form.Item>
                         </Col3>
+
+                        <Col3>
+                            {/* Tình trạng xếp xe — read-only, clickable nếu có xe (Quick Peek) */}
+                            <Form.Item label="Tình trạng xếp xe">
+                                {(() => {
+                                    const vs = editingRecord?.vehicleStatus;
+                                    const mid = editingRecord?.manifestId;
+                                    const opt = MANIFEST_STATUS_OPTIONS.find(o => o.value === vs);
+                                    return (
+                                        <Space>
+                                            {opt ? (
+                                                <Tag
+                                                    color={opt.color}
+                                                    style={mid ? { cursor: 'pointer' } : undefined}
+                                                    onClick={mid ? () => { setPeekManifestId(mid); setPeekManifestVisible(true); } : undefined}
+                                                >
+                                                    {opt.label}{mid && ' ↗'}
+                                                </Tag>
+                                            ) : (
+                                                <Tag color="default">Chưa xếp xe</Tag>
+                                            )}
+                                            {editingRecord?.vehicleStatusOverridden && (
+                                                <Tooltip title="Trạng thái đã được chỉnh thủ công — không đồng bộ theo xe">
+                                                    <span style={{ color: '#faad14' }}>⚠ Thủ công</span>
+                                                </Tooltip>
+                                            )}
+                                        </Space>
+                                    );
+                                })()}
+                            </Form.Item>
+                        </Col3>
                     </Row>
 
                     <Divider orientation="left">Danh sách mặt hàng</Divider>
@@ -532,6 +575,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 width: 130,
                                 render: (_, record) => (
                                     <Space size="small">
+                                        {/* Hành động khai báo: Chỉ giữ View (Rule 17 — Quick Peek) */}
                                         <Tooltip title="Xem khai báo">
                                             <Button
                                                 type="text"
@@ -555,31 +599,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 }}
                                             />
                                         </Tooltip>
-                                        {!viewOnly && (
-                                            <Tooltip title="Sửa khai báo">
-                                                <Button
-                                                    type="text"
-                                                    icon={<FormOutlined style={{ color: '#faad14' }} />}
-                                                    onClick={async () => {
-                                                        if (record.declaration?.id) {
-                                                            setLoading(true);
-                                                            try {
-                                                                const res = await declarationService.getById(record.declaration.id);
-                                                                setSelectedDeclaration(res.data);
-                                                                setDeclarationViewMode(false);
-                                                                setDeclarationModalVisible(true);
-                                                            } catch (e) {
-                                                                message.error(t('common.loadError'));
-                                                            } finally {
-                                                                setLoading(false);
-                                                            }
-                                                        } else {
-                                                            message.warning(t('declaration.notFound'));
-                                                        }
-                                                    }}
-                                                />
-                                            </Tooltip>
-                                        )}
                                     </Space>
                                 )
                             },
@@ -588,9 +607,10 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                 key: 'action',
                                 align: 'center',
                                 fixed: 'right',
-                                width: 120,
+                                width: 90,
                                 render: (_, record, index) => (
                                     <Space size="small">
+                                        {/* View mặt hàng — luôn hiện (Rule 17) */}
                                         <Tooltip title="Xem mặt hàng">
                                             <Button
                                                 type="text"
@@ -598,15 +618,11 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                                                 onClick={() => handleViewItem(index)}
                                             />
                                         </Tooltip>
-                                        {!viewOnly && (
-                                            <>
-                                                <Tooltip title="Sửa mặt hàng">
-                                                    <Button type="text" icon={<EditOutlined style={{ color: '#faad14' }} />} onClick={() => handleEditItem(index)} />
-                                                </Tooltip>
-                                                <Popconfirm title="Bạn có chắc chắn muốn xóa mặt hàng này?" onConfirm={() => handleDeleteItem(index)}>
-                                                    <Button type="text" icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />} />
-                                                </Popconfirm>
-                                            </>
+                                        {/* Xóa mặt hàng — admin only, độc lập với viewOnly (Rule 17) */}
+                                        {userRole === 'ADMIN' && (
+                                            <Popconfirm title="Bạn có chắc chắn muốn xóa mặt hàng này?" onConfirm={() => handleDeleteItem(index)}>
+                                                <Button type="text" icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />} />
+                                            </Popconfirm>
                                         )}
                                     </Space>
                                 )
@@ -624,14 +640,15 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                     onSave={handleSaveItem}
                     initialValues={editingItemIndex > -1 ? itemsData[editingItemIndex] : null}
                     viewOnly={itemViewOnly}
+                    userRole={userRole}
+                    onSwitchToEdit={() => setItemViewOnly(false)}
                     exchangeRate={form.getFieldValue('exchangeRate') || 0}
                     onViewDeclaration={async (id) => {
                         setLoading(true);
                         try {
                             const res = await declarationService.getById(id);
                             setSelectedDeclaration(res.data);
-                            // Khai báo từ ProductItemModal → dùng mode của item
-                            setDeclarationViewMode(itemViewOnly);
+                            setDeclarationViewMode(true);
                             setDeclarationModalVisible(true);
                         } catch (e) {
                             message.error(t('common.loadError'));
@@ -646,6 +663,8 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                     visible={declarationModalVisible}
                     declaration={selectedDeclaration}
                     isViewMode={declarationViewMode}
+                    userRole={userRole}
+                    onSwitchToEdit={() => setDeclarationViewMode(false)}
                     onCancel={() => {
                         setDeclarationModalVisible(false);
                         setSelectedDeclaration(null);
@@ -655,10 +674,17 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType 
                         setSelectedDeclaration(null);
                         loadEditData();
                     }}
-                    onViewProductCode={() => {
-                        // Already in ProductCodeModal, just close DeclarationModal
-                        setDeclarationModalVisible(false);
-                    }}
+                />
+            )}
+
+            {/* Quick Peek — Manifest (Rule 16) */}
+            {peekManifestVisible && (
+                <ManifestModal
+                    visible={peekManifestVisible}
+                    mode="view"
+                    manifestId={peekManifestId}
+                    onClose={() => setPeekManifestVisible(false)}
+                    onSuccess={() => setPeekManifestVisible(false)}
                 />
             )}
         </Modal>

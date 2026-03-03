@@ -14,6 +14,7 @@ const EmployeeList = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState(null);
     const [isViewMode, setIsViewMode] = useState(false);
+    const [userRole, setUserRole] = useState('USER');
     const [form] = Form.useForm();
 
     // Pagination & Search State
@@ -71,6 +72,13 @@ const EmployeeList = () => {
     };
 
     useEffect(() => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                setUserRole(payload.role || 'USER');
+            } catch (e) { }
+        }
         fetchEmployees(pagination.current, pagination.pageSize, filters);
     }, []);
 
@@ -203,13 +211,16 @@ const EmployeeList = () => {
             render: (_, record) => (
                 <Space size="middle">
                     <Button icon={<EyeOutlined />} onClick={() => handleView(record)} title={t('common.view')} />
-                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} title={t('employee.edit')} />
-                    <Popconfirm title={t('common.confirmResetPassword')} onConfirm={() => handleResetPassword(record.id)}>
-                        <Button icon={<SyncOutlined />} style={{ color: '#fa541c', borderColor: '#fa541c' }} title={t('employee.resetPassword')} />
-                    </Popconfirm>
-                    <Popconfirm title={t('common.confirmDelete')} onConfirm={() => handleDelete(record.id)}>
-                        <Button icon={<DeleteOutlined />} danger title={t('common.delete')} />
-                    </Popconfirm>
+                    {userRole === 'ADMIN' && (
+                        <>
+                            <Popconfirm title={t('common.confirmResetPassword')} onConfirm={() => handleResetPassword(record.id)}>
+                                <Button icon={<SyncOutlined />} style={{ color: '#fa541c', borderColor: '#fa541c' }} title={t('employee.resetPassword')} />
+                            </Popconfirm>
+                            <Popconfirm title={t('common.confirmDelete')} onConfirm={() => handleDelete(record.id)}>
+                                <Button icon={<DeleteOutlined />} danger title={t('common.delete')} />
+                            </Popconfirm>
+                        </>
+                    )}
                 </Space>
             ),
         },
@@ -336,9 +347,23 @@ const EmployeeList = () => {
                 title={isViewMode ? t('common.view') : (editingEmployee ? t('employee.edit') : t('employee.add'))}
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
-                footer={null}
+                footer={[
+                    isViewMode && userRole === 'ADMIN' && (
+                        <Button key="edit" type="primary" icon={<EditOutlined />}
+                            onClick={() => { setIsViewMode(false); }}
+                        >
+                            Chỉnh sửa
+                        </Button>
+                    ),
+                    <Button key="close" onClick={() => setIsModalVisible(false)}>{t('common.cancel')}</Button>,
+                    !isViewMode && (
+                        <Button key="save" type="primary" form="employee-form" htmlType="submit">
+                            {t('common.save')}
+                        </Button>
+                    )
+                ].filter(Boolean)}
             >
-                <Form form={form} layout="vertical" onFinish={handleSave}>
+                <Form id="employee-form" form={form} layout="vertical" onFinish={handleSave}>
                     <Form.Item
                         name="username"
                         label={t('profile.username')}
@@ -396,13 +421,8 @@ const EmployeeList = () => {
                         <Switch checkedChildren={t('employee.active')} unCheckedChildren={t('employee.inactive')} disabled={isViewMode} />
                     </Form.Item>
 
-                    {!isViewMode && (
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit" block>
-                                {t('common.save')}
-                            </Button>
-                        </Form.Item>
-                    )}
+
+
                 </Form>
             </Modal>
         </div>

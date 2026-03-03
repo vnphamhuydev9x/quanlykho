@@ -1,169 +1,216 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Space, Card, Row, Col, Typography, Modal, message, Tag, DatePicker, Form } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import moment from 'moment';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    Table, Button, Input, Space, Typography,
+    Modal, message, Tag, Tooltip, Popconfirm, Row, Col
+} from 'antd';
+import {
+    PlusOutlined, EditOutlined, DeleteOutlined,
+    SearchOutlined, EyeOutlined, TruckOutlined
+} from '@ant-design/icons';
+import dayjs from 'dayjs';
 import manifestService from '../../services/manifestService';
+import { MANIFEST_STATUS_OPTIONS } from '../../constants/enums';
+import ManifestModal from './ManifestModal';
 
 const { Title } = Typography;
+
+const getStatusOption = (status) =>
+    MANIFEST_STATUS_OPTIONS.find(o => o.value === status) || { label: status, color: 'default' };
 
 const ManifestListPage = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
     const [searchText, setSearchText] = useState('');
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [form] = Form.useForm();
-    const [editingId, setEditingId] = useState(null);
-    const navigate = useNavigate();
+    const [userRole, setUserRole] = useState('USER');
 
     useEffect(() => {
-        fetchData();
-    }, [pagination.current, pagination.pageSize, searchText]);
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                setUserRole(payload.role || 'USER');
+            } catch (e) { }
+        }
+    }, []);
 
-    const fetchData = async () => {
+    // Modal state
+    const [modalMode, setModalMode] = useState(null);  // 'create' | 'view' | 'edit'
+    const [selectedManifestId, setSelectedManifestId] = useState(null);
+
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const params = {
+            const res = await manifestService.getAll({
                 page: pagination.current,
                 limit: pagination.pageSize,
                 search: searchText
-            };
-            const response = await manifestService.getAll(params);
-            if (response) {
-                setData(response.items || []);
-                setPagination(prev => ({ ...prev, total: response.total || 0 }));
-            }
-        } catch (error) {
+            });
+            const d = res.data || res;
+            setData(d.items || []);
+            setPagination(prev => ({ ...prev, total: d.total || 0 }));
+        } catch {
             message.error('Lỗi khi tải danh sách chuyến xe');
         } finally {
             setLoading(false);
         }
+    }, [pagination.current, pagination.pageSize, searchText]);
+
+    useEffect(() => { fetchData(); }, [fetchData]);
+
+    const openModal = (mode, id = null) => {
+        setModalMode(mode);
+        setSelectedManifestId(id);
     };
 
-    const handleTableChange = (newPagination) => {
-        setPagination(newPagination);
-    };
-
-    const handleAdd = () => {
-        setEditingId(null);
-        form.resetFields();
-        form.setFieldsValue({ date: moment() });
-        setIsModalVisible(true);
-    };
-
-    const handleEdit = (record) => {
-        setEditingId(record.id);
-        form.setFieldsValue({
-            name: record.name,
-            date: moment(record.date),
-            note: record.note,
-            status: record.status
-        });
-        setIsModalVisible(true);
+    const closeModal = () => {
+        setModalMode(null);
+        setSelectedManifestId(null);
     };
 
     const handleDelete = (id) => {
         Modal.confirm({
-            title: 'Xác nhận xóa',
-            content: 'Bạn có chắc chắn muốn xóa chuyến xe này? Các kiện hàng trong chuyến sẽ được trả về trạng thái Chờ xếp xe.',
+            title: 'Xác nhận xóa chuyến xe',
+            content: 'Các mã hàng trong chuyến sẽ được giải phóng (trạng thái xếp xe về null). Tiếp tục?',
+            okText: 'Xóa',
+            okButtonProps: { danger: true },
+            cancelText: 'Hủy',
             onOk: async () => {
                 try {
                     await manifestService.delete(id);
                     message.success('Xóa thành công');
                     fetchData();
-                } catch (error) {
+                } catch {
                     message.error('Lỗi khi xóa');
                 }
             }
         });
     };
 
-    const handleModalOk = async () => {
-        try {
-            const values = await form.validateFields();
-            const submitData = {
-                ...values,
-                date: values.date.toISOString()
-            };
-
-            if (editingId) {
-                await manifestService.update(editingId, submitData);
-                message.success('Cập nhật thành công');
-            } else {
-                await manifestService.create(submitData);
-                message.success('Tạo mới thành công');
-            }
-            setIsModalVisible(false);
-            fetchData();
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
     const columns = [
-        { title: 'ID', dataIndex: 'id', width: 60, fixed: 'left' },
-        { title: 'Tên chuyến', dataIndex: 'name', width: 200 },
+        { title: 'ID', dataIndex: 'id', key: 'id', width: 70, fixed: 'left', align: 'center' },
         {
-            title: 'Ngày xếp',
-            dataIndex: 'date',
-            width: 120,
-            render: (d) => d ? moment(d).format('DD/MM/YYYY') : ''
+            title: 'Biển số xe',
+            dataIndex: 'licensePlate',
+            key: 'licensePlate',
+            width: 140,
+            render: val => (
+                <Space>
+                    <TruckOutlined style={{ color: '#1677ff' }} />
+                    <strong>{val}</strong>
+                </Space>
+            )
         },
         {
-            title: 'Số kiện hàng',
-            dataIndex: '_count',
-            width: 120,
-            render: (count) => count?.productCodes || 0
+            title: 'Người gọi xe',
+            key: 'caller',
+            width: 160,
+            render: (_, r) => r.caller ? `${r.caller.username} — ${r.caller.fullName}` : '—'
+        },
+        {
+            title: 'Ngày xếp xe',
+            dataIndex: 'date',
+            key: 'date',
+            width: 130,
+            render: d => d ? dayjs(d).format('DD/MM/YYYY') : '—'
+        },
+        {
+            title: 'Số mã hàng',
+            dataIndex: 'totalProductCodes',
+            key: 'totalProductCodes',
+            width: 110,
+            align: 'center',
+            render: v => <strong>{v ?? 0}</strong>
+        },
+        {
+            title: 'Tổng cân (kg)',
+            dataIndex: 'totalWeight',
+            key: 'totalWeight',
+            width: 130,
+            align: 'right',
+            render: v => v ? `${new Intl.NumberFormat('de-DE').format(v)} kg` : '0 kg'
+        },
+        {
+            title: 'Tổng khối (m³)',
+            dataIndex: 'totalVolume',
+            key: 'totalVolume',
+            width: 130,
+            align: 'right',
+            render: v => v
+                ? `${new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)} m³`
+                : '0,00 m³'
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
-            width: 120,
-            render: (status) => {
-                let color = 'default';
-                if (status === 'OPEN') color = 'green';
-                if (status === 'CLOSED') color = 'blue';
-                if (status === 'SHIPPED') color = 'orange';
-                return <Tag color={color}>{status}</Tag>;
+            key: 'status',
+            width: 150,
+            render: status => {
+                const opt = getStatusOption(status);
+                return <Tag color={opt.color}>{opt.label}</Tag>;
             }
         },
-        { title: 'Ghi chú', dataIndex: 'note' },
+        { title: 'Ghi chú', dataIndex: 'note', key: 'note', ellipsis: true },
         {
-            title: 'Hành động',
-            key: 'action',
-            width: 150,
+            title: 'Thao tác',
+            key: 'actions',
+            width: 100,
             fixed: 'right',
+            align: 'center',
             render: (_, record) => (
                 <Space>
-                    <Button type="primary" icon={<EyeOutlined />} size="small" onClick={() => navigate(`/manifests/${record.id}`)}>
-                        Chi tiết
-                    </Button>
-                    <Button icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)} />
-                    <Button danger icon={<DeleteOutlined />} size="small" onClick={() => handleDelete(record.id)} />
+                    <Tooltip title="Xem chi tiết">
+                        <Button
+                            type="text"
+                            icon={<EyeOutlined style={{ color: '#1677ff' }} />}
+                            size="small"
+                            onClick={() => openModal('view', record.id)}
+                        />
+                    </Tooltip>
+                    {userRole === 'ADMIN' && (
+                        <Tooltip title="Xóa">
+                            <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                                size="small"
+                                onClick={() => handleDelete(record.id)}
+                            />
+                        </Tooltip>
+                    )}
                 </Space>
             )
         }
     ];
 
     return (
-        <Card>
+        <div style={{ padding: 24 }}>
             <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
                 <Col>
-                    <Title level={3}>Quản lý Xếp xe</Title>
+                    <Title level={3} style={{ margin: 0 }}>
+                        <TruckOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+                        Quản lý Xếp Xe
+                    </Title>
                 </Col>
                 <Col>
                     <Space>
                         <Input.Search
-                            placeholder="Tìm kiếm chuyến xe..."
-                            onSearch={(val) => { setSearchText(val); setPagination(prev => ({ ...prev, current: 1 })); }}
-                            style={{ width: 250 }}
+                            placeholder="Tìm theo biển số xe..."
+                            onSearch={val => {
+                                setSearchText(val);
+                                setPagination(prev => ({ ...prev, current: 1 }));
+                            }}
                             allowClear
+                            style={{ width: 260 }}
+                            prefix={<SearchOutlined />}
                         />
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => openModal('create')}
+                        >
                             Tạo chuyến mới
                         </Button>
-                        <Button icon={<ReloadOutlined />} onClick={fetchData} />
                     </Space>
                 </Col>
             </Row>
@@ -174,30 +221,25 @@ const ManifestListPage = () => {
                 rowKey="id"
                 loading={loading}
                 scroll={{ x: 'max-content' }}
-                pagination={pagination}
-                onChange={handleTableChange}
-                bordered
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} chuyến`,
+                    pageSizeOptions: ['20', '30', '50'],
+                    onChange: (page, pageSize) => setPagination(prev => ({ ...prev, current: page, pageSize }))
+                }}
             />
 
-            <Modal
-                title={editingId ? "Sửa thông tin chuyến xe" : "Tạo chuyến xe mới"}
-                open={isModalVisible}
-                onOk={handleModalOk}
-                onCancel={() => setIsModalVisible(false)}
-            >
-                <Form form={form} layout="vertical">
-                    <Form.Item name="name" label="Tên chuyến (VD: Chuyến HN 02/02)" rules={[{ required: true, message: 'Vui lòng nhập tên chuyến' }]}>
-                        <Input />
-                    </Form.Item>
-                    <Form.Item name="date" label="Ngày xếp xe" rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}>
-                        <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-                    </Form.Item>
-                    <Form.Item name="note" label="Ghi chú">
-                        <Input.TextArea />
-                    </Form.Item>
-                </Form>
-            </Modal>
-        </Card>
+            {modalMode && (
+                <ManifestModal
+                    visible={!!modalMode}
+                    mode={modalMode}
+                    manifestId={selectedManifestId}
+                    onClose={closeModal}
+                    onSuccess={fetchData}
+                />
+            )}
+        </div>
     );
 };
 

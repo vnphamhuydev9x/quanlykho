@@ -41,6 +41,7 @@ model User {
   productCodes        ProductCode[] @relation("CustomerProductCodes")
   employeeProductCodes ProductCode[] @relation("EmployeeProductCodes")
   notifications       Notification[] @relation("UserNotifications")
+  manifestsCalled     Manifest[]    @relation("ManifestCaller")
 
   deletedAt DateTime? // Soft Delete
 
@@ -233,6 +234,10 @@ model ProductCode {
   infoSource            String?   // Nguồn cung cấp thông tin (Kg.m3)
   totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Tổng cước vận chuyển TQ_HN tạm tính
   exchangeRate          Decimal?  @db.Decimal(15, 4) // Tỷ giá (VND/RMB)
+
+  // Xếp xe
+  vehicleStatus           ManifestStatus?  // Trạng thái xếp xe (null = chưa xếp xe)
+  vehicleStatusOverridden Boolean          @default(false) // true = đã chỉnh thủ công, không đồng bộ theo xe nữa
   
   // Relations to Details
   items                 ProductItem[]
@@ -274,18 +279,29 @@ model ProductItem {
   @@map("product_items")
 }
 
+enum ManifestStatus {
+  CHO_XEP_XE
+  DA_XEP_XE
+  DANG_KIEM_HOA
+  CHO_THONG_QUAN
+  DA_THONG_QUAN
+  DA_NHAP_KHO_VN
+}
+
 model Manifest {
-  id          Int           @id @default(autoincrement())
-  name        String        // Tên chuyến (VD: Chuyến ngày 2/2/2026)
-  date        DateTime      @default(now()) // Ngày xếp xe
-  status      String        @default("OPEN") // OPEN, CLOSED, SHIPPED
-  note        String?       // Ghi chú
+  id           Int            @id @default(autoincrement())
+  licensePlate String                          // Biển số xe
+  callerId     Int?                            // Người gọi xe (FK → User)
+  caller       User?          @relation("ManifestCaller", fields: [callerId], references: [id])
+  date         DateTime       @default(now()) // Ngày xếp xe
+  status       ManifestStatus @default(CHO_XEP_XE)
+  note         String?
 
   productCodes ProductCode[]
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  deletedAt   DateTime?     // Soft Delete
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?      // Soft Delete
 
   @@map("manifests")
 }

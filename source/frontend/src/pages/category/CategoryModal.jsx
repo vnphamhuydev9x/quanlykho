@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, Select, Button, Switch } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
 
-const CategoryModal = ({ visible, onCancel, onSuccess, editingCategory }) => {
+const CategoryModal = ({ visible, onCancel, onSuccess, editingCategory, viewOnly = false, userRole = 'USER', onSwitchToEdit }) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
 
@@ -40,17 +41,21 @@ const CategoryModal = ({ visible, onCancel, onSuccess, editingCategory }) => {
     return (
         <Modal
             open={visible}
-            title={editingCategory ? t('category.edit') : t('category.add')}
-            okText={t('common.save')}
-            cancelText={t('common.cancel')}
+            title={viewOnly ? 'Xem loại hàng' : (editingCategory ? t('category.edit') : t('category.add'))}
             onCancel={onCancel}
-            onOk={handleOk}
+            footer={[
+                viewOnly && userRole === 'ADMIN' && (
+                    <Button key="edit" type="primary" icon={<EditOutlined />} onClick={() => onSwitchToEdit?.()}>
+                        Chỉnh sửa
+                    </Button>
+                ),
+                <Button key="close" onClick={onCancel}>{t('common.cancel')}</Button>,
+                !viewOnly && (
+                    <Button key="ok" type="primary" onClick={handleOk}>{t('common.save')}</Button>
+                )
+            ].filter(Boolean)}
         >
-            <Form
-                form={form}
-                layout="vertical"
-                name="categoryForm"
-            >
+            <Form form={form} layout="vertical" name="categoryForm" disabled={viewOnly}>
                 <Form.Item
                     name="name"
                     label={t('category.name')}

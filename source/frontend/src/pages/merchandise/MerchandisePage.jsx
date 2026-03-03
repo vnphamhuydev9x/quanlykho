@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Input, Space, Card, Row, Col, Typography, Modal, message, Tooltip, Tag, Select } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined, ExportOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined, ExportOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
@@ -19,6 +19,18 @@ const MerchandisePage = () => {
     const [searchText, setSearchText] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
+    const [viewOnly, setViewOnly] = useState(false);
+    const [userRole, setUserRole] = useState('USER');
+
+    useEffect(() => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                setUserRole(payload.role || 'USER');
+            } catch (e) { }
+        }
+    }, []);
 
     useEffect(() => {
         fetchData();
@@ -58,8 +70,15 @@ const MerchandisePage = () => {
         setModalVisible(true);
     };
 
+    const handleView = (record) => {
+        setEditingRecord(record);
+        setViewOnly(true);
+        setModalVisible(true);
+    };
+
     const handleEdit = (record) => {
         setEditingRecord(record);
+        setViewOnly(false);
         setModalVisible(true);
     };
 
@@ -191,11 +210,13 @@ const MerchandisePage = () => {
             title: 'Action',
             key: 'action',
             fixed: 'right',
-            width: 100,
+            width: 90,
             render: (_, record) => (
                 <Space>
-                    <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-                    <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
+                    <Button type="text" icon={<EyeOutlined />} onClick={() => handleView(record)} />
+                    {userRole === 'ADMIN' && (
+                        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
+                    )}
                 </Space>
             )
         }
@@ -238,8 +259,11 @@ const MerchandisePage = () => {
 
             <MerchandiseModal
                 visible={modalVisible}
-                onClose={() => { setModalVisible(false); fetchData(); }}
+                onClose={() => { setModalVisible(false); setViewOnly(false); fetchData(); }}
                 editingRecord={editingRecord}
+                viewOnly={viewOnly}
+                userRole={userRole}
+                onSwitchToEdit={() => setViewOnly(false)}
             />
         </Card>
     );

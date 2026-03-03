@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, Row, Col, message, Spin, Upload, DatePicker, Divider } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Select, Row, Col, message, Spin, Upload, DatePicker, Divider, Button, Space } from 'antd';
+import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import productCodeService from '../../services/productCodeService';
@@ -17,7 +17,7 @@ import { INFO_SOURCE_OPTIONS } from '../../constants/enums';
 const Col3 = ({ children }) => <Col xs={24} md={8}>{children}</Col>;
 const { TextArea } = Input;
 
-const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
+const MerchandiseModal = ({ visible, onClose, editingRecord, viewOnly = false, userRole = 'USER', onSwitchToEdit }) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
@@ -193,17 +193,28 @@ const MerchandiseModal = ({ visible, onClose, editingRecord }) => {
 
     return (
         <Modal
-            title={editingRecord ? 'Sửa Hàng hóa' : 'Thêm Hàng hóa'}
+            title={viewOnly ? 'Xem Hàng hóa' : (editingRecord ? 'Sửa Hàng hóa' : 'Thêm Hàng hóa')}
             open={visible}
-            onOk={handleSubmit}
             onCancel={onClose}
-            confirmLoading={submitting}
+            footer={[
+                viewOnly && userRole === 'ADMIN' && (
+                    <Button key="edit" type="primary" icon={<EditOutlined />}
+                        onClick={() => onSwitchToEdit?.()}
+                    >
+                        Chỉnh sửa
+                    </Button>
+                ),
+                <Button key="close" onClick={onClose}>Hủy</Button>,
+                !viewOnly && (
+                    <Button key="ok" type="primary" loading={submitting} onClick={handleSubmit}>Lưu lại</Button>
+                )
+            ].filter(Boolean)}
             width={1200}
             style={{ top: 20 }}
             maskClosable={false}
         >
             <Spin spinning={loading}>
-                <Form form={form} layout="vertical" onValuesChange={handleValuesChange}>
+                <Form form={form} layout="vertical" onValuesChange={handleValuesChange} disabled={viewOnly}>
                     {/* System Fields */}
                     <Divider orientation="left" style={{ borderColor: '#d9d9d9', color: '#666', fontSize: '12px' }}>Thông tin Hệ thống</Divider>
                     <Row gutter={16}>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, Select, Row, Col, Space, Button, Tooltip } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import CustomNumberInput from '../../components/CustomNumberInput';
 import { PACKAGE_UNIT_OPTIONS } from '../../constants/enums';
@@ -9,7 +10,7 @@ const { Option } = Select;
 const { TextArea } = Input;
 const Col2 = ({ children }) => <Col xs={24} md={12}>{children}</Col>;
 
-const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, exchangeRate, onViewDeclaration }) => {
+const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, exchangeRate, onViewDeclaration, userRole = 'USER', onSwitchToEdit }) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
@@ -51,29 +52,33 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
 
     return (
         <Modal
-            title={initialValues ? "Sửa mặt hàng" : "Thêm mặt hàng mới"}
+            title={viewOnly ? 'Xem chi tiet mat hang' : (initialValues ? 'Sua mat hang' : 'Them mat hang moi')}
             open={visible}
-            onOk={handleSubmit}
             onCancel={onClose}
             width={1500}
-            footer={
-                <Space>
-                    <Button onClick={onClose}>{t('common.cancel', 'Huỷ')}</Button>
-                    {!viewOnly && (
-                        <Button type="primary" loading={submitting} onClick={handleSubmit}>
-                            {t('common.save', 'Lưu lại')}
-                        </Button>
-                    )}
-                </Space>
-            }
+            footer={[
+                viewOnly && userRole === 'ADMIN' && (
+                    <Button key="edit" type="primary" icon={<EditOutlined />}
+                        onClick={() => onSwitchToEdit?.()}
+                    >
+                        Chinh sua mat hang
+                    </Button>
+                ),
+                <Button key="close" onClick={onClose}>{viewOnly ? 'Dong' : t('common.cancel', 'Huy')}</Button>,
+                !viewOnly && (
+                    <Button key="save" type="primary" loading={submitting} onClick={handleSubmit}>
+                        {t('common.save', 'Luu lai')}
+                    </Button>
+                )
+            ].filter(Boolean)}
         >
             <Form form={form} layout="vertical" disabled={viewOnly}>
                 <Row gutter={16}>
                     <Col2>
-                        <Form.Item label="Tên mặt hàng" required>
+                        <Form.Item label="Ten mat hang" required>
                             <Space align="baseline" style={{ width: '100%', justifyContent: 'space-between' }}>
-                                <Form.Item name="productName" noStyle rules={[{ required: true, message: 'Nhập tên' }]}>
-                                    <Input placeholder="Nhập tên" style={{ width: '100%' }} />
+                                <Form.Item name="productName" noStyle rules={[{ required: true, message: 'Nhap ten' }]}>
+                                    <Input placeholder="Nhap ten" style={{ width: '100%' }} />
                                 </Form.Item>
                                 {initialValues?.declaration?.id && (
                                     <Button
@@ -82,7 +87,7 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                                         onClick={() => onViewDeclaration && onViewDeclaration(initialValues.declaration.id)}
                                         style={{ padding: 0 }}
                                     >
-                                        Khai báo đã tạo
+                                        Khai bao da tao
                                     </Button>
                                 )}
                             </Space>
@@ -91,18 +96,18 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                     <Col2>
                     </Col2>
                     <Col2>
-                        <Form.Item label="Số kiện">
+                        <Form.Item label="So kien">
                             <Space.Compact block>
                                 <Form.Item name="packageCount" noStyle>
                                     <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
                                 </Form.Item>
-                                <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kiện" disabled />
+                                <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kien" disabled />
                             </Space.Compact>
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item name="packageUnit" label="Đơn vị kiện">
-                            <Select placeholder="Chọn ĐVT">
+                        <Form.Item name="packageUnit" label="Don vi kien">
+                            <Select placeholder="Chon DVT">
                                 {PACKAGE_UNIT_OPTIONS.map(opt => (
                                     <Option key={opt.value} value={opt.value}>{t(opt.labelKey)}</Option>
                                 ))}
@@ -111,7 +116,7 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                     </Col2>
 
                     <Col2>
-                        <Form.Item label="Trọng lượng">
+                        <Form.Item label="Trong luong">
                             <Space.Compact block>
                                 <Form.Item name="weight" noStyle>
                                     <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
@@ -121,7 +126,7 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item label="Cước cân">
+                        <Form.Item label="Cuoc can">
                             <Space.Compact block>
                                 <Form.Item name="weightFee" noStyle>
                                     <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
@@ -131,17 +136,17 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item label="Khối lượng">
+                        <Form.Item label="Khoi luong">
                             <Space.Compact block>
                                 <Form.Item name="volume" noStyle>
                                     <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
                                 </Form.Item>
-                                <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="m³" disabled />
+                                <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="m3" disabled />
                             </Space.Compact>
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item label="Cước khối">
+                        <Form.Item label="Cuoc khoi">
                             <Space.Compact block>
                                 <Form.Item name="volumeFee" noStyle>
                                     <CustomNumberInput min={0} isInteger={true} style={{ width: 'calc(100% - 60px)' }} />
@@ -151,7 +156,7 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item label="Phí dỡ hàng">
+                        <Form.Item label="Phi do hang">
                             <Space.Compact block>
                                 <Form.Item name="unloadingFeeRMB" noStyle>
                                     <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
@@ -161,7 +166,7 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item label="Phí kéo hàng">
+                        <Form.Item label="Phi keo hang">
                             <Space.Compact block>
                                 <Form.Item name="haulingFeeTQ" noStyle>
                                     <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
@@ -171,7 +176,7 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                         </Form.Item>
                     </Col2>
                     <Col2>
-                        <Form.Item label="Phí nội địa">
+                        <Form.Item label="Phi noi dia">
                             <Space.Compact block>
                                 <Form.Item name="domesticFeeTQ" noStyle>
                                     <CustomNumberInput min={0} style={{ width: 'calc(100% - 60px)' }} />
@@ -185,8 +190,8 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                         <Form.Item
                             label={
                                 <Space>
-                                    Cước TQ_HN tạm tính
-                                    <Tooltip title="Tự động tính: Max(Khối lượng × Cước khối, Trọng lượng × Cước cân) + (Phí nội địa + Phí kéo hàng + Phí dỡ hàng) × Tỷ giá">
+                                    Cuoc TQ_HN tam tinh
+                                    <Tooltip title="Tu dong tinh: Max(Khoi luong x Cuoc khoi, Trong luong x Cuoc can) + (Phi noi dia + Phi keo hang + Phi do hang) x Ty gia">
                                         <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
                                     </Tooltip>
                                 </Space>
@@ -206,7 +211,7 @@ const ProductItemModal = ({ visible, onClose, onSave, initialValues, viewOnly, e
                         </Form.Item>
                     </Col2>
                     <Col xs={24}>
-                        <Form.Item name="notes" label="Ghi chú">
+                        <Form.Item name="notes" label="Ghi chu">
                             <TextArea rows={2} />
                         </Form.Item>
                     </Col>

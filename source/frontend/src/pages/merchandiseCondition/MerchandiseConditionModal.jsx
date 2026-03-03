@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, Select, Button, Switch } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
-const MerchandiseConditionModal = ({ visible, onCancel, onSuccess, editingCondition, isViewOnly }) => {
+const MerchandiseConditionModal = ({ visible, onCancel, onSuccess, editingCondition, isViewOnly, userRole = 'USER', onSwitchToEdit }) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const isSystemStatus = editingCondition?.name_vi === 'Nhập kho';
@@ -39,11 +40,18 @@ const MerchandiseConditionModal = ({ visible, onCancel, onSuccess, editingCondit
         <Modal
             open={visible}
             title={isViewOnly ? (t('common.view') || 'Xem chi tiết') : (editingCondition ? t('merchandiseCondition.edit') : t('merchandiseCondition.add'))}
-            okText={t('common.save')}
-            cancelText={isViewOnly ? (t('common.close') || 'Đóng') : t('common.cancel')}
             onCancel={onCancel}
-            onOk={handleOk}
-            okButtonProps={{ style: { display: isViewOnly ? 'none' : 'inline-block' } }}
+            footer={[
+                isViewOnly && userRole === 'ADMIN' && !isSystemStatus && (
+                    <Button key="edit" type="primary" icon={<EditOutlined />} onClick={() => onSwitchToEdit?.()}>
+                        Chỉnh sửa
+                    </Button>
+                ),
+                <Button key="close" onClick={onCancel}>{isViewOnly ? (t('common.close') || 'Đóng') : t('common.cancel')}</Button>,
+                !isViewOnly && (
+                    <Button key="ok" type="primary" onClick={handleOk}>{t('common.save')}</Button>
+                )
+            ].filter(Boolean)}
         >
             <Form
                 form={form}

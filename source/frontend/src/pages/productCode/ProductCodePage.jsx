@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Space, message, Popconfirm, Row, Col, Card, Tooltip } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Table, Button, Input, Space, message, Popconfirm, Row, Col, Card, Tooltip, Tag, Typography, Divider, Modal } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, EyeOutlined, TruckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import productCodeService from '../../services/productCodeService';
 import ProductCodeModal from './ProductCodeModal';
+import ManifestModal from '../manifest/ManifestModal';
 import { formatCurrency } from '../../utils/format';
+import { MANIFEST_STATUS_OPTIONS } from '../../constants/enums';
 
 const ProductCodePage = () => {
     const { t, i18n } = useTranslation();
@@ -19,6 +21,50 @@ const ProductCodePage = () => {
     const [editingRecord, setEditingRecord] = useState(null);
     const [viewOnly, setViewOnly] = useState(false);
     const [userType, setUserType] = useState('USER');
+    const [userRole, setUserRole] = useState('USER');
+
+    // Selection state
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [selectedRows, setSelectedRows] = useState([]);
+
+    // Manifest modal (Xếp xe từ màn hình Mã hàng)
+    const [manifestModalVisible, setManifestModalVisible] = useState(false);
+    const [manifestInitialPCIds, setManifestInitialPCIds] = useState([]);
+
+    const UNIT_LABEL = {
+        BAO_TAI: 'bao tải',
+        THUNG_CARTON: 'thùng carton',
+        PALLET: 'pallet',
+    };
+
+    // Tính toán summary khi user tick chọn
+    const summaryData = useMemo(() => {
+        if (selectedRows.length === 0) return null;
+
+        const totalWeight = selectedRows.reduce((sum, pc) => sum + (Number(pc.totalWeight) || 0), 0);
+        const totalVolume = selectedRows.reduce((sum, pc) => sum + (Number(pc.totalVolume) || 0), 0);
+
+        // Gộm số kiện theo đơn vị từ items con (bỏ KHONG_DONG_GOI)
+        const packageSummary = {};
+        selectedRows.forEach(pc => {
+            (pc.items || []).forEach(item => {
+                if (item.packageUnit && item.packageUnit !== 'KHONG_DONG_GOI') {
+                    const count = Number(item.packageCount) || 0;
+                    packageSummary[item.packageUnit] = (packageSummary[item.packageUnit] || 0) + count;
+                }
+            });
+        });
+
+        return { totalWeight, totalVolume, packageSummary };
+    }, [selectedRows]);
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newKeys, newRows) => {
+            setSelectedRowKeys(newKeys);
+            setSelectedRows(newRows);
+        },
+    };
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -26,6 +72,7 @@ const ProductCodePage = () => {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 setUserType(payload.type);
+                setUserRole(payload.role);
             } catch (e) {
                 console.error("Invalid token");
             }
@@ -208,21 +255,35 @@ const ProductCodePage = () => {
             )
         },
         {
+            title: 'Tình trạng xếp xe',
+            key: 'vehicleStatus',
+            width: 150,
+            render: (_, record) => {
+                const opt = MANIFEST_STATUS_OPTIONS.find(o => o.value === record.vehicleStatus);
+                if (!opt) return <Tag>Chưa xếp xe</Tag>;
+                return (
+                    <Space size={4}>
+                        <Tag color={opt.color}>{opt.label}</Tag>
+                        {record.vehicleStatusOverridden && (
+                            <Tooltip title="Đã chỉnh thủ công">
+                                <span style={{ color: '#faad14', fontSize: 12 }}>⚠</span>
+                            </Tooltip>
+                        )}
+                    </Space>
+                );
+            }
+        },
+        {
             title: 'Thao tác',
             key: 'actions',
-            width: 120,
+            width: 100,
             fixed: 'right',
             render: (_, record) => (
                 <Space size="small">
                     <Tooltip title="Xem">
                         <Button type="text" icon={<EyeOutlined />} onClick={() => handleView(record)} />
                     </Tooltip>
-
-                    <Tooltip title="Sửa">
-                        <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-                    </Tooltip>
-
-                    {userType !== 'CUSTOMER' && (
+                    {userRole === 'ADMIN' && (
                         <Popconfirm
                             title="Bạn có chắc chắn muốn xoá ?"
                             onConfirm={() => handleDelete(record.id)}
@@ -277,10 +338,108 @@ const ProductCodePage = () => {
                 </Card>
             </div>
 
+            {/* Summary bar — hiển thị khi có ít nhất 1 mã hàng được chọn */}
+            {summaryData && (
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '8px 20px',
+                    backgroundColor: '#e6f4ff',
+                    border: '1px solid #91caff',
+                    borderRadius: 8,
+                    padding: '10px 16px',
+                    marginBottom: 12,
+                }}>
+                    <Typography.Text strong style={{ color: '#1677ff', whiteSpace: 'nowrap' }}>
+                        ✓ Đã chọn {selectedRows.length} mã hàng
+                    </Typography.Text>
+
+                    <Divider type="vertical" style={{ borderColor: '#91caff', height: 20 }} />
+
+                    {/* Số kiện theo đơn vị*/}
+                    <Space size={8} wrap>
+                        {Object.entries(summaryData.packageSummary).length === 0 ? (
+                            <Typography.Text type="secondary">Không có đơn vị đóng gói</Typography.Text>
+                        ) : (
+                            Object.entries(summaryData.packageSummary).map(([unit, count]) => (
+                                <Tag key={unit} color="blue" style={{ fontSize: 13, padding: '2px 10px' }}>
+                                    {new Intl.NumberFormat('de-DE').format(count)} {UNIT_LABEL[unit] || unit.toLowerCase()}
+                                </Tag>
+                            ))
+                        )}
+                    </Space>
+
+                    <Divider type="vertical" style={{ borderColor: '#91caff', height: 20 }} />
+
+                    {/* Tổng cân */}
+                    <Typography.Text>
+                        Tổng cân:{' '}
+                        <Typography.Text strong style={{ color: '#389e0d' }}>
+                            {new Intl.NumberFormat('de-DE').format(summaryData.totalWeight)} kg
+                        </Typography.Text>
+                    </Typography.Text>
+
+                    {/* Tổng khối */}
+                    <Typography.Text>
+                        Tổng khối:{' '}
+                        <Typography.Text strong style={{ color: '#389e0d' }}>
+                            {new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(summaryData.totalVolume)} m³
+                        </Typography.Text>
+                    </Typography.Text>
+
+                    {/* Nút Xếp xe */}
+                    <Button
+                        type="primary"
+                        icon={<TruckOutlined />}
+                        size="small"
+                        onClick={() => {
+                            // Kiểm tra mã hàng nào đã có vehicleStatus
+                            const conflicts = selectedRows.filter(r => r.vehicleStatus);
+                            if (conflicts.length > 0) {
+                                Modal.warning({
+                                    title: 'Có mã hàng đã được xếp xe',
+                                    width: 520,
+                                    content: (
+                                        <div>
+                                            <p>Các mã hàng sau đã được xếp vào xe khác, vui lòng bỏ chọn trước khi tiếp tục:</p>
+                                            <ul style={{ paddingLeft: 20 }}>
+                                                {conflicts.map(c => (
+                                                    <li key={c.id}>
+                                                        <strong>#{c.id} — {c.orderCode || '(chưa có mã)'}</strong>
+                                                        {c.manifest && ` (Xe ${c.manifest.licensePlate || '#' + c.manifestId})`}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )
+                                });
+                                return;
+                            }
+                            // Tất cả hợp lệ → mở ManifestModal create
+                            setManifestInitialPCIds(selectedRowKeys.map(k => parseInt(k)));
+                            setManifestModalVisible(true);
+                        }}
+                    >
+                        Xếp xe ({selectedRows.length})
+                    </Button>
+
+                    <Button
+                        type="text"
+                        size="small"
+                        style={{ marginLeft: 'auto', color: '#999' }}
+                        onClick={() => { setSelectedRowKeys([]); setSelectedRows([]); }}
+                    >
+                        Bỏ chọn
+                    </Button>
+                </div>
+            )}
+
             <Table
                 columns={columns}
                 dataSource={data}
                 rowKey="id"
+                rowSelection={rowSelection}
                 loading={loading}
                 pagination={{
                     ...pagination,
@@ -299,6 +458,25 @@ const ProductCodePage = () => {
                     editingRecord={editingRecord}
                     viewOnly={viewOnly}
                     userType={userType}
+                    userRole={userRole}
+                    onSwitchToEdit={() => {
+                        setViewOnly(false);
+                    }}
+                />
+            )}
+
+            {manifestModalVisible && (
+                <ManifestModal
+                    visible={manifestModalVisible}
+                    mode="create"
+                    initialProductCodeIds={manifestInitialPCIds}
+                    onClose={() => setManifestModalVisible(false)}
+                    onSuccess={() => {
+                        setManifestModalVisible(false);
+                        setSelectedRowKeys([]);
+                        setSelectedRows([]);
+                        fetchData();
+                    }}
                 />
             )}
         </div>

@@ -154,16 +154,6 @@ const MerchandiseConditionPage = () => {
                         }}
                         title={t('common.view') || 'Xem chi tiết'}
                     />
-                    <Button
-                        icon={<EditOutlined />}
-                        onClick={() => {
-                            setEditingStatus(record);
-                            setIsViewOnly(false);
-                            setIsModalVisible(true);
-                        }}
-                        disabled={userRole !== 'ADMIN'}
-                        title={t('common.edit')}
-                    />
                     {userRole === 'ADMIN' && record.name_vi !== 'Nhập kho' && (
                         <Popconfirm
                             title={t('common.confirmDelete')}
@@ -258,6 +248,8 @@ const MerchandiseConditionPage = () => {
                 onSuccess={handleCreateUpdate}
                 editingCondition={editingCondition}
                 isViewOnly={isViewOnly}
+                userRole={userRole}
+                onSwitchToEdit={() => setIsViewOnly(false)}
             />
         </div>
     );

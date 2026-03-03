@@ -666,6 +666,114 @@ const response = await axiosInstance.get('/customers');
     }
     ```
 
+### 12.6 Multi-Section Detail View — Tab Layout (Xem chi tiết nhiều vùng thông tin)
+
+#### Quy tắc (BẮT BUỘC)
+
+> **Khi một màn hình xem chi tiết (Modal View / Detail Page) có từ 3 vùng thông tin trở lên, BẮT BUỘC tổ chức thành các Tab thay vì để người dùng phải cuộn dọc (scroll).**
+
+**Tiêu chí áp dụng**: Từ 3 nhóm thông tin có tiêu đề riêng, thuộc về các entity khác nhau (ví dụ: Mã hàng / Mặt hàng / Khai báo).
+
+**Nguyên tắc đặt tên Tab**:
+- Tên tab = Tên entity hoặc nhóm thông tin, ngắn gọn (2–4 từ).
+- Có thể kèm icon để nhận diện nhanh (tùy chọn).
+- Ví dụ: `Thông tin Mã hàng`, `Thông tin Mặt hàng`, `Thông tin Khai báo`.
+
+**Quy tắc Tab mặc định (Active Tab)**:
+- Tab đầu tiên (Tab 1) luôn là vùng thông tin "chủ thể chính" của màn hình hiện tại.
+- **BẮT BUỘC** reset về Tab 1 mỗi khi modal mở lại (dùng `useEffect` watch `open` prop).
+- Lý do: Tránh UX lỗi khi user đóng modal đang ở Tab 3 rồi mở record khác → vẫn nhìn thấy Tab 3.
+
+**Quy tắc Tab chứa lỗi validation**:
+- Khi form submit và có lỗi ở Tab không đang active, **PHẢI** tự động chuyển sang Tab chứa lỗi đầu tiên.
+- Cách detect: Dùng `form.getFieldsError()` để lấy danh sách field lỗi, map ngược lại Tab chứa field đó.
+
+#### Code Mẫu (Ant Design Tabs trong Modal)
+
+```jsx
+import { Tabs, Modal } from 'antd';
+import { FileTextOutlined, InboxOutlined, FileSearchOutlined } from '@ant-design/icons';
+
+const TAB_KEYS = {
+    DECLARATION:  'declaration',  // Tab 1 — chủ thể chính
+    MERCHANDISE:  'merchandise',
+    PRODUCT_CODE: 'productCode',
+};
+
+// Map field name → tab key (dùng để nhảy tab khi có lỗi validation)
+const FIELD_TAB_MAP = {
+    brand: TAB_KEYS.DECLARATION,
+    declarationQuantity: TAB_KEYS.DECLARATION,
+    merchandiseName: TAB_KEYS.MERCHANDISE,
+    packageUnit: TAB_KEYS.MERCHANDISE,
+    productCodeName: TAB_KEYS.PRODUCT_CODE,
+};
+
+const DetailModal = ({ open, onClose, data }) => {
+    const [activeTab, setActiveTab] = useState(TAB_KEYS.DECLARATION);
+    const [form] = Form.useForm();
+
+    // ✅ Reset về Tab 1 mỗi khi modal mở
+    useEffect(() => {
+        if (open) setActiveTab(TAB_KEYS.DECLARATION);
+    }, [open]);
+
+    // ✅ Nhảy sang tab chứa lỗi đầu tiên khi submit fail
+    const handleFinishFailed = ({ errorFields }) => {
+        if (errorFields.length > 0) {
+            const firstErrorField = errorFields[0].name[0];
+            const targetTab = FIELD_TAB_MAP[firstErrorField];
+            if (targetTab && targetTab !== activeTab) {
+                setActiveTab(targetTab);
+            }
+        }
+    };
+
+    const tabItems = [
+        {
+            key: TAB_KEYS.DECLARATION,
+            label: <span><FileSearchOutlined /> {t('declaration.tabTitle')}</span>,
+            children: <DeclarationInfoSection form={form} data={data} />,
+        },
+        {
+            key: TAB_KEYS.MERCHANDISE,
+            label: <span><InboxOutlined /> {t('merchandise.tabTitle')}</span>,
+            children: <MerchandiseInfoSection data={data?.merchandise} />,
+        },
+        {
+            key: TAB_KEYS.PRODUCT_CODE,
+            label: <span><FileTextOutlined /> {t('productCode.tabTitle')}</span>,
+            children: <ProductCodeInfoSection data={data?.merchandise?.productCode} />,
+        },
+    ];
+
+    return (
+        <Modal open={open} onCancel={onClose} width={900} footer={/* ... */}>
+            <Form form={form} onFinishFailed={handleFinishFailed}>
+                <Tabs
+                    activeKey={activeTab}
+                    onChange={setActiveTab}
+                    items={tabItems}
+                    destroyInactiveTabPane={false}
+                />
+            </Form>
+        </Modal>
+    );
+};
+```
+
+#### Checklist khi implement Multi-Section Detail
+
+- [ ] Từ 3 vùng thông tin trở lên → dùng `Tabs`, không dùng scroll
+- [ ] Tab 1 là entity chủ thể chính của màn hình
+- [ ] Tên tab ngắn gọn, dùng translation key (không hardcode tiếng Việt)
+- [ ] `useEffect` reset `activeTab` về Tab 1 khi `open` prop thay đổi sang `true`
+- [ ] `destroyInactiveTabPane={false}` để không mất state khi chuyển tab
+- [ ] Có `FIELD_TAB_MAP` và `onFinishFailed` để tự nhảy sang tab chứa lỗi
+- [ ] Modal width đủ rộng (≥ 800px) để tab không bị xuống dòng
+
+---
+
 ### 12.4 Page Layout (Trang danh sách)
 *   Tuân thủ chuẩn "Customer List Layout".
 *   **Header**:
@@ -712,3 +820,208 @@ const response = await axiosInstance.get('/customers');
 ## 15. Communication Rules (Quy tắc giao tiếp)
 *   **Language**: Luôn trả lời và giao tiếp bằng **Tiếng Việt** (Vietnamese) trong mọi tình huống (trừ khi viết code hoặc tên biến tiếng Anh).
 *   **Plan**: Các file kế hoạch (`implementation_plan.md`) phải được viết hoàn toàn bằng **Tiếng Việt**.
+
+---
+
+## 16. Cross-Entity Navigation — "Quick Peek" Pattern (Điều hướng liên đối tượng)
+
+### Vấn đề
+Trong một ứng dụng quản lý có nhiều đối tượng liên kết (Mã hàng → Khai báo → Xe...), user thường cần xem chi tiết đối tượng B trong khi đang ở màn hình đối tượng A. Nếu navigate hẳn sang trang khác → mất context của trang hiện tại.
+
+### Quy tắc (BẮT BUỘC)
+
+> **"Quick Peek Modal" — Không bao giờ navigate trang để xem chi tiết entity liên kết."**
+
+Khi user click vào một thông tin liên kết (link, tag, ID...):
+- ✅ **Mở Modal** hiển thị thông tin entity đó ở chế độ **View (read-only)**
+- ✅ **Footer Modal** có 2 nút: `[Đóng]` + `[✏ Chỉnh sửa]`
+- ✅ Bấm `[✏ Chỉnh sửa]` → **cùng modal switch sang Edit mode** (không đóng, không navigate)
+- ❌ **KHÔNG** navigate sang trang khác khi chỉ cần xem thông tin tham chiếu
+- ❌ **KHÔNG** mở tab mới
+- ❌ **KHÔNG** navigate rồi quay lại (browser Back) — gây mất context
+
+### Khi nào dùng Navigate thay vì Modal?
+Chỉ navigate trang khi entity đích có quá nhiều sub-data phức tạp đến mức Modal không đủ chỗ hiển thị (ví dụ: dashboard phân tích với nhiều chart). Đây là trường hợp **rất hiếm** và phải có lý do rõ ràng.
+
+### Implementation Pattern
+
+```jsx
+// 1. State trong component cha
+const [peekManifestId, setPeekManifestId] = useState(null);
+const [peekManifestVisible, setPeekManifestVisible] = useState(false);
+
+// 2. Click vào Tag/Link → mở Quick Peek
+const handleViewManifest = (manifestId) => {
+    setPeekManifestId(manifestId);
+    setPeekManifestVisible(true);
+};
+
+// 3. Trong JSX — Tag/Link có thể click
+<Tag
+    color="blue"
+    style={{ cursor: 'pointer' }}
+    onClick={() => handleViewManifest(record.manifestId)}
+>
+    {statusLabel}
+</Tag>
+
+// 4. ManifestModal ở cuối JSX
+<ManifestModal
+    visible={peekManifestVisible}
+    mode="view"
+    manifestId={peekManifestId}
+    onClose={() => setPeekManifestVisible(false)}
+    onSuccess={() => { setPeekManifestVisible(false); fetchData(); }}
+/>
+```
+
+### ManifestModal — View Mode với nút Edit
+```jsx
+// Trong ManifestModal footer khi mode='view':
+footer={[
+    <Button key="edit" type="primary" icon={<EditOutlined />}
+        onClick={() => setMode('edit')}   // ← switch inline, không re-mount
+    >
+        Chỉnh sửa
+    </Button>,
+    <Button key="close" onClick={onClose}>Đóng</Button>
+]}
+```
+
+### Circular Navigation — Tránh Link Vòng Tròn
+
+**Vấn đề**: Khi Modal B được mở như một Quick Peek từ bên trong Modal A, nếu trong Modal B lại có link dẫn ngược về Modal A → người dùng click vào link đó sẽ thấy Modal A mở ra chồng lên chính Modal A đang mở → **vòng tròn vô nghĩa**.
+
+**Ví dụ cụ thể**:
+- Màn hình **Mã hàng** → mở Quick Peek **Khai báo**
+- Trong modal Khai báo có tab "Thông tin Mã hàng" → có link ID dẫn về Mã hàng
+- Nếu link đó còn hoạt động → mở thêm 1 modal Mã hàng nữa ở trên cùng → **vòng tròn**
+
+**Quy tắc**:
+- Prop callback điều hướng (ví dụ: `onViewProductCode`) **đóng vai trò Context Indicator**.
+- **Không truyền prop** → link hiển thị như text thường (không có màu xanh, không có underline, không click được).
+- **Có truyền prop** → link hiển thị đầy đủ, click được.
+
+**Implementation**:
+```jsx
+// ✅ Style có điều kiện — chỉ hiện link khi có context điều hướng
+<Input
+    readOnly
+    style={onViewProductCode
+        ? { ...disabledStyle, cursor: 'pointer', color: '#1890ff', textDecoration: 'underline' }
+        : disabledStyle
+    }
+    onClick={() => onViewProductCode && onViewProductCode(id)}
+/>
+
+// ✅ Caller từ trang gốc — truyền prop → hiện link
+<EntityModal onViewProductCode={(id) => openProductCodeModal(id)} />
+
+// ✅ Caller từ trong modal con — KHÔNG truyền prop → ẩn link, tránh vòng tròn
+<EntityModal /> {/* onViewProductCode omitted */}
+```
+
+### Checklist khi có entity liên kết
+- [ ] Link/Tag entity liên kết có `cursor: 'pointer'` và onClick handler
+- [ ] Click → mở Quick Peek Modal ở mode View
+- [ ] Modal View có nút `[✏ Chỉnh sửa]` → switch mode inline
+- [ ] Không có navigate() nào được gọi khi mở thông tin tham chiếu
+- [ ] Kiểm tra circular: nếu modal B được mở từ modal A, đừng truyền callback điều hướng về A vào modal B
+- [ ] Sau khi đóng modal, user ở nguyên vị trí trang cũ
+
+---
+
+## 17. View-first Table Action Pattern (Phân quyền nút hành động)
+
+### Quy tắc (BẮT BUỘC)
+
+Tất cả table action columns phải tuân theo pattern sau:
+
+| Nút | Hiển thị với ai | Vị trí |
+|---|---|---|
+| `👁 Xem` | **Tất cả** (ai vào được trang đều xem được) | Luôn có |
+| `🗑 Xóa` | **Chỉ ADMIN** | Table action |
+| `✏ Chỉnh sửa` | **Chỉ ADMIN** | **Trong footer modal View**, KHÔNG ở table |
+
+**Nguyên tắc cốt lõi:**
+- ❌ **KHÔNG** có nút Edit riêng ở cột action của table
+- ✅ Edit **chỉ available** bên trong modal sau khi đã View (thông qua nút `[✏ Chỉnh sửa]` ở footer)
+- ✅ Ai có quyền View trang → có quyền click View bất kỳ record nào
+- ✅ Admin click View → thấy nút `[✏ Chỉnh sửa]` trong footer → switch inline sang edit mode
+
+### Quan trọng: Sub-list bên trong Modal tuân theo cùng pattern
+
+Khi một modal có chứa danh sách con (ví dụ: Modal Mã hàng có table Mặt hàng bên trong):
+
+> **Nút hành động (View/Delete) của sub-list LUÔN hiển thị đúng theo role, ĐỘC LẬP với trạng thái view/edit của form cha.**
+
+Cụ thể với Modal Mã hàng ở chế độ View:
+- Form fields của Mã hàng: **disabled** (chỉ enable khi admin bấm `[✏ Chỉnh sửa mã hàng]` ở footer)
+- Sub-list Mặt hàng: vẫn có `[👁 Xem mặt hàng]` + `[🗑 Xóa mặt hàng]` (admin) — **không bị ẩn đi**
+- Sub-list Khai báo (trong từng mặt hàng): chỉ `[👁 Xem khai báo]` (Quick Peek)
+
+**Sai lầm cần tránh:**
+```jsx
+// ❌ SAI: Delete bị ẩn khi đang view mode
+{!viewOnly && (
+    <Popconfirm onConfirm={() => handleDeleteItem(index)}>
+        <Button danger icon={<DeleteOutlined />} />
+    </Popconfirm>
+)}
+
+// ✅ ĐÚNG: Delete theo role, không phụ thuộc viewOnly của form cha
+{userRole === 'ADMIN' && (
+    <Popconfirm onConfirm={() => handleDeleteItem(index)}>
+        <Button danger icon={<DeleteOutlined />} />
+    </Popconfirm>
+)}
+```
+
+### Implementation Pattern
+
+```jsx
+// ─── Table action column ─────────────────────────────
+render: (_, record) => (
+    <Space size="small">
+        <Button type="text" icon={<EyeOutlined />} onClick={() => handleView(record)} />
+        {userRole === 'ADMIN' && (
+            <Popconfirm title="Xác nhận xóa?" onConfirm={() => handleDelete(record.id)}>
+                <Button type="text" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+        )}
+    </Space>
+)
+
+// ─── Modal footer (view mode) ─────────────────────────
+footer={[
+    isView && userRole === 'ADMIN' && (
+        <Button key="edit" type="primary" icon={<EditOutlined />}
+            onClick={() => setMode('edit')}  // hoặc setViewOnly(false)
+        >
+            Chỉnh sửa
+        </Button>
+    ),
+    <Button key="close" onClick={onClose}>Đóng</Button>
+].filter(Boolean)}
+
+// ─── Lấy userRole từ JWT token ───────────────────────
+const [userRole, setUserRole] = useState('USER');
+useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            setUserRole(payload.role || 'USER');
+        } catch (e) {}
+    }
+}, []);
+```
+
+### Checklist khi implement/review table
+- [ ] Table action: chỉ có `👁 Xem` + `🗑 Xóa` (admin only)
+- [ ] **Không có** nút Edit ở table action
+- [ ] Modal có `viewOnly` prop hoặc `mode` state
+- [ ] Footer modal view mode: admin thấy `[✏ Chỉnh sửa]`, non-admin chỉ thấy `[Đóng]`
+- [ ] `userRole` được parse từ JWT và truyền đúng vào modal **và cả sub-modal**
+- [ ] Sub-list bên trong modal: Delete/View **không** bị điều kiện bởi `viewOnly` của form cha
+- [ ] Nút `[+ Thêm mới]` ở header page: chỉ hiện cho ADMIN (modal tạo mới không cần view mode)

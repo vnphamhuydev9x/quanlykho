@@ -78,6 +78,8 @@ const declarationController = {
                                 orderCode: true,
                                 entryDate: true,
                                 infoSource: true,
+                                vehicleStatus: true,
+                                vehicleStatusOverridden: true,
                                 customer: {
                                     select: {
                                         fullName: true,

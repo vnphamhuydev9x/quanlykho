@@ -235,7 +235,7 @@ async function main() {
                         orderCode: `ORDER${new Date().getFullYear()}${String(i + 1).padStart(4, '0')}`,
                         totalWeight: 0,
                         totalVolume: 0,
-                        infoSource: 'Mẫu Seed',
+                        infoSource: 'Kho TQ',
                         totalTransportFeeEstimate: 0,
                         exchangeRate: EXCHANGE_RATE,
                     }
@@ -282,6 +282,8 @@ async function main() {
                                     productDescription: `Mô tả ${prod.name}`,
                                     importTax: prod.importTax,
                                     vatTax: prod.vatTax,
+                                    declarationCost: 0,
+                                    importCostToCustomer: Math.round(itemFee),
                                 }
                             }
                         }
@@ -295,6 +297,7 @@ async function main() {
                         totalWeight: Math.round(pcTotalWeight),
                         totalVolume: parseFloat(pcTotalVolume.toFixed(3)),
                         totalTransportFeeEstimate: Math.round(pcTotalFee),
+                        totalImportCostToCustomer: Math.round(pcTotalFee),
                     }
                 });
 
@@ -312,11 +315,11 @@ async function main() {
     const admins = await prisma.user.findMany({ where: { role: 'ADMIN', deletedAt: null } });
 
     const manifestDefs = [
-        { licensePlate: '51C-123.45', status: 'CHO_XEP_XE',     note: 'Xe đang chờ xếp hàng tại kho TQ' },
-        { licensePlate: '29A-456.78', status: 'DA_XEP_XE',      note: 'Đã xếp hàng xong, chuẩn bị xuất phát' },
-        { licensePlate: '43B-789.01', status: 'DANG_KIEM_HOA',  note: 'Đang kiểm tra hải quan cửa khẩu Bằng Tường' },
+        { licensePlate: '51C-123.45', status: 'CHO_XEP_XE', note: 'Xe đang chờ xếp hàng tại kho TQ' },
+        { licensePlate: '29A-456.78', status: 'DA_XEP_XE', note: 'Đã xếp hàng xong, chuẩn bị xuất phát' },
+        { licensePlate: '43B-789.01', status: 'DANG_KIEM_HOA', note: 'Đang kiểm tra hải quan cửa khẩu Bằng Tường' },
         { licensePlate: '92C-234.56', status: 'CHO_THONG_QUAN', note: 'Chờ cấp phép thông quan' },
-        { licensePlate: '30E-567.89', status: 'DA_THONG_QUAN',  note: 'Đã thông quan, đang vận chuyển về HN' },
+        { licensePlate: '30E-567.89', status: 'DA_THONG_QUAN', note: 'Đã thông quan, đang vận chuyển về HN' },
         { licensePlate: '51G-890.12', status: 'DA_NHAP_KHO_VN', note: 'Đã nhập kho Hà Nội' },
     ];
 

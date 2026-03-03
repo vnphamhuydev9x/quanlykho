@@ -44,6 +44,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
     // State riêng: mode của ProductItemModal và DeclarationModal — độc lập với viewOnly của ProductCode
     const [itemViewOnly, setItemViewOnly] = useState(false);
     const [declarationViewMode, setDeclarationViewMode] = useState(false);
+    const [hasUpdates, setHasUpdates] = useState(false);
 
     // Quick Peek — ManifestModal
     const [peekManifestId, setPeekManifestId] = useState(null);
@@ -245,7 +246,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
         <Modal
             open={visible}
             title={viewOnly ? t('productCode.view', 'Xem Mã Hàng') : (editingRecord ? t('productCode.edit', 'Sửa Mã Hàng') : t('productCode.add', 'Thêm Mã Hàng Mới'))}
-            onCancel={() => onClose()}
+            onCancel={() => onClose(hasUpdates)}
             width={1500}
             style={{ top: 20 }}
             maskClosable={false}
@@ -257,7 +258,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
                         Chỉnh sửa mã hàng
                     </Button>
                 ),
-                <Button key="close" onClick={() => onClose()}>{t('common.cancel', 'Hủy')}</Button>,
+                <Button key="close" onClick={() => onClose(hasUpdates)}>{t('common.cancel', 'Hủy')}</Button>,
                 !viewOnly && (
                     <Button key="save" type="primary" loading={submitting} onClick={handleSubmit}>
                         {t('common.save', 'Lưu lại')}
@@ -387,7 +388,11 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
 
                         <Col3>
                             <Form.Item name="infoSource" label="Nguồn cung cấp thông tin (Kg/m³)">
-                                <Input disabled={disabledGeneral} placeholder="Ví dụ: Kho TQ báo" />
+                                <Select disabled={disabledGeneral} placeholder="Chọn nguồn thông tin">
+                                    <Option value="Kho TQ">Kho TQ</Option>
+                                    <Option value="Kho VN">Kho VN</Option>
+                                    <Option value="Dự kiến nhập kho">Dự kiến nhập kho</Option>
+                                </Select>
                             </Form.Item>
                         </Col3>
 
@@ -424,6 +429,31 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
                                         textAlign: 'right',
                                         fontWeight: 'bold',
                                         color: '#389e0d',
+                                        backgroundColor: '#f5f5f5',
+                                        cursor: 'default'
+                                    }}
+                                />
+                            </Form.Item>
+                        </Col3>
+
+                        <Col3>
+                            <Form.Item
+                                label={
+                                    <Space>
+                                        Chi phí NK hàng hóa đến tay KH
+                                        <Tooltip title="Tổng (Cước TQ_HN tạm tính + Chi phí khai báo) của các mặt hàng">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                }
+                            >
+                                <Input
+                                    value={formatCurrency(form.getFieldValue('totalImportCostToCustomer') || 0, 'VND')}
+                                    readOnly
+                                    style={{
+                                        textAlign: 'right',
+                                        fontWeight: 'bold',
+                                        color: '#cf1322',
                                         backgroundColor: '#f5f5f5',
                                         cursor: 'default'
                                     }}
@@ -566,6 +596,33 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
                                     </span>
                                 )
                             },
+                            {
+                                title: <div style={{ minWidth: 100 }}>Chi phí khai báo</div>,
+                                key: 'declarationCost',
+                                align: 'right',
+                                render: (_, record) => (
+                                    <span style={{ color: '#f5222d', fontWeight: 'bold' }}>
+                                        {formatCurrency(record.declaration?.declarationCost || 0, 'VND')}
+                                    </span>
+                                )
+                            },
+                            {
+                                title: (
+                                    <Space style={{ minWidth: 150 }}>
+                                        Chi phí NK...
+                                        <Tooltip title="Chi phí NK hàng hóa đến tay KH = Cước TQ_HN tạm tính + Chi phí khai báo">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                ),
+                                key: 'importCostToCustomer',
+                                align: 'right',
+                                render: (_, record) => (
+                                    <span style={{ color: '#cf1322', fontWeight: 'bold' }}>
+                                        {formatCurrency(record.declaration?.importCostToCustomer || 0, 'VND')}
+                                    </span>
+                                )
+                            },
                             { title: 'Ghi chú', dataIndex: 'notes', key: 'notes', ellipsis: true },
                             {
                                 title: 'Quản lý khai báo',
@@ -672,6 +729,7 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
                     onSuccess={() => {
                         setDeclarationModalVisible(false);
                         setSelectedDeclaration(null);
+                        setHasUpdates(true);
                         loadEditData();
                     }}
                 />

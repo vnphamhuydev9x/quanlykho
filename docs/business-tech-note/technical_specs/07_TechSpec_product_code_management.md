@@ -22,7 +22,7 @@ Hệ thống sử dụng 2 models chính: `ProductCode` (Master) và `ProductIte
 | **Mã đơn hàng** | `orderCode` | `String?` | | |
 | **Tổng trọng lượng** | `totalWeight` | `Int?` | | Integer |
 | **Tổng khối lượng** | `totalVolume` | `Decimal?` | `@db.Decimal(15,3)` | Float |
-| **Nguồn cung cấp thông tin**| `infoSource` | `String?` | | |
+| **Nguồn cung cấp thông tin (Kg,m3)**| `infoSource` | `String?` | Enum Validated | `Kho TQ`, `Kho VN`, `Dự kiến nhập kho` |
 | **Tổng cước TQ_HN tạm tính**| `totalTransportFeeEstimate`| `Decimal?` | `@db.Decimal(15,2)` | **Auto Calculated** |
 | **Tỷ giá** | `exchangeRate` | `Decimal?` | `@db.Decimal(15,4)` | Float |
 | **Trạng thái hàng** | `merchandiseConditionId`| `Int?` | Relation | Tham chiếu `MerchandiseCondition` |
@@ -63,7 +63,7 @@ Base URL: `/api/product-codes`
 
 ### 3.2 Quy Tắc Validation (Backend) - BẮT BUỘC
 - **Relation Check (DB Query)**: Trước khi lưu, phải check `employeeId`, `customerId`, `merchandiseConditionId` có thực sự tồn tại ở các table tương ứng hay không.
-- **Enum Check (Hard-coded)**: Kiểm tra `items[].packageUnit` có nằm trong mảng các giá trị hợp lệ được định nghĩa ở server (vd: `['KHONG_DONG_GOI', 'BAO_TAI', 'THUNG_CARTON', 'PALLET']`).
+- **Enum Check (Hard-coded)**: Kiểm tra `items[].packageUnit` có nằm trong mảng các giá trị hợp lệ được định nghĩa ở server (vd: `['KHONG_DONG_GOI', 'BAO_TAI', 'THUNG_CARTON', 'PALLET']`). Kiểm tra `infoSource` nếu có truyền lên phải thuộc `['Kho TQ', 'Kho VN', 'Dự kiến nhập kho']`.
 - **Data Type Rules**: 
   - `weight`, `packageCount`, `volumeFee`, `weightFee` phải parse chuẩn là **Integer** (không lấy thập phân).
   - Các trường phí RMB, Tỷ giá, Khối lượng parse thành Decimal/Float.

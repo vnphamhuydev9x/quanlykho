@@ -31,7 +31,7 @@ Màn **Mã hàng** cho phép quản lý thông tin các lô hàng vận chuyển
 | 4 | **Mã đơn hàng** | String | Bắt buộc | Mã đơn hàng (tương tự hiện tại) |
 | 5 | **Tổng trọng lượng** | Integer | | Đơn vị: kg |
 | 6 | **Tổng khối lượng** | Float | | Đơn vị: m³ |
-| 7 | **Nguồn cung cấp thông tin (Kg.m3)**| String | | Thông tin nguồn cung cấp |
+| 7 | **Nguồn cung cấp thông tin (Kg,m3)**| Selection box | Bắt buộc | Thông tin nguồn cung cấp: Kho TQ, Kho VN, Dự kiến nhập kho |
 | 8 | **Tổng cước vận chuyển TQ_HN tạm tính**| Float | Disabled | Tự động tính tổng từ các mặt hàng. Hiển thị Tooltip công thức tính. |
 | 9 | **Tỷ giá** | Float | | Tỷ giá RMB / VND |
 | 10 | **Trạng thái hàng** | Selection box | | Lấy thông tin từ tình trạng hàng hóa (trong menu cài đặt, tức là tham chiếu Table/Entity) |

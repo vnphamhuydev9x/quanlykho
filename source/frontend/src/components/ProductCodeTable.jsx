@@ -212,6 +212,41 @@ const ProductCodeTable = ({
             ),
         },
         {
+            title: 'Chi phí khai báo',
+            key: 'declarationCost',
+            width: 150,
+            align: 'right',
+            render: (_, record) => {
+                const totalTransport = Number(record.totalTransportFeeEstimate) || 0;
+                const totalImport = Number(record.totalImportCostToCustomer) || 0;
+                const decCost = Math.max(0, totalImport - totalTransport);
+                return (
+                    <span style={{ color: '#1890ff', fontWeight: 'bold' }}>
+                        {formatCurrency(decCost, 'VND')}
+                    </span>
+                );
+            },
+        },
+        {
+            title: (
+                <Space>
+                    Chi phí NK...
+                    <Tooltip title="Chi phí NK hàng hóa đến tay KH = Tổng Cước TQ_HN tạm tính + Chi phí khai báo">
+                        <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                    </Tooltip>
+                </Space>
+            ),
+            dataIndex: 'totalImportCostToCustomer',
+            key: 'totalImportCostToCustomer',
+            width: 180,
+            align: 'right',
+            render: (val) => (
+                <span style={{ color: '#cf1322', fontWeight: 'bold' }}>
+                    {formatCurrency(val, 'VND')}
+                </span>
+            ),
+        },
+        {
             title: 'Tình trạng xếp xe',
             key: 'vehicleStatus',
             width: 150,

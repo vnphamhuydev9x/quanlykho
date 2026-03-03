@@ -27,10 +27,14 @@ Trước khi chạy các test case, cần chuẩn bị sẵn các dữ liệu sa
   - **Expect**: HTTP 400 Bad Request, Message `Condition not found`.
 
 ### Scenario 2: Validation - Enum Hard-coded (Kiểm tra dữ liệu Enum)
-- **Mục đích**: Xác nhận trường `packageUnit` của các Detail Items phải nằm trong mảng giá trị cho phép.
+- **Mục đích**: Xác nhận trường `packageUnit` của các Detail Items và `infoSource` của Master phải nằm trong mảng giá trị cho phép.
 - **Test Case 2.1**: Tạo mã hàng với List items có `packageUnit` là giá trị rác (ví dụ: `HU_HONG_NANG`).
   - **Expect**: HTTP 400 Bad Request, Message `Invalid package unit in items`.
 - **Test Case 2.2**: Tạo mã hàng với List items chứa giá trị Enum hợp lệ (ví dụ: `CARTON`, `PALLET`).
+  - **Expect**: HTTP 201 Created (hoặc 200 OK) nếu các Data khác cũng hợp lệ.
+- **Test Case 2.3**: Tạo mã hàng với `infoSource` là giá trị rác (ví dụ: `ABC`).
+  - **Expect**: HTTP 400 Bad Request, Message `Invalid info source`.
+- **Test Case 2.4**: Tạo mã hàng với `infoSource` là giá trị hợp lệ (`Kho TQ`, `Kho VN`, `Dự kiến nhập kho`).
   - **Expect**: HTTP 201 Created (hoặc 200 OK) nếu các Data khác cũng hợp lệ.
 
 ### Scenario 3: Business Logic - Auto Calculation (Kiểm tra tính cước phí) 

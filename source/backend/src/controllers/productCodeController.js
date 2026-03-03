@@ -7,6 +7,7 @@ const CACHE_KEY_DETAIL = 'product-codes:detail';
 
 // Enums
 const VALID_PACKAGE_UNITS = ['KHONG_DONG_GOI', 'BAO_TAI', 'THUNG_CARTON', 'PALLET'];
+const VALID_INFO_SOURCES = ['Kho TQ', 'Kho VN', 'Dự kiến nhập kho'];
 
 // Helper to manually calculate the transport fee estimate server-side to prevent fraud
 const calculateTotalTransportFeeEstimate = (items, exchangeRateInput) => {
@@ -114,7 +115,11 @@ const productCodeController = {
                         items: {
                             include: {
                                 declaration: {
-                                    select: { id: true }
+                                    select: {
+                                        id: true,
+                                        declarationCost: true,
+                                        importCostToCustomer: true
+                                    }
                                 }
                             }
                         }
@@ -164,7 +169,11 @@ const productCodeController = {
                     items: {
                         include: {
                             declaration: {
-                                select: { id: true }
+                                select: {
+                                    id: true,
+                                    declarationCost: true,
+                                    importCostToCustomer: true
+                                }
                             }
                         }
                     }
@@ -229,6 +238,10 @@ const productCodeController = {
                 }
             }
 
+            if (infoSource && !VALID_INFO_SOURCES.includes(infoSource)) {
+                return res.status(400).json({ code: 400, message: "Invalid info source" });
+            }
+
             // 3. Auto Calculation for transport fee
             const calculateFee = calculateTotalTransportFeeEstimate(hasItems ? items : [], exchangeRate);
 
@@ -246,6 +259,7 @@ const productCodeController = {
                         infoSource,
                         exchangeRate: exchangeRate ? parseFloat(exchangeRate) : null,
                         totalTransportFeeEstimate: calculateFee,
+                        totalImportCostToCustomer: calculateFee,
                         items: hasItems ? {
                             create: items.map(i => ({
                                 productName: i.productName,
@@ -267,7 +281,11 @@ const productCodeController = {
                         items: {
                             include: {
                                 declaration: {
-                                    select: { id: true }
+                                    select: {
+                                        id: true,
+                                        declarationCost: true,
+                                        importCostToCustomer: true
+                                    }
                                 }
                             }
                         }
@@ -279,7 +297,8 @@ const productCodeController = {
                     await tx.declaration.createMany({
                         data: pc.items.map(item => ({
                             productCodeId: pc.id,
-                            productItemId: item.id
+                            productItemId: item.id,
+                            importCostToCustomer: item.itemTransportFeeEstimate || 0
                         }))
                     });
                 }
@@ -329,6 +348,10 @@ const productCodeController = {
                 }
             }
 
+            if (updateData.infoSource && !VALID_INFO_SOURCES.includes(updateData.infoSource)) {
+                return res.status(400).json({ code: 400, message: "Invalid info source" });
+            }
+
             // 3. Auto Calculation for transport fee based on new items or fallback to DB
             let feeToSave = updateData.totalTransportFeeEstimate;
             let transactionStmts = [];
@@ -356,6 +379,7 @@ const productCodeController = {
                 infoSource: updateData.infoSource,
                 exchangeRate: updateData.exchangeRate !== undefined ? (updateData.exchangeRate ? parseFloat(updateData.exchangeRate) : null) : undefined,
                 totalTransportFeeEstimate: feeToSave !== undefined ? feeToSave : undefined,
+                totalImportCostToCustomer: feeToSave !== undefined ? feeToSave : undefined,
             };
 
             // If we have items to update, nested create them
@@ -405,7 +429,8 @@ const productCodeController = {
                     await tx.declaration.createMany({
                         data: pc.items.map(item => ({
                             productCodeId: pc.id,
-                            productItemId: item.id
+                            productItemId: item.id,
+                            importCostToCustomer: item.itemTransportFeeEstimate || 0
                         }))
                     });
                 }

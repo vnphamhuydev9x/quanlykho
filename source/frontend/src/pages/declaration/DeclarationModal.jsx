@@ -50,7 +50,8 @@ const DeclarationModal = ({ visible, declaration, onCancel, onSuccess, onViewPro
     const importTaxPayable = Math.round(totalLotValueBeforeVat * importTax / 100);
     const vatTaxPayable = Math.round(totalLotValueBeforeVat * vatTax / 100);
     const transportFee = parseFloat(declaration?.productItem?.itemTransportFeeEstimate || 0);
-    const importCostToCustomer = Math.round(transportFee + importTaxPayable + vatTaxPayable + payableFee + entrustmentFee);
+    const declarationCost = Math.round(importTaxPayable + vatTaxPayable + payableFee + entrustmentFee);
+    const importCostToCustomer = Math.round(transportFee + declarationCost);
 
     // Image Upload State
     const [previewOpen, setPreviewOpen] = useState(false);
@@ -141,6 +142,7 @@ const DeclarationModal = ({ visible, declaration, onCancel, onSuccess, onViewPro
                 formData.append('totalLotValueBeforeVat', totalLotValueBeforeVat);
                 formData.append('importTaxPayable', importTaxPayable);
                 formData.append('vatTaxPayable', vatTaxPayable);
+                formData.append('declarationCost', declarationCost);
                 formData.append('importCostToCustomer', importCostToCustomer);
 
                 if (declaration) {
@@ -329,10 +331,18 @@ const DeclarationModal = ({ visible, declaration, onCancel, onSuccess, onViewPro
             </Row>
 
             <Card size="small" style={{ backgroundColor: '#f0f2f5', border: '1px solid #d9d9d9', marginTop: 8 }}>
-                <Row justify="end" align="middle">
+                <Row justify="space-between" align="middle">
                     <Col>
                         <Space size="large">
-                            <Text strong style={{ fontSize: 16 }}>{t('declaration.importCostToCustomer')}</Text>
+                            <Text strong style={{ fontSize: 16 }}>Chi phí khai báo</Text>
+                            <Text strong style={{ fontSize: 18, color: '#f5222d' }}>
+                                {formatCurrency(declarationCost || 0, 'VND')}
+                            </Text>
+                        </Space>
+                    </Col>
+                    <Col>
+                        <Space size="large">
+                            <Text strong style={{ fontSize: 16 }} title="Cước TQ_HN tạm tính + Chi phí khai báo">{t('declaration.importCostToCustomer')}</Text>
                             <Text strong style={{ fontSize: 24, color: '#cf1322' }}>
                                 {formatCurrency(importCostToCustomer || 0, 'VND')}
                             </Text>

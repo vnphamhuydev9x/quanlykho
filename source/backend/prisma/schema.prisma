@@ -192,6 +192,7 @@ model Declaration {
   payableFee           Int?                    // Phí phải nộp - VND
   notes                String?   @db.Text      // Ghi chú
   entrustmentFee       Int?                    // Phí ủy thác - VND
+  declarationCost      Int?                    // Chi phí khai báo - VND - Auto Calculated
   importCostToCustomer Int?                    // Chi phí nhập khẩu hàng hóa đến tay khách hàng - VND - Auto Calculated
 
   createdAt            DateTime  @default(now())
@@ -231,8 +232,9 @@ model ProductCode {
   orderCode             String?   // Mã đơn hàng
   totalWeight           Int?      // Tổng trọng lượng (kg)
   totalVolume           Decimal?  @db.Decimal(15, 3) // Tổng khối lượng (m3)
-  infoSource            String?   // Nguồn cung cấp thông tin (Kg.m3)
+  infoSource            String?   // Nguồn cung cấp thông tin (Kg,m3) (Selection box)
   totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Tổng cước vận chuyển TQ_HN tạm tính
+  totalImportCostToCustomer Decimal? @db.Decimal(15, 2) // Chi phí NK hàng hóa đến tay KH (VND)
   exchangeRate          Decimal?  @db.Decimal(15, 4) // Tỷ giá (VND/RMB)
 
   // Xếp xe

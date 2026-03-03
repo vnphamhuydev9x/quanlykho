@@ -208,7 +208,8 @@ const declarationController = {
 
             const itemFee = parseFloat(existing.productItem?.itemTransportFeeEstimate || 0);
 
-            const importCostToCustomer = Math.round(itemFee + importTaxPayable + vatTaxPayable + payableFee + entrustmentFee);
+            const declarationCost = Math.round(importTaxPayable + vatTaxPayable + payableFee + entrustmentFee);
+            const importCostToCustomer = Math.round(itemFee + declarationCost);
 
             const dataToUpdate = {
                 images: imagesJson,
@@ -231,6 +232,7 @@ const declarationController = {
                 payableFee,
                 notes: body.notes,
                 entrustmentFee,
+                declarationCost,
                 importCostToCustomer
             };
 
@@ -239,9 +241,26 @@ const declarationController = {
                 data: dataToUpdate
             });
 
+            if (updated.productCodeId) {
+                const allDeclarations = await prisma.declaration.findMany({
+                    where: { productCodeId: updated.productCodeId, deletedAt: null }
+                });
+                const totalImportCostToCustomer = allDeclarations.reduce((sum, d) => sum + (d.importCostToCustomer || 0), 0);
+                await prisma.productCode.update({
+                    where: { id: updated.productCodeId },
+                    data: { totalImportCostToCustomer }
+                });
+            }
+
             // Invalidate Cache
             const keys = await redisClient.keys(`${CACHE_KEY}:*`);
             if (keys.length > 0) await redisClient.del(keys);
+
+            if (updated.productCodeId) {
+                await redisClient.del(`product-codes:detail:${updated.productCodeId}`);
+                const pcKeysList = await redisClient.keys(`product-codes:list:*`);
+                if (pcKeysList.length > 0) await redisClient.del(pcKeysList);
+            }
 
             return res.status(200).json({ code: 200, message: "Success", data: updated });
         } catch (error) {

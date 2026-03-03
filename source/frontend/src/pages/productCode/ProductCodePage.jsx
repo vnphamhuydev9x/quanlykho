@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import ProductCodeModal from './ProductCodeModal';
 import ManifestModal from '../manifest/ManifestModal';
 import ProductCodeTable from '../../components/ProductCodeTable';
+import { formatCurrency } from '../../utils/format';
 
 const UNIT_LABEL = {
     BAO_TAI: 'bao tải',
@@ -56,6 +57,8 @@ const ProductCodePage = () => {
 
         const totalWeight = selectedRows.reduce((sum, pc) => sum + (Number(pc.totalWeight) || 0), 0);
         const totalVolume = selectedRows.reduce((sum, pc) => sum + (Number(pc.totalVolume) || 0), 0);
+        const totalTransportFee = selectedRows.reduce((sum, pc) => sum + (Number(pc.totalTransportFeeEstimate) || 0), 0);
+        const totalImportCost = selectedRows.reduce((sum, pc) => sum + (Number(pc.totalImportCostToCustomer) || 0), 0);
 
         const packageSummary = {};
         selectedRows.forEach(pc => {
@@ -67,7 +70,7 @@ const ProductCodePage = () => {
             });
         });
 
-        return { totalWeight, totalVolume, packageSummary };
+        return { totalWeight, totalVolume, packageSummary, totalTransportFee, totalImportCost };
     }, [selectedRows]);
 
     const rowSelection = {
@@ -168,6 +171,20 @@ const ProductCodePage = () => {
                         </Typography.Text>
                     </Typography.Text>
 
+                    <Typography.Text>
+                        CP tạm tính:{' '}
+                        <Typography.Text strong style={{ color: '#389e0d' }}>
+                            {formatCurrency(summaryData.totalTransportFee, 'VND')}
+                        </Typography.Text>
+                    </Typography.Text>
+
+                    <Typography.Text>
+                        Chi phí NK:{' '}
+                        <Typography.Text strong style={{ color: '#cf1322' }}>
+                            {formatCurrency(summaryData.totalImportCost, 'VND')}
+                        </Typography.Text>
+                    </Typography.Text>
+
                     <Button
                         type="primary"
                         icon={<TruckOutlined />}
@@ -212,7 +229,7 @@ const ProductCodePage = () => {
                     viewOnly={false}
                     userType={userType}
                     userRole={userRole}
-                    onSwitchToEdit={() => {}}
+                    onSwitchToEdit={() => { }}
                 />
             )}
 

@@ -135,6 +135,30 @@ describe('Product Code API - Master/Detail', () => {
             expect(res.statusCode).toBe(400);
             expect(res.body.message).toBe('Invalid package unit in items');
         });
+
+        it('should return 400 if infoSource is invalid', async () => {
+            const res = await request(BASE_URL)
+                .post('/api/product-codes')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send({
+                    orderCode: 'ORD_TEST_02_INFO',
+                    infoSource: 'ABC' // Invalid string
+                });
+            expect(res.statusCode).toBe(400);
+            expect(res.body.message).toBe('Invalid info source');
+        });
+
+        it('should create product code properly if infoSource is valid', async () => {
+            const res = await request(BASE_URL)
+                .post('/api/product-codes')
+                .set('Authorization', `Bearer ${adminToken}`)
+                .send({
+                    orderCode: 'ORD_TEST_02_INFO_VALID',
+                    infoSource: 'Kho TQ'
+                });
+            expect(res.statusCode).toBe(201);
+            expect(res.body.data.infoSource).toBe('Kho TQ');
+        });
     });
 
     describe('Scenario 3: Business Logic - Auto Calculation & Scenario 5.1: List Caching', () => {

@@ -16,16 +16,21 @@ Hệ thống sử dụng 2 models chính: `ProductCode` (Master) và `ProductIte
 
 | Tên trường (Frontend) | Prisma Field | Kiểu dữ liệu | Ràng buộc | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
+| **Khối phụ trách** | `khoiPhuTrach` | `String?` | | Optional. Tên khối/bộ phận phụ trách |
 | **Nhân viên** | `employeeId` | `Int?` | Relation | Tham chiếu `User` (FK) |
 | **Mã khách hàng** | `customerId` | `Int?` | Relation | Tham chiếu `User` (FK) |
 | **Ngày nhập kho** | `entryDate` | `DateTime?` | | |
 | **Mã đơn hàng** | `orderCode` | `String?` | | |
-| **Tổng trọng lượng** | `totalWeight` | `Int?` | | Integer |
-| **Tổng khối lượng** | `totalVolume` | `Decimal?` | `@db.Decimal(15,3)` | Float |
+| **Tổng trọng lượng** | `totalWeight` | `Int?` | | **Auto Calculated** = `SUM(items[].weight)`. Integer |
+| **Tổng khối lượng** | `totalVolume` | `Decimal?` | `@db.Decimal(15,3)` | **Auto Calculated** = `SUM(items[].volume)`. Float |
 | **Nguồn cung cấp thông tin (Kg,m3)**| `infoSource` | `String?` | Enum Validated | `Kho TQ`, `Kho VN`, `Dự kiến nhập kho` |
 | **Tổng cước TQ_HN tạm tính**| `totalTransportFeeEstimate`| `Decimal?` | `@db.Decimal(15,2)` | **Auto Calculated** |
 | **Tỷ giá** | `exchangeRate` | `Decimal?` | `@db.Decimal(15,4)` | Float |
 | **Trạng thái hàng** | `merchandiseConditionId`| `Int?` | Relation | Tham chiếu `MerchandiseCondition` |
+| **Ghi chú** | `notes` | `String?` | `@db.Text` | Optional. Text area tự do |
+| **Lệnh xuất kho** | `exportOrderId` | `Int?` | Relation | FK → `ExportOrder.id`. Null = chưa có lệnh xuất |
+| **Trạng thái xuất kho** | `exportStatus` | `ExportOrderStatus?` | Clone field | Clone từ `ExportOrder.status`. Null = "Chưa có lệnh xuất" |
+| **Ngày giờ giao hàng** | `exportDeliveryDateTime` | `DateTime?` | Clone field | Clone từ `ExportOrder.deliveryDateTime`. Dùng để sort trong "Tồn kho VN" |
 
 ### 2.2 Model: ProductItem (Detail)
 Mỗi `ProductCode` có thể có nhiều `ProductItem` (quan hệ 1-N).
@@ -45,6 +50,11 @@ Mỗi `ProductCode` có thể có nhiều `ProductItem` (quan hệ 1-N).
 | **Phí dỡ hàng** | `unloadingFeeRMB` | `Decimal?` | `@db.Decimal(15,2)` | Float (RMB) - Lưu trữ |
 | **Cước TQ_HN tạm tính**| `itemTransportFeeEstimate`| `Decimal?` | `@db.Decimal(15,2)` | Float (VND) - **Auto Calculated** |
 | **Ghi chú** | `notes` | `String?` | | Text area |
+| **Trọng lượng sau cân lại** | `actualWeight` | `Int?` | | Trọng lượng thực tế sau cân lại (kg). Cùng type với `weight` |
+| **Khối lượng sau cân lại** | `actualVolume` | `Decimal?` | `@db.Decimal(15,3)` | Khối lượng thực tế sau cân lại (m³). Cùng type với `volume` |
+| **Cước TQ_HN sau cân lại** | `actualItemTransportFeeEstimate` | `Decimal?` | `@db.Decimal(15,2)` | **Auto Calculated** từ actual weight/volume. Đơn vị: VND |
+| **Chi phí NK sau cân lại** | `actualImportCostToCustomer` | `Decimal?` | `@db.Decimal(15,2)` | **Auto Calculated** = `actualItemTransportFeeEstimate + chiPhiKhaiBao`. Đơn vị: VND |
+| **Dùng số liệu sau cân** | `useActualData` | `Boolean` | `@default(false)` | Flag Admin xác nhận. `true` = downstream dùng actual, `false` = dùng số liệu gốc |
 
 ---
 
@@ -100,11 +110,20 @@ for (const item of items) {
 // Nếu lưu DB (Prisma), set giá trị này cho Master
 ```
 
-### 3.4 API Endpoints
-- **GET `/`**: Lấy danh sách ProductCodes. Join các bảng `customer`, `employee`, `merchandiseCondition` để hiển thị trên Table.
+### 3.4 Thuật toán tính `totalWeight` và `totalVolume` (Auto Calculated)
+Giống `totalTransportFeeEstimate`, hai trường này được **Backend tự tính** từ danh sách `items`, bỏ qua giá trị FE gửi lên:
+```javascript
+totalWeight = items.reduce((sum, i) => sum + (parseInt(i.weight) || 0), 0) || null;
+totalVolume = items.reduce((sum, i) => sum + (parseFloat(i.volume) || 0), 0) || null;
+```
+- Khi `items` được cung cấp trong **CREATE** hoặc **UPDATE**: luôn tính lại từ items mới.
+- Khi `items` **không** được cung cấp trong **UPDATE**: `totalWeight`/`totalVolume` giữ nguyên giá trị hiện có trong DB.
+
+### 3.5 API Endpoints
+- **GET `/`**: Lấy danh sách ProductCodes. Join các bảng `customer`, `employee`, `merchandiseCondition` để hiển thị trên Table. Response đã bao gồm `items` (danh sách mặt hàng) để FE có thể render cột tóm tắt mặt hàng ngay trên Table.
 - **GET `/:id`**: Lấy chi tiết Master kèm `include: { items: true }`.
 - **POST `/`**:
-  - Request Body: Gửi Object Master bao gồm array `items`.
+  - Request Body: Gửi Object Master bao gồm array `items`. **Bao gồm cả 2 trường mới**: `khoiPhuTrach` (String, optional) và `notes` (String, optional).
   - Transaction: Dùng `$transaction` để đảm bảo:
     - Tạo `ProductCode`
     - Tạo danh sách `ProductItem`
@@ -112,7 +131,22 @@ for (const item of items) {
 - **PUT `/:id`**:
   - Cách xử lý Detail (`items`): Thực hiện xoá items cũ / thêm items mới / hoặc cập nhật.
   - Tức là nếu có `ProductItem` mới được sinh ra, phải đồng thời sinh ra bản ghi `Declaration` cho nó.
+  - **Bao gồm cả 2 trường mới**: `khoiPhuTrach` và `notes` được cập nhật nếu truyền lên.
 - **DELETE `/:id`**: Soft delete Master. `Declaration` cũng cần được xử lý phù hợp.
+
+### 3.6 Tích hợp Xuất Kho — Clone fields trên `ProductCode`
+
+Khi `ExportOrder` thay đổi trạng thái hoặc bị hủy, các field sau trên `ProductCode` được cập nhật bởi **exportOrderController** (không phải productCodeController):
+
+| Sự kiện | exportOrderId | exportStatus | exportDeliveryDateTime |
+|---|---|---|---|
+| Tạo lệnh | gán `ExportOrder.id` | `DA_TAO_LENH` | `ExportOrder.deliveryDateTime` |
+| Đổi status | giữ nguyên | status mới | giữ nguyên |
+| Hủy lệnh | `null` | `null` | `null` |
+
+**Nguyên tắc Audit Trail cho `actualWeight`/`actualVolume`**: Số liệu gốc (`weight`, `volume`) **không bao giờ bị ghi đè**. Downstream (báo cáo, thanh toán) đọc theo flag `useActualData`:
+- `useActualData = false` → dùng `weight`/`volume`/`itemTransportFeeEstimate` (gốc)
+- `useActualData = true` → dùng `actualWeight`/`actualVolume`/`actualItemTransportFeeEstimate`
 
 ---
 
@@ -120,6 +154,8 @@ for (const item of items) {
 
 ### 4.1 UI Layout (Form Master-Detail)
 - **Cấu trúc Form**: Chia làm 2 khu vực rõ ràng. Khu vực trên điền thông tin chung (Master). Khu vực dưới là một Component Table động có thể "Thêm dòng/Xóa dòng", dùng Ant Design `Form.List` để quản lý các dòng mặt hàng.
+- **Thứ tự hiển thị trường Master (Form)**: `Khối phụ trách` → `Nhân viên` → `Mã khách hàng` → ... → `Trạng thái hàng` → `Ghi chú` (TextArea, nằm ngoài bảng mặt hàng).
+- **Cột mới trong ProductCodeTable**: Thêm cột hiển thị tóm tắt danh sách mặt hàng (`items[].productName`) ngay sau cột `Mã đơn hàng` (`orderCode`). Render dưới dạng danh sách tên mặt hàng, mỗi tên một dòng hoặc phân cách bởi dấu phẩy.
 - **Numerical Inputs**:
   - Các ô nhập dữ liệu *Integer* (Cân, Số lượng, VND) sử dụng thuộc tính `precision={0}`.
   - Các ô nhập dữ liệu *Float* (Khối lượng, RMB, tỷ giá) sử dụng thuộc tính `precision={2}` hoặc `3`.

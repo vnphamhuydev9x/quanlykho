@@ -41,6 +41,9 @@ model User {
   productCodes        ProductCode[] @relation("CustomerProductCodes")
   employeeProductCodes ProductCode[] @relation("EmployeeProductCodes")
   notifications       Notification[] @relation("UserNotifications")
+  manifestsCalled     Manifest[]    @relation("ManifestCaller")
+
+  createdExportOrders    ExportOrder[] @relation("ExportOrderCreatedBy")
 
   deletedAt DateTime? // Soft Delete
 
@@ -191,6 +194,7 @@ model Declaration {
   payableFee           Int?                    // Phí phải nộp - VND
   notes                String?   @db.Text      // Ghi chú
   entrustmentFee       Int?                    // Phí ủy thác - VND
+  declarationCost      Int?                    // Chi phí khai báo - VND - Auto Calculated
   importCostToCustomer Int?                    // Chi phí nhập khẩu hàng hóa đến tay khách hàng - VND - Auto Calculated
 
   createdAt            DateTime  @default(now())
@@ -226,14 +230,27 @@ model ProductCode {
   declarations          Declaration[]
 
   // MASTER FIELDS
+  khoiPhuTrach          String?   // Khối phụ trách
   entryDate             DateTime? // Ngày nhập kho
   orderCode             String?   // Mã đơn hàng
   totalWeight           Int?      // Tổng trọng lượng (kg)
   totalVolume           Decimal?  @db.Decimal(15, 3) // Tổng khối lượng (m3)
-  infoSource            String?   // Nguồn cung cấp thông tin (Kg.m3)
+  infoSource            String?   // Nguồn cung cấp thông tin (Kg,m3) (Selection box)
   totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Tổng cước vận chuyển TQ_HN tạm tính
+  totalImportCostToCustomer Decimal? @db.Decimal(15, 2) // Chi phí NK hàng hóa đến tay KH (VND)
   exchangeRate          Decimal?  @db.Decimal(15, 4) // Tỷ giá (VND/RMB)
-  
+  notes                 String?   @db.Text            // Ghi chú
+
+  // Xếp xe
+  vehicleStatus           ManifestStatus?  // Trạng thái xếp xe (null = chưa xếp xe)
+  vehicleStatusOverridden Boolean          @default(false) // true = đã chỉnh thủ công, không đồng bộ theo xe nữa
+
+  // Xuất kho
+  exportOrderId           Int?
+  exportOrder             ExportOrder?     @relation(fields: [exportOrderId], references: [id])
+  exportStatus            ExportOrderStatus? // Clone từ ExportOrder.status (null = chưa có lệnh xuất)
+  exportDeliveryDateTime  DateTime?        // Clone từ ExportOrder.deliveryDateTime (dùng để sort trong Tồn kho VN)
+
   // Relations to Details
   items                 ProductItem[]
   warehouseCosts        WarehouseCost[]
@@ -264,7 +281,14 @@ model ProductItem {
   unloadingFeeRMB   Decimal?    @db.Decimal(15, 2) // Phí dỡ hàng (RMB)
   itemTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Cước TQ_HN tạm tính (VND)
   notes             String?     @db.Text // Ghi chú
-  
+
+  // Cân đo lại (Xuất kho)
+  actualWeight                   Int?          // Trọng lượng sau cân lại (kg)
+  actualVolume                   Decimal?      @db.Decimal(15, 3) // Khối lượng sau cân lại (m³)
+  actualItemTransportFeeEstimate Decimal?      @db.Decimal(15, 2) // Cước TQ_HN sau cân lại (VND) - Auto Calculated
+  actualImportCostToCustomer     Decimal?      @db.Decimal(15, 2) // Chi phí NK sau cân lại (VND) - Auto Calculated
+  useActualData                  Boolean       @default(false)    // Flag Admin xác nhận dùng số liệu sau cân
+
   declaration       Declaration?
 
   createdAt         DateTime    @default(now())
@@ -274,20 +298,61 @@ model ProductItem {
   @@map("product_items")
 }
 
+enum ExportOrderStatus {
+  DA_TAO_LENH
+  DANG_XAC_NHAN_CAN
+  DA_XAC_NHAN_CAN
+  DA_XUAT_KHO
+}
+
+enum ManifestStatus {
+  CHO_XEP_XE
+  DA_XEP_XE
+  DANG_KIEM_HOA
+  CHO_THONG_QUAN
+  DA_THONG_QUAN
+  DA_NHAP_KHO_VN
+}
+
 model Manifest {
-  id          Int           @id @default(autoincrement())
-  name        String        // Tên chuyến (VD: Chuyến ngày 2/2/2026)
-  date        DateTime      @default(now()) // Ngày xếp xe
-  status      String        @default("OPEN") // OPEN, CLOSED, SHIPPED
-  note        String?       // Ghi chú
+  id           Int            @id @default(autoincrement())
+  licensePlate String                          // Biển số xe
+  callerId     Int?                            // Người gọi xe (FK → User)
+  caller       User?          @relation("ManifestCaller", fields: [callerId], references: [id])
+  date         DateTime       @default(now()) // Ngày xếp xe
+  status       ManifestStatus @default(CHO_XEP_XE)
+  note         String?
 
   productCodes ProductCode[]
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  deletedAt   DateTime?     // Soft Delete
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?      // Soft Delete
 
   @@map("manifests")
+}
+
+model ExportOrder {
+  id                 Int               @id @default(autoincrement())
+
+  createdById        Int?
+  createdBy          User?             @relation("ExportOrderCreatedBy", fields: [createdById], references: [id])
+
+  deliveryDateTime   DateTime?         // Ngày giờ khách nhận hàng
+  deliveryCost       Int?              // Chi phí giao hàng dự kiến (VND)
+  notes              String?           @db.Text
+  status             ExportOrderStatus @default(DA_TAO_LENH)
+
+  amountReceived     Int?              // Số tiền đã nhận (VND) - điền khi giao hàng
+  actualShippingCost Int?              // Phí ship thực tế (VND) - điền khi giao hàng
+
+  productCodes       ProductCode[]
+
+  deletedAt          DateTime?         // Soft delete
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@map("export_orders")
 }
 
 model WarehouseCost {

@@ -284,6 +284,12 @@ const MainLayout = ({ children }) => {
             onClick: () => navigate('/manifests'),
         },
         {
+            key: '/export-orders',
+            icon: <ExportOutlined />,
+            label: t('menu.export'),
+            onClick: () => navigate('/export-orders'),
+        },
+        {
             key: 'inventory',
             icon: <HomeOutlined />,
             label: t('menu.inventory'),

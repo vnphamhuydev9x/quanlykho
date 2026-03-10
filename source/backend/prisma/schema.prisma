@@ -43,6 +43,8 @@ model User {
   notifications       Notification[] @relation("UserNotifications")
   manifestsCalled     Manifest[]    @relation("ManifestCaller")
 
+  createdExportOrders    ExportOrder[] @relation("ExportOrderCreatedBy")
+
   deletedAt DateTime? // Soft Delete
 
   @@map("users")
@@ -228,6 +230,7 @@ model ProductCode {
   declarations          Declaration[]
 
   // MASTER FIELDS
+  khoiPhuTrach          String?   // Khối phụ trách
   entryDate             DateTime? // Ngày nhập kho
   orderCode             String?   // Mã đơn hàng
   totalWeight           Int?      // Tổng trọng lượng (kg)
@@ -236,11 +239,18 @@ model ProductCode {
   totalTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Tổng cước vận chuyển TQ_HN tạm tính
   totalImportCostToCustomer Decimal? @db.Decimal(15, 2) // Chi phí NK hàng hóa đến tay KH (VND)
   exchangeRate          Decimal?  @db.Decimal(15, 4) // Tỷ giá (VND/RMB)
+  notes                 String?   @db.Text            // Ghi chú
 
   // Xếp xe
   vehicleStatus           ManifestStatus?  // Trạng thái xếp xe (null = chưa xếp xe)
   vehicleStatusOverridden Boolean          @default(false) // true = đã chỉnh thủ công, không đồng bộ theo xe nữa
-  
+
+  // Xuất kho
+  exportOrderId           Int?
+  exportOrder             ExportOrder?     @relation(fields: [exportOrderId], references: [id])
+  exportStatus            ExportOrderStatus? // Clone từ ExportOrder.status (null = chưa có lệnh xuất)
+  exportDeliveryDateTime  DateTime?        // Clone từ ExportOrder.deliveryDateTime (dùng để sort trong Tồn kho VN)
+
   // Relations to Details
   items                 ProductItem[]
   warehouseCosts        WarehouseCost[]
@@ -271,7 +281,14 @@ model ProductItem {
   unloadingFeeRMB   Decimal?    @db.Decimal(15, 2) // Phí dỡ hàng (RMB)
   itemTransportFeeEstimate Decimal? @db.Decimal(15, 2) // Cước TQ_HN tạm tính (VND)
   notes             String?     @db.Text // Ghi chú
-  
+
+  // Cân đo lại (Xuất kho)
+  actualWeight                   Int?          // Trọng lượng sau cân lại (kg)
+  actualVolume                   Decimal?      @db.Decimal(15, 3) // Khối lượng sau cân lại (m³)
+  actualItemTransportFeeEstimate Decimal?      @db.Decimal(15, 2) // Cước TQ_HN sau cân lại (VND) - Auto Calculated
+  actualImportCostToCustomer     Decimal?      @db.Decimal(15, 2) // Chi phí NK sau cân lại (VND) - Auto Calculated
+  useActualData                  Boolean       @default(false)    // Flag Admin xác nhận dùng số liệu sau cân
+
   declaration       Declaration?
 
   createdAt         DateTime    @default(now())
@@ -279,6 +296,13 @@ model ProductItem {
   deletedAt         DateTime?   // Soft Delete
 
   @@map("product_items")
+}
+
+enum ExportOrderStatus {
+  DA_TAO_LENH
+  DANG_XAC_NHAN_CAN
+  DA_XAC_NHAN_CAN
+  DA_XUAT_KHO
 }
 
 enum ManifestStatus {
@@ -306,6 +330,29 @@ model Manifest {
   deletedAt    DateTime?      // Soft Delete
 
   @@map("manifests")
+}
+
+model ExportOrder {
+  id                 Int               @id @default(autoincrement())
+
+  createdById        Int?
+  createdBy          User?             @relation("ExportOrderCreatedBy", fields: [createdById], references: [id])
+
+  deliveryDateTime   DateTime?         // Ngày giờ khách nhận hàng
+  deliveryCost       Int?              // Chi phí giao hàng dự kiến (VND)
+  notes              String?           @db.Text
+  status             ExportOrderStatus @default(DA_TAO_LENH)
+
+  amountReceived     Int?              // Số tiền đã nhận (VND) - điền khi giao hàng
+  actualShippingCost Int?              // Phí ship thực tế (VND) - điền khi giao hàng
+
+  productCodes       ProductCode[]
+
+  deletedAt          DateTime?         // Soft delete
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@map("export_orders")
 }
 
 model WarehouseCost {

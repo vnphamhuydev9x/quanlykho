@@ -1,6 +1,6 @@
 # Test Spec: Module Quản lý Mã hàng (Product Code) - Backend
 
-> **Mục tiêu**: Đảm bảo Controller, Service và Logic tính toán của Backend hoạt động chính xác theo kiến trúc Master/Detail mới nhất (BRD/TechSpec cập nhật ngày 28/02/2026).
+> **Mục tiêu**: Đảm bảo Controller, Service và Logic tính toán của Backend hoạt động chính xác theo kiến trúc Master/Detail mới nhất (BRD/TechSpec cập nhật ngày 08/03/2026).
 > **Phạm vi test**: Unit/Integration test cho Backend `productCode` module. Đặc biệt tập trung vào Validation, Caching và Auto Calculation. Tài khoản test mặc định có Role là ADMIN.
 
 ---
@@ -59,11 +59,67 @@ Trước khi chạy các test case, cần chuẩn bị sẵn các dữ liệu sa
 - **Mục đích**: Xác minh khi Admin thêm/sửa/xóa mã hàng, Redis Cache trả về cho API List và API Detail bị Invalid.
   - **Expect**: Key list trong Redis phải NOT FOUND.
 
-### Scenario 6: Tích hợp Khai báo (Declaration Integration)
+### Scenario 6: New Fields — khoiPhuTrach & notes (Trường mới trên Master)
+- **Mục đích**: Xác minh 2 trường mới `khoiPhuTrach` và `notes` được lưu/trả về đúng ở cả POST và PUT.
+
+#### TC-PC-NEWFIELD-01: POST — Tạo mã hàng kèm khoiPhuTrach & notes
+- **Endpoint**: `POST /api/product-codes`
+- **Auth**: ADMIN token
+- **Input Body**:
+  ```json
+  {
+    "khoiPhuTrach": "Khối Bắc",
+    "notes": "Ghi chú thử nghiệm cho mã hàng",
+    "orderCode": "DH-TEST-01",
+    "employeeId": 2,
+    "customerId": 3,
+    "exchangeRate": 3500,
+    "items": [
+      { "productName": "Hàng test", "weight": 10, "weightFee": 5000, "volume": 0.5, "volumeFee": 200000 }
+    ]
+  }
+  ```
+- **Expected HTTP Status**: `201`
+- **DB Verify**: `productCode.khoiPhuTrach = "Khối Bắc"`, `productCode.notes = "Ghi chú thử nghiệm cho mã hàng"`
+- **Response Verify**: `data.khoiPhuTrach = "Khối Bắc"`, `data.notes = "Ghi chú thử nghiệm cho mã hàng"`
+
+#### TC-PC-NEWFIELD-02: PUT — Cập nhật khoiPhuTrach & notes
+- **Endpoint**: `PUT /api/product-codes/:id`
+- **Auth**: ADMIN token
+- **Precondition**: ProductCode tồn tại (tạo bằng TC-PC-NEWFIELD-01)
+- **Input Body**:
+  ```json
+  {
+    "khoiPhuTrach": "Khối Nam",
+    "notes": "Đã cập nhật ghi chú",
+    "items": [
+      { "productName": "Hàng test", "weight": 10, "weightFee": 5000, "volume": 0.5, "volumeFee": 200000 }
+    ]
+  }
+  ```
+- **Expected HTTP Status**: `200`
+- **DB Verify**: `productCode.khoiPhuTrach = "Khối Nam"`, `productCode.notes = "Đã cập nhật ghi chú"`
+
+#### TC-PC-NEWFIELD-03: GET — Danh sách trả về có khoiPhuTrach & notes
+- **Endpoint**: `GET /api/product-codes`
+- **Auth**: ADMIN token
+- **Expected HTTP Status**: `200`
+- **Response Verify**: Mỗi item trong `data.items[]` phải có field `khoiPhuTrach` và `notes` (có thể null nếu chưa set).
+
+#### TC-PC-NEWFIELD-04: POST — Không truyền khoiPhuTrach & notes (optional fields)
+- **Endpoint**: `POST /api/product-codes`
+- **Auth**: ADMIN token
+- **Input Body**: Không có `khoiPhuTrach` và `notes`
+- **Expected HTTP Status**: `201`
+- **DB Verify**: `productCode.khoiPhuTrach = null`, `productCode.notes = null`
+
+---
+
+### Scenario 7: Tích hợp Khai báo (Declaration Integration)
 - **Mục đích**: Chắc chắn rằng khi một Mã hàng/Mặt hàng được sinh ra, bản ghi Khai báo tương ứng cũng phải xuất hiện.
-- **Test Case 6.1**: Tạo mã hàng có 1 mặt hàng.
+- **Test Case 7.1**: Tạo mã hàng có 1 mặt hàng.
   - **Expect**: Truy vấn DB thấy 1 `ProductCode`, 1 `ProductItem`. Và phải thấy 1 `Declaration` có `productItemId` trỏ về Item vừa tạo.
-- **Test Case 6.2**: Cập nhật Mã hàng (thay đổi danh sách items).
+- **Test Case 7.2**: Cập nhật Mã hàng (thay đổi danh sách items).
   - **Expect**: Các `Declaration` cũ bị xóa (theo item cũ), và `Declaration` mới được sinh ra cho item mới.
 - **Test Case 5.2 (Detail Cache)**:
   - (1) Gọi GET `/api/product-codes/:id` để tạo detail Cache: `product-codes:detail:{id}`.
@@ -79,3 +135,4 @@ Trước khi chạy các test case, cần chuẩn bị sẵn các dữ liệu sa
 - [ ] Hàm tính `totalTransportFeeEstimate` đang được áp dụng đồng bộ ở 2 endpoints là CREATE và UPDATE.
 - [ ] Quá trình UPDATE mảng list items được diễn ra an toàn thông qua Prisma Transaction (Xóa items cũ -> Tạo items mới / Upsert logic).
 - [ ] Admin User Role middleware cho API Product Code được test thành công (User có quyền access endpoint, người lạ bị 403 Forbidden).
+- [ ] Trường `khoiPhuTrach` và `notes` (mới) được lưu và trả về đúng ở POST, PUT, GET (Scenario 6).

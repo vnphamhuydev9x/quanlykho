@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Button, Space, Modal, Typography, Divider, Tag } from 'antd';
-import { PlusOutlined, TruckOutlined } from '@ant-design/icons';
+import { PlusOutlined, TruckOutlined, ExportOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import ProductCodeModal from './ProductCodeModal';
 import ManifestModal from '../manifest/ManifestModal';
+import ExportOrderModal from '../exportOrder/ExportOrderModal';
 import ProductCodeTable from '../../components/ProductCodeTable';
 import { formatCurrency } from '../../utils/format';
 
@@ -26,6 +27,9 @@ const ProductCodePage = () => {
     // Manifest modal
     const [manifestModalVisible, setManifestModalVisible] = useState(false);
     const [manifestInitialPCIds, setManifestInitialPCIds] = useState([]);
+
+    // Export order modal
+    const [exportOrderModalVisible, setExportOrderModalVisible] = useState(false);
 
     // Thêm mới
     const [addModalVisible, setAddModalVisible] = useState(false);
@@ -105,6 +109,54 @@ const ProductCodePage = () => {
         }
         setManifestInitialPCIds(selectedRowKeys.map(k => parseInt(k)));
         setManifestModalVisible(true);
+    };
+
+    const handleTaoLenhXuatKho = () => {
+        // Kiểm tra mã hàng có exportOrderId chưa
+        const hasExportOrder = selectedRows.filter(r => r.exportOrderId);
+        if (hasExportOrder.length > 0) {
+            Modal.warning({
+                title: 'Có mã hàng đã có lệnh xuất kho',
+                width: 520,
+                content: (
+                    <div>
+                        <p>Các mã hàng sau đã thuộc một lệnh xuất kho, vui lòng bỏ chọn:</p>
+                        <ul style={{ paddingLeft: 20 }}>
+                            {hasExportOrder.map(c => (
+                                <li key={c.id}>
+                                    <strong>#{c.id} — {c.orderCode || '(chưa có mã)'}</strong>
+                                    {` (Lệnh #${c.exportOrderId})`}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )
+            });
+            return;
+        }
+        // Kiểm tra vehicleStatus phải là DA_NHAP_KHO_VN
+        const notReady = selectedRows.filter(r => r.vehicleStatus !== 'DA_NHAP_KHO_VN');
+        if (notReady.length > 0) {
+            Modal.warning({
+                title: 'Có mã hàng chưa đủ điều kiện xuất kho',
+                width: 520,
+                content: (
+                    <div>
+                        <p>Chỉ các mã hàng có trạng thái <strong>Đã nhập kho VN</strong> mới có thể tạo lệnh xuất kho. Các mã hàng sau chưa đủ điều kiện:</p>
+                        <ul style={{ paddingLeft: 20 }}>
+                            {notReady.map(c => (
+                                <li key={c.id}>
+                                    <strong>#{c.id} — {c.orderCode || '(chưa có mã)'}</strong>
+                                    {` (${c.vehicleStatus || 'chưa xếp xe'})`}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )
+            });
+            return;
+        }
+        setExportOrderModalVisible(true);
     };
 
     return (
@@ -195,6 +247,16 @@ const ProductCodePage = () => {
                     </Button>
 
                     <Button
+                        type="primary"
+                        icon={<ExportOutlined />}
+                        size="small"
+                        style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                        onClick={handleTaoLenhXuatKho}
+                    >
+                        Tạo lệnh xuất kho ({selectedRows.length})
+                    </Button>
+
+                    <Button
                         type="text"
                         size="small"
                         style={{ marginLeft: 'auto', color: '#999' }}
@@ -241,6 +303,21 @@ const ProductCodePage = () => {
                     onClose={() => setManifestModalVisible(false)}
                     onSuccess={() => {
                         setManifestModalVisible(false);
+                        setSelectedRowKeys([]);
+                        setSelectedRows([]);
+                        setRefreshTrigger(c => c + 1);
+                    }}
+                />
+            )}
+
+            {exportOrderModalVisible && (
+                <ExportOrderModal
+                    visible={exportOrderModalVisible}
+                    mode="create"
+                    exportOrderId={null}
+                    onClose={() => setExportOrderModalVisible(false)}
+                    onSuccess={() => {
+                        setExportOrderModalVisible(false);
                         setSelectedRowKeys([]);
                         setSelectedRows([]);
                         setRefreshTrigger(c => c + 1);

@@ -4,7 +4,7 @@ import { SearchOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import productCodeService from '../services/productCodeService';
 import ProductCodeModal from '../pages/productCode/ProductCodeModal';
 import { formatCurrency } from '../utils/format';
-import { MANIFEST_STATUS_OPTIONS } from '../constants/enums';
+import { MANIFEST_STATUS_OPTIONS, EXPORT_ORDER_STATUS_OPTIONS } from '../constants/enums';
 
 /**
  * Shared reusable ProductCode table component.
@@ -146,6 +146,13 @@ const ProductCodeTable = ({
                 : '-',
         },
         {
+            title: 'Khối phụ trách',
+            dataIndex: 'khoiPhuTrach',
+            key: 'khoiPhuTrach',
+            width: 130,
+            render: val => val || <span style={{ color: '#bfbfbf' }}>-</span>,
+        },
+        {
             title: 'Nhân viên (Sale)',
             key: 'employee',
             width: 150,
@@ -159,6 +166,22 @@ const ProductCodeTable = ({
             key: 'orderCode',
             width: 150,
             ellipsis: true,
+        },
+        {
+            title: 'Danh sách mặt hàng',
+            key: 'itemNames',
+            width: 240,
+            render: (_, record) => {
+                const items = (record.items || []).filter(i => i.productName);
+                if (items.length === 0) return <span style={{ color: '#bfbfbf' }}>-</span>;
+                return (
+                    <div style={{ lineHeight: '1.8' }}>
+                        {items.map((item, idx) => (
+                            <div key={idx}>{item.productName}</div>
+                        ))}
+                    </div>
+                );
+            },
         },
         {
             title: 'Tổng trọng lượng',
@@ -183,6 +206,15 @@ const ProductCodeTable = ({
             key: 'merchandiseCondition',
             width: 170,
             render: (_, record) => record.merchandiseCondition?.name_vi || '-',
+        },
+        {
+            title: 'Ghi chú',
+            dataIndex: 'notes',
+            key: 'notes',
+            width: 180,
+            render: val => val
+                ? <Tooltip title={val}><div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>{val}</div></Tooltip>
+                : <span style={{ color: '#bfbfbf' }}>-</span>,
         },
         {
             title: 'Nguồn cung cấp thông tin (Kg/m³)',
@@ -261,6 +293,23 @@ const ProductCodeTable = ({
                                 <span style={{ color: '#faad14', fontSize: 12 }}>⚠</span>
                             </Tooltip>
                         )}
+                    </Space>
+                );
+            },
+        },
+        {
+            title: 'Lệnh xuất kho',
+            key: 'exportStatus',
+            width: 160,
+            render: (_, record) => {
+                const opt = EXPORT_ORDER_STATUS_OPTIONS.find(o => o.value === record.exportStatus);
+                if (!record.exportOrderId) return <Tag>Chưa có lệnh</Tag>;
+                return (
+                    <Space size={4}>
+                        <Tag color={opt?.color || 'default'}>{opt?.label || record.exportStatus}</Tag>
+                        <Tooltip title={`Lệnh #${record.exportOrderId}`}>
+                            <span style={{ color: '#8c8c8c', fontSize: 11 }}>#{record.exportOrderId}</span>
+                        </Tooltip>
                     </Space>
                 );
             },

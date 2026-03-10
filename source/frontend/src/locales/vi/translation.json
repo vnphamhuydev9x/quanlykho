@@ -509,6 +509,24 @@
         "searchPlaceholder": "Tìm theo Tên hàng, HS, Mã thuế...",
         "duplicateErrorId": "Đã tồn tại tờ khai rút gọn trùng lặp (ID: {{id}})"
     },
+    "exportOrder": {
+        "title": "Quản lý Lệnh Xuất Kho",
+        "create": "Tạo lệnh xuất kho",
+        "view": "Chi tiết lệnh xuất kho",
+        "cancel": "Hủy lệnh",
+        "submitReweigh": "Gửi số cân thực tế",
+        "confirmReweigh": "Xác nhận số cân",
+        "delivery": "Hoàn thành xuất kho",
+        "statusDaTaoLenh": "Đã tạo lệnh",
+        "statusDangXacNhanCan": "Đang xác nhận cân",
+        "statusDaXacNhanCan": "Đã xác nhận cân",
+        "statusDaXuatKho": "Đã xuất kho",
+        "createSuccess": "Tạo lệnh xuất kho thành công!",
+        "cancelSuccess": "Hủy lệnh xuất kho thành công!",
+        "submitReweighSuccess": "Đã gửi số cân thực tế!",
+        "confirmReweighSuccess": "Đã xác nhận số cân!",
+        "deliverySuccess": "Đã hoàn thành xuất kho!"
+    },
     "error": {
         "99001": "Vui lòng nhập tên đăng nhập và mật khẩu",
         "99002": "Sai tài khoản hoặc mật khẩu",

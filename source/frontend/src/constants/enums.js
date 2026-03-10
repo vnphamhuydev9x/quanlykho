@@ -138,6 +138,22 @@ export const ROLES_OPTIONS = [
     { value: ROLES.CHUNG_TU, labelKey: 'roles.CHUNG_TU' }
 ];
 
+// Export Order Status Enums
+export const EXPORT_ORDER_STATUS = {
+    DA_TAO_LENH: 'DA_TAO_LENH',
+    DANG_XAC_NHAN_CAN: 'DANG_XAC_NHAN_CAN',
+    DA_XAC_NHAN_CAN: 'DA_XAC_NHAN_CAN',
+    DA_XUAT_KHO: 'DA_XUAT_KHO',
+};
+
+// Export Order Status Options (Xuất kho)
+export const EXPORT_ORDER_STATUS_OPTIONS = [
+    { value: 'DA_TAO_LENH', label: 'Đã tạo lệnh', color: 'blue' },
+    { value: 'DANG_XAC_NHAN_CAN', label: 'Đang xác nhận cân', color: 'orange' },
+    { value: 'DA_XAC_NHAN_CAN', label: 'Đã xác nhận cân', color: 'green' },
+    { value: 'DA_XUAT_KHO', label: 'Đã xuất kho', color: 'purple' },
+];
+
 // Manifest Status Options (Xếp xe)
 export const MANIFEST_STATUS_OPTIONS = [
     { value: 'CHO_XEP_XE', label: 'Chờ xếp xe', color: 'default' },

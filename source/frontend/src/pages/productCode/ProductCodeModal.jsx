@@ -147,9 +147,16 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
             };
         });
 
+        const calcTotalWeight = itemsArray.reduce((sum, item) => sum + (parseInt(item?.weight) || 0), 0);
+        const calcTotalVolume = itemsArray.reduce((sum, item) => sum + (parseFloat(item?.volume) || 0), 0);
+
         setItemsData(recalculatedItems);
         setTotalFeeEstimate(newTotalFee);
-        form.setFieldsValue({ totalTransportFeeEstimate: newTotalFee });
+        form.setFieldsValue({
+            totalTransportFeeEstimate: newTotalFee,
+            totalWeight: calcTotalWeight || null,
+            totalVolume: calcTotalVolume ? parseFloat(calcTotalVolume.toFixed(3)) : null
+        });
         return recalculatedItems;
     };
 
@@ -203,8 +210,6 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
             const submitData = {
                 ...values,
                 entryDate: values.entryDate ? values.entryDate.toISOString() : null,
-                totalWeight: Number(values.totalWeight) || 0,
-                totalVolume: parseFloat(values.totalVolume) || 0,
                 exchangeRate: parseFloat(values.exchangeRate) || 0,
                 totalTransportFeeEstimate: Number(totalFeeEstimate) || 0,
                 items: itemsData.map(item => ({
@@ -274,6 +279,13 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
                 >
                     <Divider orientation="left">Thông tin chung</Divider>
                     <Row gutter={16}>
+                        {/* Khối phụ trách */}
+                        <Col3>
+                            <Form.Item name="khoiPhuTrach" label="Khối phụ trách">
+                                <Input disabled={disabledGeneral} placeholder="Nhập khối/bộ phận phụ trách" />
+                            </Form.Item>
+                        </Col3>
+
                         {/* Nhân viên */}
                         <Col3>
                             <Form.Item name="employeeId" label="Nhân viên (Sale)" rules={[{ required: true, message: 'Bắt buộc chọn' }]}>
@@ -365,10 +377,19 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
                         </Col3>
 
                         <Col3>
-                            <Form.Item label="Tổng trọng lượng">
+                            <Form.Item
+                                label={
+                                    <Space>
+                                        Tổng trọng lượng
+                                        <Tooltip title="Tự động tính: Tổng trọng lượng (kg) của tất cả mặt hàng trong mã hàng">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                }
+                            >
                                 <Space.Compact block>
                                     <Form.Item name="totalWeight" noStyle>
-                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} isInteger={true} disabled={disabledGeneral} />
+                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} isInteger={true} disabled />
                                     </Form.Item>
                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="kg" disabled />
                                 </Space.Compact>
@@ -376,10 +397,19 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
                         </Col3>
 
                         <Col3>
-                            <Form.Item label="Tổng khối lượng">
+                            <Form.Item
+                                label={
+                                    <Space>
+                                        Tổng khối lượng
+                                        <Tooltip title="Tự động tính: Tổng khối lượng (m³) của tất cả mặt hàng trong mã hàng">
+                                            <span style={{ cursor: 'pointer', color: '#1890ff' }}>(?)</span>
+                                        </Tooltip>
+                                    </Space>
+                                }
+                            >
                                 <Space.Compact block>
                                     <Form.Item name="totalVolume" noStyle>
-                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled={disabledGeneral} />
+                                        <CustomNumberInput style={{ width: 'calc(100% - 60px)' }} min={0} disabled />
                                     </Form.Item>
                                     <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="m³" disabled />
                                 </Space.Compact>
@@ -411,6 +441,15 @@ const ProductCodeModal = ({ visible, onClose, editingRecord, viewOnly, userType,
                                 </Select>
                             </Form.Item>
                         </Col3>
+                        <Col xs={24}>
+                            <Form.Item name="notes" label="Ghi chú">
+                                <TextArea
+                                    rows={3}
+                                    disabled={disabledGeneral}
+                                    placeholder="Ghi chú về mã hàng..."
+                                />
+                            </Form.Item>
+                        </Col>
                         <Col3>
                             <Form.Item
                                 label={

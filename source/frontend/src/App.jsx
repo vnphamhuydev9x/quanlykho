@@ -20,6 +20,7 @@ import ProductCodePage from './pages/productCode/ProductCodePage';
 import MerchandisePage from './pages/merchandise/MerchandisePage';
 import ManifestListPage from './pages/manifest/ManifestListPage';
 import ManifestDetailPage from './pages/manifest/ManifestDetailPage';
+import ExportOrderListPage from './pages/exportOrder/ExportOrderListPage';
 import MainLayout from './layouts/MainLayout';
 
 // Set dayjs global locale to Vietnamese
@@ -166,6 +167,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <TransactionPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/export-orders"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ExportOrderListPage />
                 </MainLayout>
               </ProtectedRoute>
             }

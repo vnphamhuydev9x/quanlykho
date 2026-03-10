@@ -9,6 +9,17 @@ const CACHE_KEY_DETAIL = 'product-codes:detail';
 const VALID_PACKAGE_UNITS = ['KHONG_DONG_GOI', 'BAO_TAI', 'THUNG_CARTON', 'PALLET'];
 const VALID_INFO_SOURCES = ['Kho TQ', 'Kho VN', 'Dự kiến nhập kho'];
 
+// Helper: Calculate totalWeight and totalVolume from items (auto, ignores client values)
+const calculateWeightAndVolume = (items) => {
+    if (!items || !Array.isArray(items) || items.length === 0) return { totalWeight: null, totalVolume: null };
+    const totalWeight = items.reduce((sum, i) => sum + (parseInt(i.weight) || 0), 0);
+    const totalVolume = items.reduce((sum, i) => sum + (parseFloat(i.volume) || 0), 0);
+    return {
+        totalWeight: totalWeight > 0 ? totalWeight : null,
+        totalVolume: totalVolume > 0 ? totalVolume : null
+    };
+};
+
 // Helper to manually calculate the transport fee estimate server-side to prevent fraud
 const calculateTotalTransportFeeEstimate = (items, exchangeRateInput) => {
     if (!items || !Array.isArray(items)) return null;
@@ -202,6 +213,7 @@ const productCodeController = {
     createProductCode: async (req, res) => {
         try {
             const {
+                khoiPhuTrach,
                 employeeId,
                 customerId,
                 merchandiseConditionId,
@@ -211,6 +223,7 @@ const productCodeController = {
                 totalVolume,
                 infoSource,
                 exchangeRate,
+                notes,
                 items // Detail array
             } = req.body;
 
@@ -242,24 +255,27 @@ const productCodeController = {
                 return res.status(400).json({ code: 400, message: "Invalid info source" });
             }
 
-            // 3. Auto Calculation for transport fee
+            // 3. Auto Calculation for transport fee, weight, volume
             const calculateFee = calculateTotalTransportFeeEstimate(hasItems ? items : [], exchangeRate);
+            const { totalWeight: calcTotalWeight, totalVolume: calcTotalVolume } = calculateWeightAndVolume(hasItems ? items : []);
 
             // 4. Create Master & Nested Create Detail
             const newProductCode = await prisma.$transaction(async (tx) => {
                 const pc = await tx.productCode.create({
                     data: {
+                        khoiPhuTrach: khoiPhuTrach || null,
                         employeeId: employeeId ? parseInt(employeeId) : null,
                         customerId: customerId ? parseInt(customerId) : null,
                         merchandiseConditionId: merchandiseConditionId ? parseInt(merchandiseConditionId) : null,
                         entryDate: entryDate ? new Date(entryDate) : null,
                         orderCode,
-                        totalWeight: totalWeight ? parseInt(totalWeight) : null,
-                        totalVolume: totalVolume ? parseFloat(totalVolume) : null,
+                        totalWeight: calcTotalWeight,
+                        totalVolume: calcTotalVolume,
                         infoSource,
                         exchangeRate: exchangeRate ? parseFloat(exchangeRate) : null,
                         totalTransportFeeEstimate: calculateFee,
                         totalImportCostToCustomer: calculateFee,
+                        notes: notes || null,
                         items: hasItems ? {
                             create: items.map(i => ({
                                 productName: i.productName,
@@ -352,12 +368,17 @@ const productCodeController = {
                 return res.status(400).json({ code: 400, message: "Invalid info source" });
             }
 
-            // 3. Auto Calculation for transport fee based on new items or fallback to DB
+            // 3. Auto Calculation for transport fee, weight, volume based on new items
             let feeToSave = updateData.totalTransportFeeEstimate;
+            let calcTotalWeightUpdate = undefined;
+            let calcTotalVolumeUpdate = undefined;
             let transactionStmts = [];
 
             if (updateData.items && Array.isArray(updateData.items)) {
                 feeToSave = calculateTotalTransportFeeEstimate(updateData.items, updateData.exchangeRate !== undefined ? updateData.exchangeRate : existing.exchangeRate);
+                const { totalWeight: wt, totalVolume: vl } = calculateWeightAndVolume(updateData.items);
+                calcTotalWeightUpdate = wt;
+                calcTotalVolumeUpdate = vl;
 
                 // Completely replace items details by deleting them first
                 transactionStmts.push(
@@ -369,17 +390,19 @@ const productCodeController = {
 
             // Master Update Payload
             const dataToUpdate = {
+                khoiPhuTrach: updateData.khoiPhuTrach !== undefined ? (updateData.khoiPhuTrach || null) : undefined,
                 employeeId: updateData.employeeId !== undefined ? (updateData.employeeId ? parseInt(updateData.employeeId) : null) : undefined,
                 customerId: updateData.customerId !== undefined ? (updateData.customerId ? parseInt(updateData.customerId) : null) : undefined,
                 merchandiseConditionId: updateData.merchandiseConditionId !== undefined ? (updateData.merchandiseConditionId ? parseInt(updateData.merchandiseConditionId) : null) : undefined,
                 entryDate: updateData.entryDate !== undefined ? (updateData.entryDate ? new Date(updateData.entryDate) : null) : undefined,
                 orderCode: updateData.orderCode,
-                totalWeight: updateData.totalWeight !== undefined ? (updateData.totalWeight ? parseInt(updateData.totalWeight) : null) : undefined,
-                totalVolume: updateData.totalVolume !== undefined ? (updateData.totalVolume ? parseFloat(updateData.totalVolume) : null) : undefined,
+                totalWeight: calcTotalWeightUpdate !== undefined ? calcTotalWeightUpdate : undefined,
+                totalVolume: calcTotalVolumeUpdate !== undefined ? calcTotalVolumeUpdate : undefined,
                 infoSource: updateData.infoSource,
                 exchangeRate: updateData.exchangeRate !== undefined ? (updateData.exchangeRate ? parseFloat(updateData.exchangeRate) : null) : undefined,
                 totalTransportFeeEstimate: feeToSave !== undefined ? feeToSave : undefined,
                 totalImportCostToCustomer: feeToSave !== undefined ? feeToSave : undefined,
+                notes: updateData.notes !== undefined ? (updateData.notes || null) : undefined,
             };
 
             // If we have items to update, nested create them

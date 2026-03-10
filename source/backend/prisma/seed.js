@@ -208,6 +208,7 @@ async function main() {
 
     // ─── SEED PRODUCT CODES ──────────────────────────────────────────────────
     console.log('Seeding Product Codes...');
+    const KHOI_PHU_TRACH_POOL = ['Khối Bắc', 'Khối Nam', 'Khối Trung', 'Khối Tây Nguyên', null];
     const warehouseEmps = await prisma.user.findMany({ where: { role: 'WAREHOUSE', deletedAt: null } });
     const pCustomers = await prisma.user.findMany({ where: { type: 'CUSTOMER', deletedAt: null } });
     const targetCondition = await prisma.merchandiseCondition.findFirst({ where: { name_vi: 'Nhập kho' } });
@@ -228,6 +229,7 @@ async function main() {
                 // Tạo product code trước để lấy ID
                 const pc = await prisma.productCode.create({
                     data: {
+                        khoiPhuTrach: KHOI_PHU_TRACH_POOL[i % KHOI_PHU_TRACH_POOL.length],
                         employeeId: emp.id,
                         customerId: customer.id,
                         merchandiseConditionId: targetCondition.id,
@@ -238,6 +240,7 @@ async function main() {
                         infoSource: 'Kho TQ',
                         totalTransportFeeEstimate: 0,
                         exchangeRate: EXCHANGE_RATE,
+                        notes: i % 5 === 0 ? `Lô hàng đặc biệt số ${i + 1}, cần kiểm tra kỹ trước khi nhập kho` : null,
                     }
                 });
 

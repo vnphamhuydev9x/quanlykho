@@ -1,7 +1,7 @@
 # Tài Liệu Nghiệp Vụ: Quản Lý Mã Hàng (Cập nhật - Master/Detail)
 
 > **Mục đích**: Mô tả các chức năng nghiệp vụ của màn Quản lý Mã hàng theo yêu cầu mới dựa trên cấu trúc Master-Detail
-> **Ngày cập nhật**: 2026-02-28
+> **Ngày cập nhật**: 2026-03-10
 
 ---
 
@@ -25,16 +25,20 @@ Màn **Mã hàng** cho phép quản lý thông tin các lô hàng vận chuyển
 
 | STT | Tên trường | Kiểu dữ liệu | Ràng buộc | Mô tả |
 |-----|------------|--------------|-----------|-------|
-| 1 | **Nhân viên** | Selection box | Bắt buộc | Chọn thông tin từ danh sách nhân viên |
-| 2 | **Mã khách hàng** | Selection box | Bắt buộc | Chọn từ danh sách khách hàng như hiện tại |
-| 3 | **Ngày nhập kho** | Date | | Ngày hàng nhập kho |
-| 4 | **Mã đơn hàng** | String | Bắt buộc | Mã đơn hàng (tương tự hiện tại) |
-| 5 | **Tổng trọng lượng** | Integer | | Đơn vị: kg |
-| 6 | **Tổng khối lượng** | Float | | Đơn vị: m³ |
-| 7 | **Nguồn cung cấp thông tin (Kg,m3)**| Selection box | Bắt buộc | Thông tin nguồn cung cấp: Kho TQ, Kho VN, Dự kiến nhập kho |
-| 8 | **Tổng cước vận chuyển TQ_HN tạm tính**| Float | Disabled | Tự động tính tổng từ các mặt hàng. Hiển thị Tooltip công thức tính. |
-| 9 | **Tỷ giá** | Float | | Tỷ giá RMB / VND |
-| 10 | **Trạng thái hàng** | Selection box | | Lấy thông tin từ tình trạng hàng hóa (trong menu cài đặt, tức là tham chiếu Table/Entity) |
+| 1 | **Khối phụ trách** | String | | Khối/bộ phận phụ trách mã hàng này |
+| 2 | **Nhân viên** | Selection box | Bắt buộc | Chọn thông tin từ danh sách nhân viên |
+| 3 | **Mã khách hàng** | Selection box | Bắt buộc | Chọn từ danh sách khách hàng như hiện tại |
+| 4 | **Ngày nhập kho** | Date | | Ngày hàng nhập kho |
+| 5 | **Mã đơn hàng** | String | Bắt buộc | Mã đơn hàng (tương tự hiện tại) |
+| 6 | **Tổng trọng lượng** | Integer | Disabled, Auto Calculated | Tự động tính = Tổng `trọng lượng` của tất cả mặt hàng trong mã hàng. Đơn vị: kg |
+| 7 | **Tổng khối lượng** | Float | Disabled, Auto Calculated | Tự động tính = Tổng `khối lượng` của tất cả mặt hàng trong mã hàng. Đơn vị: m³ |
+| 8 | **Nguồn cung cấp thông tin (Kg,m3)**| Selection box | Bắt buộc | Thông tin nguồn cung cấp: Kho TQ, Kho VN, Dự kiến nhập kho |
+| 9 | **Tổng cước vận chuyển TQ_HN tạm tính**| Float | Disabled | Tự động tính tổng từ các mặt hàng. Hiển thị Tooltip công thức tính. |
+| 10 | **Tỷ giá** | Float | | Tỷ giá RMB / VND |
+| 11 | **Trạng thái hàng** | Selection box | | Lấy thông tin từ tình trạng hàng hóa (trong menu cài đặt, tức là tham chiếu Table/Entity) |
+| 12 | **Ghi chú** | String | Text Area | Ghi chú tự do về mã hàng. Hiển thị bên ngoài bảng mặt hàng (phía dưới trạng thái hàng) |
+| 13 | **Trạng thái xếp xe** | Read-only, Tag | Hệ thống quản lý | Clone từ Manifest. Hiển thị Tag màu, click để Quick Peek chuyến xe. Xem chi tiết tại BRD Xếp Xe. |
+| 14 | **Trạng thái xuất kho** | Read-only, Tag | Hệ thống quản lý | Clone từ ExportOrder (`exportStatus`). Hiển thị Tag màu, click để Quick Peek lệnh xuất kho. Null = "Chưa có lệnh xuất". Xem chi tiết tại BRD Xuất Kho (`10_BRD_export_order_management.md`). |
 
 **Cơ chế Tính toán cho [8] Tổng cước vận chuyển TQ_HN tạm tính:**
 Hệ thống lấy thông tin từ danh sách mặt hàng của mã hàng, dựa vào cước tính toán của từng mặt hàng:
@@ -79,3 +83,24 @@ Dựa theo Rule chuẩn hóa đã chốt: Khi một trường là dropdown (Sele
 
 ### 3.3 Đảm Bảo Real-time Thống Kê Giao Diện
 - Frontend phải lập tức lắng nghe những thay đổi vào Detail của Danh sách các Mặt hàng để recalculate lại field Auto **"Tổng cước vận chuyển TQ_HN tạm tính"** và hiển thị con số ngay trên form trước khi Save.
+
+---
+
+## 4. Tích Hợp với Các Module Khác
+
+### 4.1 Tích hợp Xếp Xe (Manifest)
+- Sau khi Mã hàng được gán vào chuyến xe, trường `vehicleStatus` trên ProductCode được cập nhật đồng bộ theo trạng thái chuyến xe.
+- Khi xe đến trạng thái `DA_NHAP_KHO_VN`, Mã hàng sẵn sàng cho luồng Xuất Kho.
+- Chi tiết: xem `08_BRD_manifest_management.md`.
+
+### 4.2 Tích hợp Xuất Kho (ExportOrder)
+- Khi Admin/Sale chọn các Mã hàng có `vehicleStatus = DA_NHAP_KHO_VN` (cùng 1 khách hàng) và tạo lệnh xuất kho, hệ thống gán `exportOrderId` và cập nhật `exportStatus` trên từng ProductCode.
+- Các trường được hệ thống quản lý (không nhập tay):
+  - `exportOrderId`: FK trỏ đến ExportOrder
+  - `exportStatus`: Trạng thái lệnh xuất kho (clone từ ExportOrder)
+  - `exportDeliveryDateTime`: Ngày giờ khách nhận hàng (clone từ ExportOrder, dùng để sort trong "Tồn kho VN")
+- Chi tiết luồng: xem `10_BRD_export_order_management.md`.
+
+### 4.3 Tích hợp Khai Báo (Declaration)
+- Khi tạo mới Mã hàng kèm Mặt hàng, hệ thống **tự động tạo** bản ghi Khai báo tương ứng cho mỗi Mặt hàng.
+- Chi tiết: xem `06_BRD_declaration_management.md`.

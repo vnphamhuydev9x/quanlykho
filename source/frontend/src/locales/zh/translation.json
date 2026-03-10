@@ -21,7 +21,11 @@
         "warehouses": "仓库",
         "categories": "货物类型",
         "declarations": "报关",
-        "merchandise": "货物"
+        "merchandise": "货物",
+        "manifests": "配车",
+        "export": "出库",
+        "shortDeclarations": "简短报关",
+        "reports": "报表"
     },
     "inventory": {
         "titleTQ": "中国库存管理",
@@ -505,6 +509,24 @@
         "uploadExcel": "上传 Excel",
         "searchPlaceholder": "搜索详细品名，HS编码...",
         "duplicateErrorId": "简短申报记录重复 (ID: {{id}})"
+    },
+    "exportOrder": {
+        "title": "出库订单管理",
+        "create": "创建出库单",
+        "view": "出库单详情",
+        "cancel": "取消出库单",
+        "submitReweigh": "提交实际重量",
+        "confirmReweigh": "确认重量",
+        "delivery": "完成出库",
+        "statusDaTaoLenh": "已创建",
+        "statusDangXacNhanCan": "正在确认重量",
+        "statusDaXacNhanCan": "已确认重量",
+        "statusDaXuatKho": "已出库",
+        "createSuccess": "创建出库单成功！",
+        "cancelSuccess": "取消出库单成功！",
+        "submitReweighSuccess": "提交实际重量成功！",
+        "confirmReweighSuccess": "确认重量成功！",
+        "deliverySuccess": "出库完成！"
     },
     "error": {
         "99001": "请输入用户名和密码",

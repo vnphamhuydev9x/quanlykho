@@ -17,14 +17,14 @@ const exportOrderService = {
     },
 
     // Gửi số cân thực tế - DA_TAO_LENH → DANG_XAC_NHAN_CAN
-    submitReweigh: async (id, productItems) => {
-        const response = await axiosInstance.patch(`/export-orders/${id}/submit-reweigh`, { productItems });
+    submitReweigh: async (id, items) => {
+        const response = await axiosInstance.patch(`/export-orders/${id}/submit-reweigh`, { items });
         return response.data;
     },
 
     // Xác nhận số cân - DANG_XAC_NHAN_CAN → DA_XAC_NHAN_CAN
-    confirmReweigh: async (id, productItems) => {
-        const response = await axiosInstance.patch(`/export-orders/${id}/confirm-reweigh`, { productItems });
+    confirmReweigh: async (id, items) => {
+        const response = await axiosInstance.patch(`/export-orders/${id}/confirm-reweigh`, { items });
         return response.data;
     },
 

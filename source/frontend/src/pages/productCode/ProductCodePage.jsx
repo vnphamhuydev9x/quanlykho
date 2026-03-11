@@ -156,6 +156,7 @@ const ProductCodePage = () => {
             });
             return;
         }
+        setExportInitialPCIds(selectedRowKeys.map(k => parseInt(k)));
         setExportOrderModalVisible(true);
     };
 
@@ -315,6 +316,7 @@ const ProductCodePage = () => {
                     visible={exportOrderModalVisible}
                     mode="create"
                     exportOrderId={null}
+                    initialProductCodeIds={exportInitialPCIds}
                     onClose={() => setExportOrderModalVisible(false)}
                     onSuccess={() => {
                         setExportOrderModalVisible(false);

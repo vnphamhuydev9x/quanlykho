@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Modal, Form, Input, InputNumber, DatePicker, Select,
     Button, Space, Tag, Table, Checkbox, Descriptions,
-    message, Spin, Divider, Typography, Popconfirm, Alert
+    message, Spin, Divider, Typography, Popconfirm, Alert,
+    Row, Col
 } from 'antd';
 import {
     ExportOutlined, CheckOutlined, SendOutlined, DeleteOutlined,
@@ -40,7 +41,7 @@ const formatVND = (v) => v != null ? `${new Intl.NumberFormat('de-DE').format(v)
  *  - 'confirm-reweigh': Xác nhận số cân thực tế
  *  - 'delivery'       : Hoàn thành xuất kho (nhập tiền thu + phí vận chuyển)
  */
-const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, onSuccess }) => {
+const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialProductCodeIds = [], onClose, onSuccess }) => {
     const [mode, setMode] = useState(initialMode);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -57,42 +58,63 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
     const [loadingAvailable, setLoadingAvailable] = useState(false);
     const [selectedAddKeys, setSelectedAddKeys] = useState([]);
 
-    // Submit-reweigh: actualWeight/actualVolume per item
-    // { [itemId]: { actualWeight, actualVolume } }
+    // Submit-reweigh & Confirm-reweigh data states
     const [reweighData, setReweighData] = useState({});
-
-    // Confirm-reweigh: useActualData per item
-    // { [itemId]: boolean }
     const [confirmData, setConfirmData] = useState({});
 
     // Delivery form
     const [deliveryForm] = Form.useForm();
 
-    // Load order detail khi mode !== 'create'
-    const loadOrder = useCallback(async () => {
-        if (!exportOrderId) return;
-        setLoading(true);
-        try {
-            const res = await exportOrderService.getById(exportOrderId);
-            setOrder(res.data || res);
-        } catch {
-            message.error('Lỗi khi tải chi tiết lệnh xuất kho');
-        } finally {
-            setLoading(false);
-        }
-    }, [exportOrderId]);
-
+    // 1. Initial Load Effect - Only runs when visible or mode/id changes
     useEffect(() => {
-        setMode(initialMode);
-        if (initialMode !== 'create') {
-            loadOrder();
+        if (!visible) {
+            // Reset when modal closes
+            setOrder(null);
+            setSelectedPCIds([]);
+            setSelectedPCs([]);
+            form.resetFields();
+            return;
         }
-    }, [initialMode, exportOrderId]);
 
-    // Init reweigh/confirm data khi order load xong
+        setMode(initialMode);
+
+        if (initialMode === 'create') {
+            form.resetFields();
+            form.setFieldsValue({ deliveryDateTime: dayjs().add(1, 'hour') });
+
+            // Khởi tạo danh sách PC từ props (nếu có)
+            if (initialProductCodeIds && initialProductCodeIds.length > 0) {
+                const ids = initialProductCodeIds.map(id => Number(id));
+                setSelectedPCIds(ids);
+
+                // Load chi tiết PC
+                setLoading(true);
+                productCodeService.getAll(1, 1000, '').then(res => {
+                    const all = res.data?.items || res.items || [];
+                    setSelectedPCs(all.filter(pc => ids.includes(pc.id)));
+                }).catch(() => {
+                    message.error('Lỗi khi tải thông tin mã hàng');
+                }).finally(() => setLoading(false));
+            }
+        } else {
+            // View / Reweigh / Confirm / Delivery modes
+            if (exportOrderId) {
+                setLoading(true);
+                exportOrderService.getById(exportOrderId).then(res => {
+                    const data = res.data || res;
+                    setOrder(data);
+                }).catch(() => {
+                    message.error('Lỗi khi tải chi tiết lệnh xuất kho');
+                }).finally(() => setLoading(false));
+            }
+        }
+    }, [visible, initialMode, exportOrderId]);
+
+    // 2. Initialize reweigh/confirm data when mode changes locally
     useEffect(() => {
         if (!order) return;
         const allItems = (order.productCodes || []).flatMap(pc => pc.items || []);
+
         if (mode === 'submit-reweigh') {
             const init = {};
             allItems.forEach(item => {
@@ -112,16 +134,17 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
         }
     }, [order, mode]);
 
-    // Fetch danh sách PC có thể xuất (NHAP_KHO_VN + chưa có lệnh)
+    // 3. Fetch danh sách PC có thể xuất (NHAP_KHO_VN + chưa có lệnh)
     const fetchAvailablePCs = async () => {
         setLoadingAvailable(true);
         try {
-            const res = await productCodeService.getAll(1, 500, '');
+            const res = await productCodeService.getAll(1, 1000, '');
             const all = res.data?.items || res.items || [];
-            // Filter: Đã nhập kho VN VÀ Chưa có lệnh xuất kho
+            // Filter: Đã nhập kho VN VÀ Chưa có lệnh xuất kho VÀ chưa có trong danh sách chọn
             const eligible = all.filter(pc =>
-                pc.vehicleStatus === 'DA_NHAP_KHO_VN' && !pc.exportOrderId
-                && !selectedPCIds.includes(pc.id)
+                pc.vehicleStatus === 'DA_NHAP_KHO_VN' &&
+                !pc.exportOrderId &&
+                !selectedPCIds.includes(pc.id)
             );
             setAvailablePCs(eligible);
         } catch {
@@ -192,12 +215,12 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
         }
         setSubmitting(true);
         try {
-            const productItems = allItems.map(item => ({
-                id: item.id,
+            const items = allItems.map(item => ({
+                productItemId: item.id,
                 actualWeight: reweighData[item.id]?.actualWeight,
                 actualVolume: reweighData[item.id]?.actualVolume,
             }));
-            await exportOrderService.submitReweigh(exportOrderId, productItems);
+            await exportOrderService.submitReweigh(exportOrderId, items);
             message.success('Đã gửi số cân thực tế');
             onSuccess();
         } catch (err) {
@@ -212,11 +235,11 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
         const allItems = (order.productCodes || []).flatMap(pc => pc.items || []);
         setSubmitting(true);
         try {
-            const productItems = allItems.map(item => ({
-                id: item.id,
+            const items = allItems.map(item => ({
+                productItemId: item.id,
                 useActualData: confirmData[item.id] ?? false,
             }));
-            await exportOrderService.confirmReweigh(exportOrderId, productItems);
+            await exportOrderService.confirmReweigh(exportOrderId, items);
             message.success('Đã xác nhận số cân');
             onSuccess();
         } catch (err) {
@@ -273,9 +296,9 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
     };
 
     const getWidth = () => {
-        if (mode === 'submit-reweigh' || mode === 'confirm-reweigh') return 1000;
-        if (mode === 'create') return 860;
-        return 900;
+        if (mode === 'submit-reweigh' || mode === 'confirm-reweigh') return 1100;
+        if (mode === 'create') return 960;
+        return 960;
     };
 
     const getFooter = () => {
@@ -299,7 +322,7 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
             return [
                 <Button key="back" onClick={() => { setMode('view'); loadOrder(); }}>Quay lại</Button>,
                 <Button key="submit" type="primary" icon={<CheckOutlined />} loading={submitting} onClick={handleConfirmReweigh}>
-                    Xác nhận số cân
+                    Xác nhận & Hoàn tất số cân
                 </Button>,
             ];
         }
@@ -333,12 +356,9 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
                     key="reweigh"
                     type="primary"
                     icon={<SendOutlined />}
-                    onClick={() => {
-                        loadOrder().then(() => setMode('submit-reweigh'));
-                        setMode('submit-reweigh');
-                    }}
+                    onClick={() => setMode('submit-reweigh')}
                 >
-                    Gửi số cân thực tế
+                    Nhập số cân thực tế
                 </Button>
             );
         }
@@ -347,10 +367,10 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
                 <Button
                     key="confirm"
                     type="primary"
-                    icon={<CheckOutlined />}
+                    icon={<CheckCircleOutlined />}
                     onClick={() => setMode('confirm-reweigh')}
                 >
-                    Xác nhận số cân
+                    Tiến hành xác nhận số liệu
                 </Button>
             );
         }
@@ -485,7 +505,7 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
                     onOk={handleAddItems}
                     okText={`Thêm${selectedAddKeys.length > 0 ? ` (${selectedAddKeys.length})` : ''}`}
                     cancelText="Hủy"
-                    width={800}
+                    width={900}
                     destroyOnClose
                 >
                     {selectedAddKeys.length > 0 && (
@@ -499,10 +519,10 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
                     <ProductCodeTable
                         dataSource={availablePCs}
                         externalLoading={loadingAvailable}
-                        rowSelection={{
+                        rowSelection={useMemo(() => ({
                             selectedRowKeys: selectedAddKeys,
                             onChange: keys => setSelectedAddKeys(keys),
-                        }}
+                        }), [selectedAddKeys])}
                         showFilters={false}
                         showPagination={false}
                         showActions={false}
@@ -605,6 +625,14 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
 
         return (
             <>
+                {order.status === 'DANG_XAC_NHAN_CAN' && (
+                    <Alert
+                        message="Lệnh đang chờ bạn xác nhận số liệu cân thực tế. Vui lòng nhấn nút 'Tiến hành xác nhận số liệu' ở bên dưới để bắt đầu tích chọn."
+                        type="info"
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                    />
+                )}
                 <Descriptions bordered size="small" column={2} style={{ marginBottom: 16 }}>
                     <Descriptions.Item label="ID">{order.id}</Descriptions.Item>
                     <Descriptions.Item label="Trạng thái">
@@ -824,7 +852,7 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, onClose, 
     };
 
     const renderDelivery = () => (
-        <Form form={deliveryForm} layout="vertical">
+        <Form form={form} layout="vertical">
             <Alert
                 type="warning"
                 showIcon

@@ -76,25 +76,38 @@ const invalidateCache = async (id = null) => {
 const productCodeController = {
     getAllProductCodes: async (req, res) => {
         try {
-            const { page = 1, limit = 20, search = '', customerId } = req.query;
+            // 2. Build Query
+            const {
+                page = 1,
+                limit = 20,
+                search = '',
+                customerId,
+                vehicleStatus,
+                inventory,
+                exportStatus
+            } = req.query;
             const skip = (parseInt(page) - 1) * parseInt(limit);
 
-            const cacheKey = `${CACHE_KEY_LIST}:${page}:${limit}:${search}:${customerId || 'all'}`;
+            const cacheKey = `${CACHE_KEY_LIST}:${page}:${limit}:${search}:${customerId || 'all'}:${vehicleStatus || 'all'}:${inventory || 'all'}:${exportStatus || 'all'}`;
 
-            // 1. Check Cache
-            const cachedData = await redisClient.get(cacheKey);
-            if (cachedData) {
-                logger.info('[GetAllProductCodes] Cache HIT');
-                return res.status(200).json(JSON.parse(cachedData));
-            }
-
-            logger.info('[GetAllProductCodes] Cache MISS');
-
-            // 2. Build Query
             const where = { deletedAt: null };
 
             if (customerId) {
                 where.customerId = parseInt(customerId);
+            }
+
+            if (vehicleStatus) {
+                where.vehicleStatus = vehicleStatus;
+            }
+
+            if (exportStatus) {
+                where.exportStatus = exportStatus;
+            }
+
+            if (inventory === 'TQ') {
+                where.vehicleStatus = { in: [null, 'CHO_GOM_HANG', 'DA_GOM_HANG'] };
+            } else if (inventory === 'VN') {
+                where.vehicleStatus = { in: ['DA_NHAP_KHO_VN', 'DA_XUAT_KHO'] };
             }
 
             if (search) {

@@ -284,10 +284,21 @@ const MainLayout = ({ children }) => {
             onClick: () => navigate('/manifests'),
         },
         {
-            key: '/export-orders',
+            key: 'export-orders-parent',
             icon: <ExportOutlined />,
-            label: t('menu.export'),
-            onClick: () => navigate('/export-orders'),
+            label: t('menu.export') || 'Xuất kho',
+            children: [
+                {
+                    key: '/export-orders',
+                    label: 'Tất cả',
+                    onClick: () => navigate('/export-orders'),
+                },
+                {
+                    key: '/export-orders?status=DANG_XAC_NHAN_CAN',
+                    label: 'Đang xác nhận cân',
+                    onClick: () => navigate('/export-orders?status=DANG_XAC_NHAN_CAN'),
+                }
+            ]
         },
         {
             key: 'inventory',

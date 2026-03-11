@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Table, Button, Input, Space, Typography,
     Tag, Tooltip, Row, Col, Select, message
 } from 'antd';
-import { PlusOutlined, EyeOutlined, SearchOutlined, ExportOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined, SearchOutlined, ExportOutlined, SendOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 import dayjs from 'dayjs';
 import exportOrderService from '../../services/exportOrderService';
 import { EXPORT_ORDER_STATUS_OPTIONS } from '../../constants/enums';
@@ -36,6 +37,12 @@ const ExportOrderListPage = () => {
         }
     }, []);
 
+    const location = useLocation();
+
+    // Parse status from URL
+    const urlParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const urlStatus = urlParams.get('status') || '';
+
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -44,7 +51,10 @@ const ExportOrderListPage = () => {
                 limit: pagination.pageSize,
             };
             if (searchText) params.search = searchText;
-            if (statusFilter) params.status = statusFilter;
+
+            // Priority: Local state filter > URL filter
+            const effectiveStatus = statusFilter || urlStatus;
+            if (effectiveStatus) params.status = effectiveStatus;
 
             const res = await exportOrderService.getAll(params);
             const d = res.data || res;
@@ -58,6 +68,11 @@ const ExportOrderListPage = () => {
     }, [pagination.current, pagination.pageSize, searchText, statusFilter]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    // Reset status filter when URL changes (to handle navigation between "All" and "Sub-menus")
+    useEffect(() => {
+        setStatusFilter('');
+    }, [location.search]);
 
     const openModal = (mode, id = null) => {
         setModalMode(mode);
@@ -141,7 +156,7 @@ const ExportOrderListPage = () => {
             key: 'createdBy',
             width: 160,
             render: (_, r) => r.createdBy
-                ? `${r.createdBy.username} — ${r.createdBy.fullName}`
+                ? `${r.createdBy.username} — ${r.createdBy.fullName} `
                 : '—',
         },
         {
@@ -158,14 +173,26 @@ const ExportOrderListPage = () => {
             fixed: 'right',
             align: 'center',
             render: (_, record) => (
-                <Tooltip title="Xem chi tiết">
-                    <Button
-                        type="text"
-                        icon={<EyeOutlined style={{ color: '#1677ff' }} />}
-                        size="small"
-                        onClick={() => openModal('view', record.id)}
-                    />
-                </Tooltip>
+                <Space size="small">
+                    <Tooltip title="Xem chi tiết">
+                        <Button
+                            type="text"
+                            icon={<EyeOutlined style={{ color: '#1677ff' }} />}
+                            size="small"
+                            onClick={() => openModal('view', record.id)}
+                        />
+                    </Tooltip>
+                    {record.status === 'DA_TAO_LENH' && (
+                        <Tooltip title="Cân thực tế">
+                            <Button
+                                type="text"
+                                icon={<SendOutlined style={{ color: '#faad14' }} />}
+                                size="small"
+                                onClick={() => openModal('submit-reweigh', record.id)}
+                            />
+                        </Tooltip>
+                    )}
+                </Space>
             ),
         },
     ];
@@ -221,25 +248,27 @@ const ExportOrderListPage = () => {
                 pagination={{
                     ...pagination,
                     showSizeChanger: true,
-                    showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} lệnh`,
+                    showTotal: (total, range) => `${range[0]} -${range[1]} / ${total} lệnh`,
                     pageSizeOptions: ['20', '30', '50'],
                     onChange: (page, pageSize) => setPagination(prev => ({ ...prev, current: page, pageSize })),
                 }}
             />
 
-            {modalMode && (
-                <ExportOrderModal
-                    visible={!!modalMode}
-                    mode={modalMode}
-                    exportOrderId={selectedOrderId}
-                    onClose={closeModal}
-                    onSuccess={() => {
-                        closeModal();
-                        fetchData();
-                    }}
-                />
-            )}
-        </div>
+            {
+                modalMode && (
+                    <ExportOrderModal
+                        visible={!!modalMode}
+                        mode={modalMode}
+                        exportOrderId={selectedOrderId}
+                        onClose={closeModal}
+                        onSuccess={() => {
+                            closeModal();
+                            fetchData();
+                        }}
+                    />
+                )
+            }
+        </div >
     );
 };
 

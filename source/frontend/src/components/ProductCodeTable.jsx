@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Table, Button, Input, Space, message, Popconfirm, Card, Tooltip, Tag } from 'antd';
 import { SearchOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import productCodeService from '../services/productCodeService';
@@ -52,11 +53,19 @@ const ProductCodeTable = ({
     const [editingRecord, setEditingRecord] = useState(null);
     const [viewOnly, setViewOnly] = useState(false);
 
+    const location = useLocation();
+
+    // Parse filters from URL
+    const urlParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const urlStatus = urlParams.get('status') || '';
+    const urlInventory = urlParams.get('inventory') || '';
+    const urlExportStatus = urlParams.get('exportStatus') || '';
+
     const fetchData = async (p = pagination.current, l = pagination.pageSize, s = searchText) => {
         if (isControlled) return;
         setLoading(true);
         try {
-            const res = await productCodeService.getAll(p, l, s, '', customerId);
+            const res = await productCodeService.getAll(p, l, s, urlStatus, customerId, urlInventory, urlExportStatus);
             setData(res.data?.items || []);
             setPagination(prev => ({ ...prev, total: res.data?.total || 0, current: p }));
         } catch {
@@ -66,14 +75,14 @@ const ProductCodeTable = ({
         }
     };
 
-    // Fetch khi customerId hoặc refreshTrigger thay đổi
+    // Fetch khi customerId, refreshTrigger hoặc location.search thay đổi
     useEffect(() => {
         if (!isControlled) {
             const initSearch = autoOpenId ? String(autoOpenId) : '';
             setSearchText(initSearch);
             fetchData(1, pagination.pageSize, initSearch);
         }
-    }, [customerId, refreshTrigger]);
+    }, [customerId, refreshTrigger, location.search]);
 
     // Auto-open modal khi tìm thấy record theo autoOpenId
     useEffect(() => {
@@ -279,9 +288,10 @@ const ProductCodeTable = ({
             ),
         },
         {
-            title: 'Tình trạng xếp xe',
+            title: 'Trạng thái xe',
+            dataIndex: 'vehicleStatus',
             key: 'vehicleStatus',
-            width: 150,
+            width: 170,
             render: (_, record) => {
                 const opt = MANIFEST_STATUS_OPTIONS.find(o => o.value === record.vehicleStatus);
                 if (!opt) return <Tag>Chưa xếp xe</Tag>;

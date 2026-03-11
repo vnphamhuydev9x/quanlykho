@@ -163,6 +163,12 @@ Số liệu gốc **không bao giờ bị xoá hay ghi đè**. Số liệu sau c
            + ProductCode.exportStatus = DA_XUAT_KHO
 ```
 
+### [OBSOLETE] Yêu cầu: Quản lý Lệnh Xuất Kho
+
+> [!WARNING]
+> Tài liệu này đã cũ và không còn được sử dụng để phát triển.
+> Vui lòng tham khảo tài liệu chính thức tại: [10_BRD_export_order_management.md v1.1](file:///Volumes/Data/projects/javascript/nodejs/quanlykho/docs/business-tech-note/10_BRD_export_order_management.md)
+
 ### 3.5 Luồng Hủy Lệnh Xuất Kho
 
 ```

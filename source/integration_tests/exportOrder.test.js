@@ -865,17 +865,17 @@ describe('Cache Invalidation', () => {
 
         // Tạo mới
         const pc = await createReadyProductCode(customerId1);
-        await request(BASE_URL)
+        const res = await request(BASE_URL)
             .post('/api/export-orders')
             .set('Authorization', `Bearer ${adminToken}`)
             .send({ productCodeIds: [pc.id] });
 
         // GET lại → phải thấy bản ghi mới
-        const res = await request(BASE_URL)
+        const getRes = await request(BASE_URL)
             .get('/api/export-orders')
             .set('Authorization', `Bearer ${adminToken}`);
 
-        expect(res.body.data.total).toBe(1);
+        expect(getRes.body.data.total).toBe(1);
     });
 
     // [TC-EO-CACHE-02] submit-reweigh → invalidate product-codes cache
@@ -902,11 +902,11 @@ describe('Cache Invalidation', () => {
             .send({ items: [{ productItemId: pc.items[0].id, actualWeight: 90, actualVolume: 0.9 }] });
 
         // GET product-codes → exportStatus phải là DANG_XAC_NHAN_CAN (không phải stale cache)
-        const res = await request(BASE_URL)
+        const getRes = await request(BASE_URL)
             .get('/api/product-codes')
             .set('Authorization', `Bearer ${adminToken}`);
 
-        const updatedPc = res.body.data.items.find(p => p.id === pc.id);
+        const updatedPc = getRes.body.data.items.find(p => p.id === pc.id);
         expect(updatedPc.exportStatus).toBe('DANG_XAC_NHAN_CAN');
     });
 
@@ -933,7 +933,7 @@ describe('Cache Invalidation', () => {
             .delete(`/api/export-orders/${eo.id}`)
             .set('Authorization', `Bearer ${adminToken}`);
 
-        // GET export-orders → không còn EO
+        // GET export-orders → không còn EO (status ok và items rỗng)
         const eoRes = await request(BASE_URL).get('/api/export-orders').set('Authorization', `Bearer ${adminToken}`);
         expect(eoRes.body.data.total).toBe(0);
 

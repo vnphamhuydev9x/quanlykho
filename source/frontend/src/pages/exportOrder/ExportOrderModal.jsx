@@ -296,9 +296,9 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
     };
 
     const getWidth = () => {
-        if (mode === 'submit-reweigh' || mode === 'confirm-reweigh') return 1100;
-        if (mode === 'create') return 960;
-        return 960;
+        if (mode === 'confirm-reweigh') return 1300;
+        if (mode === 'submit-reweigh') return 1100;
+        return 1100;
     };
 
     const getFooter = () => {
@@ -535,27 +535,59 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
     const renderView = () => {
         if (!order) return null;
         const statusOpt = getStatusOpt(order.status);
-        const allItems = (order.productCodes || []).flatMap(pc =>
-            (pc.items || []).map(item => ({ ...item, pcOrderCode: pc.orderCode, pcId: pc.id }))
-        );
 
+        // Bảng mặt hàng con (expandable) - hiển thị trong từng mã hàng
+        const itemColumns = [
+            { title: 'Tên mặt hàng', dataIndex: 'productName', key: 'productName', ellipsis: true },
+            { title: 'Cân gốc (kg)', dataIndex: 'weight', key: 'weight', width: 120, align: 'right', render: v => v != null ? `${formatNum(v)} kg` : '—' },
+            { title: 'Khối gốc (m³)', dataIndex: 'volume', key: 'volume', width: 130, align: 'right', render: v => v != null ? `${formatNum(Number(v), 3)} m³` : '—' },
+            {
+                title: 'Cân TT (kg)',
+                dataIndex: 'actualWeight',
+                key: 'actualWeight',
+                width: 120,
+                align: 'right',
+                render: v => v != null ? <Text strong style={{ color: '#1677ff' }}>{formatNum(v)} kg</Text> : <Text type="secondary">—</Text>,
+            },
+            {
+                title: 'Khối TT (m³)',
+                dataIndex: 'actualVolume',
+                key: 'actualVolume',
+                width: 130,
+                align: 'right',
+                render: v => v != null ? <Text strong style={{ color: '#1677ff' }}>{formatNum(Number(v), 3)} m³</Text> : <Text type="secondary">—</Text>,
+            },
+            {
+                title: 'Dùng số TT?',
+                dataIndex: 'useActualData',
+                key: 'useActualData',
+                width: 100,
+                align: 'center',
+                render: v => v ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>,
+            },
+        ];
+
+        // Bảng mã hàng chính với expand để xem mặt hàng bên trong
         const pcColumns = [
-            { title: 'ID', dataIndex: 'id', key: 'id', width: 60, align: 'center' },
+            { title: 'ID', dataIndex: 'id', key: 'id', width: 60, align: 'center', fixed: 'left' },
             { title: 'Mã đơn hàng', dataIndex: 'orderCode', key: 'orderCode', width: 150, render: v => v || '—' },
             {
                 title: 'Khách hàng',
                 key: 'customer',
-                width: 180,
-                render: (_, r) => r.customer
-                    ? `${r.customer.customerCode || ''} ${r.customer.fullName}`.trim()
-                    : '—'
+                width: 200,
+                render: (_, r) => r.customer ? (
+                    <Space direction="vertical" size={0}>
+                        <Text strong>{r.customer.fullName}</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{r.customer.username}</Text>
+                    </Space>
+                ) : '—'
             },
             {
                 title: 'Mặt hàng',
                 key: 'items',
                 render: (_, r) => {
                     const names = (r.items || []).map(i => i.productName).filter(Boolean);
-                    return names.length ? names.join(', ') : '—';
+                    return <Text type="secondary" style={{ fontSize: 12 }}>{names.join(', ') || '—'}</Text>;
                 },
             },
             {
@@ -592,36 +624,16 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
             },
         ];
 
-        const itemColumns = [
-            { title: 'Item ID', dataIndex: 'id', key: 'id', width: 80, align: 'center' },
-            { title: 'Tên mặt hàng', dataIndex: 'productName', key: 'productName', ellipsis: true },
-            { title: 'Cân gốc (kg)', dataIndex: 'weight', key: 'weight', width: 110, align: 'right', render: v => v != null ? `${formatNum(v)} kg` : '—' },
-            { title: 'Khối gốc (m³)', dataIndex: 'volume', key: 'volume', width: 120, align: 'right', render: v => v != null ? `${formatNum(Number(v), 3)} m³` : '—' },
-            {
-                title: 'Cân TT (kg)',
-                dataIndex: 'actualWeight',
-                key: 'actualWeight',
-                width: 110,
-                align: 'right',
-                render: v => v != null ? <Text strong style={{ color: '#1677ff' }}>{formatNum(v)} kg</Text> : <Text type="secondary">—</Text>,
-            },
-            {
-                title: 'Khối TT (m³)',
-                dataIndex: 'actualVolume',
-                key: 'actualVolume',
-                width: 120,
-                align: 'right',
-                render: v => v != null ? <Text strong style={{ color: '#1677ff' }}>{formatNum(Number(v), 3)} m³</Text> : <Text type="secondary">—</Text>,
-            },
-            {
-                title: 'Dùng số TT?',
-                dataIndex: 'useActualData',
-                key: 'useActualData',
-                width: 100,
-                align: 'center',
-                render: v => v ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>,
-            },
-        ];
+        const expandedRowRender = (pc) => (
+            <Table
+                size="small"
+                columns={itemColumns}
+                dataSource={pc.items || []}
+                rowKey="id"
+                pagination={false}
+                style={{ margin: '4px 0' }}
+            />
+        );
 
         return (
             <>
@@ -633,42 +645,77 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                         style={{ marginBottom: 16 }}
                     />
                 )}
-                <Descriptions bordered size="small" column={2} style={{ marginBottom: 16 }}>
-                    <Descriptions.Item label="ID">{order.id}</Descriptions.Item>
-                    <Descriptions.Item label="Trạng thái">
-                        <Tag color={statusOpt.color}>{statusOpt.label}</Tag>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Ngày giao dự kiến">
-                        {order.deliveryDateTime ? dayjs(order.deliveryDateTime).format('DD/MM/YYYY HH:mm') : '—'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Chi phí giao hàng">
-                        {formatVND(order.deliveryCost)}
-                    </Descriptions.Item>
-                    {order.amountReceived != null && (
-                        <Descriptions.Item label="Số tiền đã thu">
-                            <Text strong style={{ color: '#389e0d' }}>{formatVND(order.amountReceived)}</Text>
-                        </Descriptions.Item>
-                    )}
-                    {order.actualShippingCost != null && (
-                        <Descriptions.Item label="Phí vận chuyển thực tế">
-                            {formatVND(order.actualShippingCost)}
-                        </Descriptions.Item>
-                    )}
-                    <Descriptions.Item label="Ghi chú" span={2}>
-                        {order.notes || '—'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Người tạo">
-                        {order.createdBy
-                            ? `${order.createdBy.username} — ${order.createdBy.fullName}`
-                            : '—'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Ngày tạo">
-                        {order.createdAt ? dayjs(order.createdAt).format('DD/MM/YYYY HH:mm') : '—'}
-                    </Descriptions.Item>
-                </Descriptions>
+
+                {/* Thông tin lệnh - dạng Form read-only */}
+                <Form layout="vertical" style={{ marginBottom: 8 }}>
+                    <Row gutter={16}>
+                        <Col span={4}>
+                            <Form.Item label="Mã lệnh">
+                                <Input value={`#${order.id}`} disabled className="bg-gray-100" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item label="Trạng thái">
+                                <div style={{ height: 32, display: 'flex', alignItems: 'center' }}>
+                                    <Tag color={statusOpt.color} style={{ fontSize: 13 }}>{statusOpt.label}</Tag>
+                                </div>
+                            </Form.Item>
+                        </Col>
+                        <Col span={7}>
+                            <Form.Item label="Ngày giao dự kiến">
+                                <Input
+                                    value={order.deliveryDateTime ? dayjs(order.deliveryDateTime).format('DD/MM/YYYY HH:mm') : '—'}
+                                    disabled className="bg-gray-100"
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={7}>
+                            <Form.Item label="Chi phí giao hàng">
+                                <Input value={formatVND(order.deliveryCost)} disabled className="bg-gray-100" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        {order.amountReceived != null && (
+                            <Col span={8}>
+                                <Form.Item label="Số tiền đã thu">
+                                    <Input
+                                        value={formatVND(order.amountReceived)}
+                                        disabled className="bg-gray-100"
+                                        style={{ color: '#389e0d', fontWeight: 'bold' }}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        )}
+                        {order.actualShippingCost != null && (
+                            <Col span={8}>
+                                <Form.Item label="Phí vận chuyển thực tế">
+                                    <Input value={formatVND(order.actualShippingCost)} disabled className="bg-gray-100" />
+                                </Form.Item>
+                            </Col>
+                        )}
+                        <Col span={order.amountReceived != null || order.actualShippingCost != null ? 8 : 12}>
+                            <Form.Item label="Người tạo">
+                                <Input
+                                    value={order.createdBy ? `${order.createdBy.username} — ${order.createdBy.fullName}` : '—'}
+                                    disabled className="bg-gray-100"
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={order.amountReceived != null || order.actualShippingCost != null ? 24 : 12}>
+                            <Form.Item label="Ghi chú">
+                                <Input.TextArea
+                                    value={order.notes || '—'}
+                                    disabled className="bg-gray-100"
+                                    autoSize={{ minRows: 1, maxRows: 3 }}
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </Form>
 
                 <Divider style={{ margin: '8px 0 12px' }}>
-                    Mã hàng ({(order.productCodes || []).length} mã hàng)
+                    Mã hàng ({(order.productCodes || []).length} mã — click mũi tên để xem mặt hàng)
                 </Divider>
                 <Table
                     size="small"
@@ -676,58 +723,27 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                     dataSource={order.productCodes || []}
                     rowKey="id"
                     pagination={false}
-                    scroll={{ x: 'max-content', y: 200 }}
+                    scroll={{ x: 'max-content' }}
+                    expandable={{
+                        expandedRowRender,
+                        defaultExpandAllRows: true,
+                    }}
                 />
-
-                {allItems.length > 0 && (
-                    <>
-                        <Divider style={{ margin: '12px 0' }}>
-                            Chi tiết mặt hàng ({allItems.length} mặt hàng)
-                        </Divider>
-                        <Table
-                            size="small"
-                            columns={itemColumns}
-                            dataSource={allItems}
-                            rowKey="id"
-                            pagination={false}
-                            scroll={{ x: 'max-content', y: 220 }}
-                        />
-                    </>
-                )}
             </>
         );
     };
 
     const renderSubmitReweigh = () => {
         if (!order) return null;
-        const allItems = (order.productCodes || []).flatMap(pc =>
-            (pc.items || []).map(item => ({ ...item, pcOrderCode: pc.orderCode }))
-        );
 
-        const columns = [
-            { title: 'Item ID', dataIndex: 'id', key: 'id', width: 80, align: 'center' },
-            { title: 'PC', dataIndex: 'pcOrderCode', key: 'pc', width: 120, render: v => v || '—' },
+        const itemColumns = [
             { title: 'Tên mặt hàng', dataIndex: 'productName', key: 'productName', ellipsis: true },
-            {
-                title: 'Cân gốc (kg)',
-                dataIndex: 'weight',
-                key: 'weight',
-                width: 110,
-                align: 'right',
-                render: v => v != null ? `${formatNum(v)} kg` : '—',
-            },
-            {
-                title: 'Khối gốc (m³)',
-                dataIndex: 'volume',
-                key: 'volume',
-                width: 120,
-                align: 'right',
-                render: v => v != null ? `${formatNum(Number(v), 3)} m³` : '—',
-            },
+            { title: 'Cân gốc (kg)', dataIndex: 'weight', key: 'weight', width: 120, align: 'right', render: v => v != null ? `${formatNum(v)} kg` : '—' },
+            { title: 'Khối gốc (m³)', dataIndex: 'volume', key: 'volume', width: 130, align: 'right', render: v => v != null ? `${formatNum(Number(v), 3)} m³` : '—' },
             {
                 title: 'Cân thực tế* (kg)',
                 key: 'actualWeight',
-                width: 160,
+                width: 180,
                 render: (_, item) => (
                     <InputNumber
                         size="small"
@@ -744,7 +760,7 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
             {
                 title: 'Khối thực tế* (m³)',
                 key: 'actualVolume',
-                width: 170,
+                width: 190,
                 render: (_, item) => (
                     <InputNumber
                         size="small"
@@ -761,59 +777,131 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
             },
         ];
 
+        const pcColumns = [
+            { title: 'ID', dataIndex: 'id', key: 'id', width: 60, align: 'center', fixed: 'left' },
+            { title: 'Mã đơn hàng', dataIndex: 'orderCode', key: 'orderCode', width: 150, render: v => v || '—' },
+            {
+                title: 'Khách hàng',
+                key: 'customer',
+                width: 200,
+                render: (_, r) => r.customer ? (
+                    <Space direction="vertical" size={0}>
+                        <Text strong>{r.customer.fullName}</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{r.customer.username}</Text>
+                    </Space>
+                ) : '—'
+            },
+            { title: 'Số mặt hàng', key: 'itemCount', width: 110, align: 'center', render: (_, r) => `${(r.items || []).length} mặt hàng` },
+        ];
+
+        const expandedRowRender = (pc) => (
+            <Table
+                size="small"
+                columns={itemColumns}
+                dataSource={pc.items || []}
+                rowKey="id"
+                pagination={false}
+                style={{ margin: '4px 0' }}
+            />
+        );
+
         return (
             <Table
                 size="small"
-                columns={columns}
-                dataSource={allItems}
+                columns={pcColumns}
+                dataSource={order.productCodes || []}
                 rowKey="id"
                 pagination={false}
-                scroll={{ x: 'max-content', y: 400 }}
+                scroll={{ x: 'max-content' }}
+                expandable={{
+                    expandedRowRender,
+                    defaultExpandAllRows: true,
+                }}
             />
         );
     };
 
     const renderConfirmReweigh = () => {
         if (!order) return null;
-        const allItems = (order.productCodes || []).flatMap(pc =>
-            (pc.items || []).map(item => ({ ...item, pcOrderCode: pc.orderCode }))
-        );
+        const allItems = (order.productCodes || []).flatMap(pc => pc.items || []);
+        const checkedCount = Object.values(confirmData).filter(Boolean).length;
 
-        const columns = [
-            { title: 'Item ID', dataIndex: 'id', key: 'id', width: 80, align: 'center' },
-            { title: 'PC', dataIndex: 'pcOrderCode', key: 'pc', width: 120, render: v => v || '—' },
-            { title: 'Tên mặt hàng', dataIndex: 'productName', key: 'productName', ellipsis: true },
+        // Tính tổng Cước tạm tính và Chi phí NK theo 2 kịch bản (gốc vs thực tế)
+        const totalOriginalTransport = allItems.reduce((s, i) => s + (Number(i.itemTransportFeeEstimate) || 0), 0);
+        const totalActualTransport = allItems.reduce((s, i) => s + (Number(i.actualItemTransportFeeEstimate) || 0), 0);
+        const totalOriginalNK = (order.productCodes || []).reduce((s, pc) => s + (Number(pc.totalImportCostToCustomer) || 0), 0);
+        const totalActualNK = allItems.reduce((s, i) => s + (Number(i.actualImportCostToCustomer) || 0), 0);
+        const transportDiff = totalActualTransport - totalOriginalTransport;
+        const nkDiff = totalActualNK - totalOriginalNK;
+
+        // Helper render chênh lệch phí trong cột bảng
+        const renderFeeDiff = (origFee, actualFee) => {
+            const diff = (Number(actualFee) || 0) - (Number(origFee) || 0);
+            if (diff === 0) return <Tag color="default" style={{ marginInlineEnd: 0 }}>Không đổi</Tag>;
+            const sign = diff > 0 ? '+' : '';
+            const color = diff > 0 ? '#cf1322' : '#389e0d';
+            return <Text strong style={{ color }}>{sign}{formatVND(diff)}</Text>;
+        };
+
+        // Bảng mặt hàng con — so sánh phí gốc vs phí thực tế
+        const itemColumns = [
+            { title: 'Tên mặt hàng', dataIndex: 'productName', key: 'productName', ellipsis: true, width: 180 },
             {
-                title: 'Cân gốc (kg)',
-                dataIndex: 'weight',
-                key: 'weight',
-                width: 110,
-                align: 'right',
-                render: v => v != null ? `${formatNum(v)} kg` : '—',
+                title: 'Cân',
+                key: 'weightCompare',
+                width: 160,
+                align: 'center',
+                render: (_, item) => (
+                    <Space size={4}>
+                        <Text type="secondary">{item.weight != null ? `${formatNum(item.weight)} kg` : '—'}</Text>
+                        <Text type="secondary">→</Text>
+                        <Text strong style={{ color: '#1677ff' }}>{item.actualWeight != null ? `${formatNum(item.actualWeight)} kg` : '—'}</Text>
+                    </Space>
+                ),
             },
             {
-                title: 'Cân TT (kg)',
-                dataIndex: 'actualWeight',
-                key: 'actualWeight',
-                width: 110,
-                align: 'right',
-                render: v => v != null ? <Text strong style={{ color: '#1677ff' }}>{formatNum(v)} kg</Text> : <Text type="secondary">—</Text>,
+                title: 'Khối',
+                key: 'volumeCompare',
+                width: 200,
+                align: 'center',
+                render: (_, item) => (
+                    <Space size={4}>
+                        <Text type="secondary">{item.volume != null ? `${formatNum(Number(item.volume), 3)} m³` : '—'}</Text>
+                        <Text type="secondary">→</Text>
+                        <Text strong style={{ color: '#1677ff' }}>{item.actualVolume != null ? `${formatNum(Number(item.actualVolume), 3)} m³` : '—'}</Text>
+                    </Space>
+                ),
             },
             {
-                title: 'Khối gốc (m³)',
-                dataIndex: 'volume',
-                key: 'volume',
+                title: 'Cước gốc',
+                dataIndex: 'itemTransportFeeEstimate',
+                key: 'origFee',
                 width: 120,
                 align: 'right',
-                render: v => v != null ? `${formatNum(Number(v), 3)} m³` : '—',
+                render: v => <Text style={{ color: '#389e0d' }}>{formatVND(v)}</Text>,
             },
             {
-                title: 'Khối TT (m³)',
-                dataIndex: 'actualVolume',
-                key: 'actualVolume',
+                title: 'Cước TT',
+                dataIndex: 'actualItemTransportFeeEstimate',
+                key: 'actualFee',
                 width: 120,
                 align: 'right',
-                render: v => v != null ? <Text strong style={{ color: '#1677ff' }}>{formatNum(Number(v), 3)} m³</Text> : <Text type="secondary">—</Text>,
+                render: v => <Text strong style={{ color: '#1677ff' }}>{formatVND(v)}</Text>,
+            },
+            {
+                title: 'Δ Cước',
+                key: 'feeDiff',
+                width: 120,
+                align: 'right',
+                render: (_, item) => renderFeeDiff(item.itemTransportFeeEstimate, item.actualItemTransportFeeEstimate),
+            },
+            {
+                title: 'Chi phí NK TT',
+                dataIndex: 'actualImportCostToCustomer',
+                key: 'actualNK',
+                width: 130,
+                align: 'right',
+                render: v => <Text strong style={{ color: '#1677ff' }}>{formatVND(v)}</Text>,
             },
             {
                 title: 'Dùng số TT?',
@@ -829,23 +917,151 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
             },
         ];
 
-        const checkedCount = Object.values(confirmData).filter(Boolean).length;
+        // PC cha — tóm tắt phí gốc vs phí TT để reviewer thấy impact ngay không cần expand
+        const pcColumns = [
+            { title: 'ID', dataIndex: 'id', key: 'id', width: 55, align: 'center', fixed: 'left' },
+            { title: 'Mã đơn hàng', dataIndex: 'orderCode', key: 'orderCode', width: 150, render: v => v || '—' },
+            {
+                title: 'Khách hàng',
+                key: 'customer',
+                width: 200,
+                render: (_, r) => r.customer ? (
+                    <Space direction="vertical" size={0}>
+                        <Text strong>{r.customer.fullName}</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{r.customer.username}</Text>
+                    </Space>
+                ) : '—'
+            },
+            {
+                title: 'Cước gốc',
+                key: 'origTransportSum',
+                width: 130,
+                align: 'right',
+                render: (_, r) => {
+                    const sum = (r.items || []).reduce((s, i) => s + (Number(i.itemTransportFeeEstimate) || 0), 0);
+                    return <Text type="secondary" style={{ color: '#389e0d' }}>{formatVND(sum)}</Text>;
+                },
+            },
+            {
+                title: 'Cước TT',
+                key: 'actualTransportSum',
+                width: 130,
+                align: 'right',
+                render: (_, r) => {
+                    const sum = (r.items || []).reduce((s, i) => s + (Number(i.actualItemTransportFeeEstimate) || 0), 0);
+                    return <Text strong style={{ color: '#1677ff' }}>{formatVND(sum)}</Text>;
+                },
+            },
+            {
+                title: 'Chênh lệch cước',
+                key: 'transportDiff',
+                width: 140,
+                align: 'right',
+                render: (_, r) => {
+                    const orig = (r.items || []).reduce((s, i) => s + (Number(i.itemTransportFeeEstimate) || 0), 0);
+                    const actual = (r.items || []).reduce((s, i) => s + (Number(i.actualItemTransportFeeEstimate) || 0), 0);
+                    return renderFeeDiff(orig, actual);
+                },
+            },
+        ];
+
+        const expandedRowRender = (pc) => (
+            <Table
+                size="small"
+                columns={itemColumns}
+                dataSource={pc.items || []}
+                rowKey="id"
+                pagination={false}
+                rowClassName={(item) => confirmData[item.id] ? 'confirm-reweigh-checked-row' : ''}
+                style={{ margin: '4px 0' }}
+            />
+        );
+
+        const renderDiffValue = (diff) => {
+            if (diff === 0) return <Text type="secondary" style={{ fontSize: 13 }}>Không đổi</Text>;
+            const sign = diff > 0 ? '+' : '';
+            const color = diff > 0 ? '#cf1322' : '#389e0d';
+            return <Text strong style={{ fontSize: 14, color }}>{sign}{formatVND(diff)}</Text>;
+        };
 
         return (
             <>
+                {/* Banner so sánh Cước tạm tính + Chi phí NK: gốc vs thực tế */}
+                <Row gutter={12} style={{ marginBottom: 12 }}>
+                    {/* Cột 1: Theo số cân gốc */}
+                    <Col span={8}>
+                        <div style={{ background: '#fafafa', border: '1px solid #d9d9d9', borderRadius: 6, padding: '10px 16px' }}>
+                            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 8, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                Theo số cân gốc
+                            </Text>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>Cước tạm tính</Text>
+                                <Text strong style={{ color: '#389e0d' }}>{formatVND(totalOriginalTransport)}</Text>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>Chi phí NK</Text>
+                                <Text strong style={{ color: '#cf1322' }}>{formatVND(totalOriginalNK)}</Text>
+                            </div>
+                        </div>
+                    </Col>
+                    {/* Cột 2: Theo số cân thực tế */}
+                    <Col span={8}>
+                        <div style={{ background: '#e6f4ff', border: '1px solid #91caff', borderRadius: 6, padding: '10px 16px' }}>
+                            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 8, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                Theo số cân thực tế
+                            </Text>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>Cước tạm tính</Text>
+                                <Text strong style={{ color: '#1677ff' }}>{formatVND(totalActualTransport)}</Text>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>Chi phí NK</Text>
+                                <Text strong style={{ color: '#1677ff' }}>{formatVND(totalActualNK)}</Text>
+                            </div>
+                        </div>
+                    </Col>
+                    {/* Cột 3: Chênh lệch */}
+                    <Col span={8}>
+                        <div style={{
+                            background: (transportDiff + nkDiff) > 0 ? '#fff1f0' : (transportDiff + nkDiff) < 0 ? '#f6ffed' : '#fafafa',
+                            border: `1px solid ${(transportDiff + nkDiff) > 0 ? '#ffa39e' : (transportDiff + nkDiff) < 0 ? '#b7eb8f' : '#d9d9d9'}`,
+                            borderRadius: 6, padding: '10px 16px'
+                        }}>
+                            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 8, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                Chênh lệch
+                            </Text>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>Cước tạm tính</Text>
+                                {renderDiffValue(transportDiff)}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>Chi phí NK</Text>
+                                {renderDiffValue(nkDiff)}
+                            </div>
+                        </div>
+                    </Col>
+                </Row>
+
                 <Alert
                     type="info"
                     showIcon
-                    message={`Chọn ${checkedCount}/${allItems.length} mặt hàng dùng số cân thực tế. Mặt hàng không tick sẽ dùng số cân gốc để tính phí.`}
+                    message={`Đã tích ${checkedCount}/${allItems.length} mặt hàng dùng số cân thực tế. Mặt hàng không tick sẽ dùng số cân gốc để tính phí.`}
                     style={{ marginBottom: 12 }}
                 />
+
+                <style>{`.confirm-reweigh-checked-row { background-color: #f0f9ff; }`}</style>
+
                 <Table
                     size="small"
-                    columns={columns}
-                    dataSource={allItems}
+                    columns={pcColumns}
+                    dataSource={order.productCodes || []}
                     rowKey="id"
                     pagination={false}
-                    scroll={{ x: 'max-content', y: 380 }}
+                    scroll={{ x: 'max-content' }}
+                    expandable={{
+                        expandedRowRender,
+                        defaultExpandAllRows: true,
+                    }}
                 />
             </>
         );

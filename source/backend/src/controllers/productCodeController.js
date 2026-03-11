@@ -97,7 +97,11 @@ const productCodeController = {
             }
 
             if (vehicleStatus) {
-                where.vehicleStatus = vehicleStatus;
+                if (vehicleStatus === 'NHAP_KHO') {
+                    where.vehicleStatus = null; // Chưa xếp xe
+                } else {
+                    where.vehicleStatus = vehicleStatus;
+                }
             }
 
             if (exportStatus) {

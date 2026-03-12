@@ -21,6 +21,8 @@ import MerchandisePage from './pages/merchandise/MerchandisePage';
 import ManifestListPage from './pages/manifest/ManifestListPage';
 import ManifestDetailPage from './pages/manifest/ManifestDetailPage';
 import ExportOrderListPage from './pages/exportOrder/ExportOrderListPage';
+import DebtPage from './pages/debt/DebtPage';
+import DebtDetailPage from './pages/debt/DebtDetailPage';
 import MainLayout from './layouts/MainLayout';
 
 // Set dayjs global locale to Vietnamese
@@ -187,6 +189,26 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <CustomerList />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bao-cao/cong-no"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <DebtPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bao-cao/cong-no/:customerId"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <DebtDetailPage />
                 </MainLayout>
               </ProtectedRoute>
             }

@@ -46,6 +46,8 @@ model User {
   createdExportOrders    ExportOrder[] @relation("ExportOrderCreatedBy")
   customerExportOrders   ExportOrder[] @relation("ExportOrderCustomer")
 
+  debtPeriods            DebtPeriod[]  @relation("CustomerDebtPeriods")
+
   deletedAt DateTime? // Soft Delete
 
   @@map("users")
@@ -161,6 +163,7 @@ model Transaction {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
+  @@index([customerId, status, createdAt])
   @@map("transactions")
 }
 
@@ -355,6 +358,7 @@ model ExportOrder {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
+  @@index([customerId, status, paymentReceived, createdAt])
   @@map("export_orders")
 }
 
@@ -406,6 +410,20 @@ model Notification {
   updatedAt   DateTime @updatedAt
 
   @@map("notifications")
+}
+
+model DebtPeriod {
+  id             Int      @id @default(autoincrement())
+  customerId     Int
+  customer       User     @relation("CustomerDebtPeriods", fields: [customerId], references: [id])
+  year           Int
+  openingBalance Decimal  @default(0) @db.Decimal(15, 0) // Nợ đầu kỳ (VND) — admin nhập tay
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([customerId, year])
+  @@index([year])
+  @@map("debt_periods")
 }
 
 model ShortDeclaration {

@@ -377,6 +377,164 @@ async function main() {
         console.warn('  Skipping manifests (Need ADMIN users).');
     }
 
+    // ─── SEED EXPORT ORDERS + TRANSACTIONS (DEBT DEMO) ──────────────────────
+    console.log('Seeding Export Orders + Transactions (debt demo)...');
+    const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN', deletedAt: null } });
+    const accountantUser = await prisma.user.findFirst({ where: { role: 'ACCOUNTANT', deletedAt: null } });
+    const debtCustomers = await prisma.user.findMany({ where: { type: 'CUSTOMER', deletedAt: null }, orderBy: { id: 'asc' } });
+
+    // Guard: dùng marker trong notes để idempotent
+    const markerOrder = await prisma.exportOrder.findFirst({ where: { notes: { contains: '[DEBT_SEED]' } } });
+
+    if (!markerOrder && adminUser && accountantUser && debtCustomers.length >= 4) {
+        // Lấy tất cả product codes còn trống (chưa có exportOrderId)
+        const freePcs = await prisma.productCode.findMany({
+            where: { exportOrderId: null, deletedAt: null },
+            orderBy: { id: 'asc' },
+        });
+
+        // Helper: tạo Date cho năm/tháng/ngày cụ thể
+        const dt = (year, month, day) => new Date(year, month - 1, day, randInt(8, 17), randInt(0, 59));
+
+        // Helper: tạo export order và gán product codes
+        async function createDebtOrder(customerId, date, deliveryCost, paymentReceived, pcs) {
+            const order = await prisma.exportOrder.create({
+                data: {
+                    customerId,
+                    createdById: adminUser.id,
+                    status: 'DA_XUAT_KHO',
+                    paymentReceived,
+                    deliveryCost,
+                    deliveryDateTime: date,
+                    createdAt: date,
+                    notes: `[DEBT_SEED] Xuất kho ${date.getMonth() + 1}/${date.getFullYear()}`,
+                },
+            });
+            for (const pc of pcs) {
+                await prisma.productCode.update({
+                    where: { id: pc.id },
+                    data: { exportOrderId: order.id, exportStatus: 'DA_XUAT_KHO', exportDeliveryDateTime: date },
+                });
+            }
+            return order;
+        }
+
+        // Helper: tạo transaction nạp tiền
+        async function createPayment(customerId, date, amount, content) {
+            return prisma.transaction.create({
+                data: {
+                    customerId,
+                    createdById: accountantUser.id,
+                    amount,
+                    content,
+                    status: 'SUCCESS',
+                    createdAt: date,
+                },
+            });
+        }
+
+        let pi = 0; // product code index
+        const pop = (n) => { const s = freePcs.slice(pi, pi + n); pi += n; return s; };
+
+        const c0 = debtCustomers[0]; // kh_minh
+        const c1 = debtCustomers[1]; // kh_hang
+        const c2 = debtCustomers[2]; // kh_tuan
+        const c3 = debtCustomers[3]; // kh_ngoc
+
+        // ── KH001 kh_minh: nhiều đơn, 1 tháng có 2 đơn, có nạp tiền trong tháng nợ ──
+        // 2025
+        await createDebtOrder(c0.id, dt(2025, 2, 10), 150000, false, pop(2));
+        await createDebtOrder(c0.id, dt(2025, 2, 22), 0,      false, pop(1)); // tháng 2 có 2 lệnh xuất
+        await createPayment(c0.id,   dt(2025, 3, 5),  8000000,  'Nạp tiền tháng 3/2025');
+        await createDebtOrder(c0.id, dt(2025, 5, 14), 200000, false, pop(2));
+        await createDebtOrder(c0.id, dt(2025, 5, 28), 100000, false, pop(1)); // tháng 5 có 2 lệnh
+        await createPayment(c0.id,   dt(2025, 5, 20), 15000000, 'Nạp một phần tháng 5/2025');
+        await createDebtOrder(c0.id, dt(2025, 8, 3),  0,      false, pop(2));
+        await createPayment(c0.id,   dt(2025, 9, 10), 10000000, 'Nạp tiền tháng 9/2025');
+        await createDebtOrder(c0.id, dt(2025, 11, 7), 300000, false, pop(2));
+        // 2026
+        await createDebtOrder(c0.id, dt(2026, 1, 15), 120000, false, pop(2));
+        await createDebtOrder(c0.id, dt(2026, 1, 28), 80000,  false, pop(1)); // tháng 1/2026 có 2 lệnh
+        await createPayment(c0.id,   dt(2026, 2, 5),  20000000, 'Nạp tiền đầu năm 2026');
+        await createDebtOrder(c0.id, dt(2026, 3, 10), 250000, false, pop(2));
+        await createPayment(c0.id,   dt(2026, 3, 20), 12000000, 'Nạp 1 phần tháng 3/2026');
+        console.log(`  [${c0.username}] 2025-2026: nhiều lệnh xuất, có nạp xen kẽ`);
+
+        // ── KH002 kh_hang: đơn đều đặn, có tháng nợ + nạp cùng tháng ──
+        // 2025
+        await createDebtOrder(c1.id, dt(2025, 1, 8),  0,      false, pop(2));
+        await createDebtOrder(c1.id, dt(2025, 4, 12), 180000, false, pop(2));
+        await createPayment(c1.id,   dt(2025, 4, 25), 5000000,  'Trả nợ tháng 4');
+        await createDebtOrder(c1.id, dt(2025, 7, 3),  150000, false, pop(2));
+        await createDebtOrder(c1.id, dt(2025, 7, 18), 0,      false, pop(1)); // 2 lệnh tháng 7
+        await createPayment(c1.id,   dt(2025, 7, 30), 18000000, 'Nạp bù tháng 7/2025');
+        await createDebtOrder(c1.id, dt(2025, 10, 5), 200000, false, pop(2));
+        await createDebtOrder(c1.id, dt(2025, 12, 20),120000, false, pop(1));
+        // 2026
+        await createDebtOrder(c1.id, dt(2026, 2, 14), 0,      false, pop(2));
+        await createPayment(c1.id,   dt(2026, 2, 28), 25000000, 'Thanh toán lớn tháng 2/2026');
+        await createDebtOrder(c1.id, dt(2026, 3, 5),  180000, false, pop(1));
+        console.log(`  [${c1.username}] 2025-2026: đơn đều, nạp xen tháng`);
+
+        // ── KH003 kh_tuan: có đơn đã thanh toán (không phát sinh nợ) xen kẽ ──
+        // 2025
+        await createDebtOrder(c2.id, dt(2025, 3, 15), 100000, false, pop(2));
+        await createDebtOrder(c2.id, dt(2025, 3, 22), 50000,  true,  pop(1)); // đã thanh toán → k phát sinh nợ
+        await createPayment(c2.id,   dt(2025, 4, 10), 7000000,  'Nạp tiền quý 2/2025');
+        await createDebtOrder(c2.id, dt(2025, 6, 5),  200000, false, pop(2));
+        await createDebtOrder(c2.id, dt(2025, 9, 11), 0,      false, pop(2));
+        await createPayment(c2.id,   dt(2025, 9, 28), 9000000,  'Nạp tháng 9/2025');
+        await createDebtOrder(c2.id, dt(2025, 11, 3), 150000, true,  pop(1)); // đã thanh toán
+        // 2026
+        await createDebtOrder(c2.id, dt(2026, 1, 20), 200000, false, pop(2));
+        await createDebtOrder(c2.id, dt(2026, 2, 8),  100000, false, pop(1));
+        await createPayment(c2.id,   dt(2026, 2, 25), 30000000, 'Thanh toán dứt điểm tháng 2/2026');
+        console.log(`  [${c2.username}] 2025-2026: xen kẽ đơn đã/chưa TT`);
+
+        // ── KH004 kh_ngoc: ít đơn hơn, nợ lớn ──
+        // 2025
+        await createDebtOrder(c3.id, dt(2025, 4, 5),  500000, false, pop(2));
+        await createDebtOrder(c3.id, dt(2025, 8, 14), 350000, false, pop(2));
+        await createPayment(c3.id,   dt(2025, 8, 30), 5000000,  'Trả một phần');
+        await createDebtOrder(c3.id, dt(2025, 11,20), 400000, false, pop(2));
+        // 2026
+        await createDebtOrder(c3.id, dt(2026, 1, 10), 300000, false, pop(2));
+        await createPayment(c3.id,   dt(2026, 1, 25), 10000000, 'Nạp đầu năm');
+        console.log(`  [${c3.username}] 2025-2026: ít đơn, nợ lớn`);
+
+    } else if (markerOrder) {
+        console.log('  Export Orders (debt demo) already seeded.');
+    } else {
+        console.warn('  Skipping debt orders (Need ADMIN + ACCOUNTANT + ≥4 Customers).');
+    }
+
+    // ─── SEED DEBT PERIODS (NỢ ĐẦU KỲ) ─────────────────────────────────────
+    console.log('Seeding Debt Periods...');
+    const allDebtCus = await prisma.user.findMany({ where: { type: 'CUSTOMER', deletedAt: null }, orderBy: { id: 'asc' }, take: 4 });
+
+    const debtPeriodDefs = [
+        // [customerIndex, year, openingBalance]
+        [0, 2025, 5000000],   // kh_minh nợ đầu kỳ 2025
+        [0, 2026, 0],         // kh_minh 2026 không có nợ đầu kỳ
+        [1, 2025, 12000000],  // kh_hang
+        [1, 2026, 0],
+        [2, 2025, 8000000],   // kh_tuan
+        [3, 2025, 20000000],  // kh_ngoc nợ lớn từ trước
+        [3, 2026, 15000000],
+    ];
+
+    for (const [idx, year, balance] of debtPeriodDefs) {
+        if (idx >= allDebtCus.length) continue;
+        const cus = allDebtCus[idx];
+        const existing = await prisma.debtPeriod.findFirst({ where: { customerId: cus.id, year } });
+        if (!existing) {
+            await prisma.debtPeriod.create({ data: { customerId: cus.id, year, openingBalance: balance } });
+            console.log(`  DebtPeriod: ${cus.username} ${year} — ${balance.toLocaleString('vi')} VND`);
+        } else {
+            console.log(`  DebtPeriod exists: ${cus.username} ${year}`);
+        }
+    }
+
     console.log('\nSeeding finished.');
 }
 

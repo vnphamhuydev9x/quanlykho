@@ -18,6 +18,7 @@ const notificationRoutes = require('./routes/notificationRoute');
 const merchandiseConditionRoutes = require('./routes/merchandiseConditionRoute');
 
 const exportOrderRoutes = require('./routes/exportOrderRoutes');
+const debtRoutes = require('./routes/debtRoutes');
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/manifests', require('./routes/manifestRoutes'));
 app.use('/api/merchandise-conditions', merchandiseConditionRoutes);
 app.use('/api/short-declarations', require('./routes/shortDeclaration.routes'));
 app.use('/api/export-orders', exportOrderRoutes);
+app.use('/api/debts', debtRoutes);
 
 app.get('/', (req, res) => {
     res.send('Kho Manager Backend is running');

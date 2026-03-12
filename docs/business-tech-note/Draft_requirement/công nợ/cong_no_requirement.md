@@ -1,5 +1,17 @@
-# Thêm menu công nợ 
-- bên trong menu Báo Cáo
-
-# Hiểu về công nợ
-- sau khi xuất kho thành công nếu mã hàng nằm trong 1 phiếu xuất mà 
+# phân tích tình hình
+- bây giờ dựa vào logic xuất kho ta đã có những mã hàng của một khách hàng là công nợ hay đã trả hết tiền (với mã hàng có "trạng thái xuất kho" là "đã xuất kho" và không tích vào Đã nhận tiền là công nợ còn đâu là không phải công nợ)
+- với những mã hàng có công nợ. ta sẽ biết đó là của khách hàng nào
+- logic tính công nợ của một người được quản lý như sau
+    - với mỗi năm ta sẽ có 1 nợ đầu kỳ
+        - giá trị này được tính bằng tay ở hệ thống của chúng ta, cần có 1 chỗ, 1 trường thông tin cho người dùng nhập vào với mỗi năm
+    - thực tế qua nhiều năm ta có nhiều kỳ công nợ nhưng ta chỉ quan tâm đến công nợ của năm hiện tại
+    - với các kỳ công nợ cũ chúng phục vụ việc truy xuất thông tin thôi
+    - ta sẽ luôn tính được công nợ của 1 người khách hàng nào đó bằng cách lấy công nợ đầu kỳ của năm hiện tại cộng với tổng chi phí khách hàng phải trả cho tất cả các mã hàng mà họ đã nhận được (giá trị mà khi xuất kho đã được cộng với cả tiền ship)
+    - nếu admin không set công nợ đầu kỳ thì nó là 0
+- admin sẽ có nhu cầu vào 1 trang thống kê, trang đó sẽ hiển thị
+    - table chứa tất cả các khách hàng mà có công nợ
+    - có thể filter theo từng năm (việc có những năm nào thì phải có api trả ra chứ k phải fix cứng)
+    - khi view công nợ theo năm, table sẽ được chia thành nhiều 12 tháng, từ tháng 1 đến tháng 12. mỗi tháng hiển thị tổng công nợ của tháng đó.
+    - khi view detail ta sẽ thấy danh sách các mã hàng mà phát sinh công nợ của năm đó. cũng là table, sort by created date, gần đây nhất thì hiển thị lên đầu
+- à thực ra ta lại cần quan tâm đến 1 giá trị nữa đó là nạp tiền. logic thực tế là có khách hàng sẽ trả nợ công ty sau khi họ order 1 số mã hàng dẫn đến công nợ đến 1 số tròn nào đó kiểu như 100 triệu 200 triệu thì họ mới trả 1 cục. đây chính là nạp tiền.
+    - vì vậy khi hiển thị công nợ theo từng tháng hãy làm cách nào đó hiển thị đc cả số tiền nạp và số công nợ còn lại tính đến tháng đó.

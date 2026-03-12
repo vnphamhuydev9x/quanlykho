@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
+const { invalidateDebtCache } = require('../utils/debtCacheHelper');
 
 const CACHE_KEY = 'transactions:list';
 
@@ -118,6 +119,10 @@ const transactionController = {
                 await redisClient.del(keys);
             }
 
+            // Invalidate debt cache
+            const txYear = new Date(newTransaction.createdAt).getFullYear();
+            await invalidateDebtCache(redisClient, parseInt(customerId), txYear);
+
             logger.info(`[CreateTransaction] ID: ${newTransaction.id} by User: ${creatorId}`);
 
             return res.status(200).json({
@@ -159,6 +164,10 @@ const transactionController = {
             if (keys.length > 0) {
                 await redisClient.del(keys);
             }
+
+            // Invalidate debt cache
+            const txYear = new Date(transaction.createdAt).getFullYear();
+            await invalidateDebtCache(redisClient, transaction.customerId, txYear);
 
             logger.info(`[CancelTransaction] ID: ${id} by User: ${req.user.userId}`);
 

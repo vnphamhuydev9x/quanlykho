@@ -328,10 +328,16 @@ const MainLayout = ({ children }) => {
             ],
         },
         {
-            key: '/reports',
+            key: 'reports-parent',
             icon: <BarChartOutlined />,
             label: t('menu.reports'),
-            onClick: () => navigate('/reports'),
+            children: [
+                {
+                    key: '/bao-cao/cong-no',
+                    label: t('menu.debt'),
+                    onClick: () => navigate('/bao-cao/cong-no'),
+                },
+            ],
         },
         {
             key: '/merchandise',

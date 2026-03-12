@@ -25,7 +25,8 @@
         "manifests": "配车",
         "export": "出库",
         "shortDeclarations": "简短报关",
-        "reports": "报表"
+        "reports": "报表",
+        "debt": "应收账款"
     },
     "inventory": {
         "titleTQ": "中国库存管理",
@@ -533,6 +534,37 @@
         "submitReweighSuccess": "提交实际重量成功！",
         "confirmReweighSuccess": "确认重量成功！",
         "deliverySuccess": "出库完成！"
+    },
+    "debt": {
+        "title": "应收账款管理",
+        "customer": "客户",
+        "year": "年份",
+        "openingBalance": "期初余额",
+        "editOpeningBalance": "编辑期初余额",
+        "saveOpeningBalance": "保存期初余额",
+        "incurred": "发生额",
+        "paid": "充值",
+        "remaining": "余额",
+        "totalRemaining": "总余额",
+        "debtOrders": "欠款出库单",
+        "paymentHistory": "充值记录",
+        "exportOrderId": "出库单 #",
+        "deliveryDate": "出库日期",
+        "importCost": "进口费用",
+        "shippingCost": "运费",
+        "totalOwed": "应付总额",
+        "paymentDate": "充值日期",
+        "amount": "金额",
+        "content": "内容",
+        "createdBy": "记录人",
+        "addPayment": "充值",
+        "noDebt": "本年度无欠款",
+        "saveSuccess": "期初余额保存成功！",
+        "saveError": "保存期初余额失败",
+        "month": "{{month}}月",
+        "orderCode": "订单编号",
+        "productName": "产品名称",
+        "noProductCodes": "无货物代码"
     },
     "error": {
         "99001": "请输入用户名和密码",

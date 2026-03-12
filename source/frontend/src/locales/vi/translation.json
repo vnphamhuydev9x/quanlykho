@@ -25,7 +25,8 @@
         "manifests": "Xếp xe",
         "export": "Xuất kho",
         "shortDeclarations": "Tờ khai rút gọn",
-        "reports": "Báo cáo"
+        "reports": "Báo cáo",
+        "debt": "Công nợ"
     },
     "inventory": {
         "titleTQ": "Quản lý Tồn kho TQ",
@@ -530,6 +531,37 @@
         "submitReweighSuccess": "Đã gửi số cân thực tế!",
         "confirmReweighSuccess": "Đã xác nhận số cân!",
         "deliverySuccess": "Đã hoàn thành xuất kho!"
+    },
+    "debt": {
+        "title": "Quản lý Công Nợ",
+        "customer": "Khách hàng",
+        "year": "Năm",
+        "openingBalance": "Nợ đầu kỳ",
+        "editOpeningBalance": "Chỉnh sửa nợ đầu kỳ",
+        "saveOpeningBalance": "Lưu nợ đầu kỳ",
+        "incurred": "Phát sinh",
+        "paid": "Nạp tiền",
+        "remaining": "Còn lại",
+        "totalRemaining": "Tổng nợ còn lại",
+        "debtOrders": "Lệnh xuất kho phát sinh nợ",
+        "paymentHistory": "Lịch sử nạp tiền",
+        "exportOrderId": "Lệnh xuất #",
+        "deliveryDate": "Ngày xuất kho",
+        "importCost": "Chi phí NK",
+        "shippingCost": "Phí ship",
+        "totalOwed": "Tổng phải trả",
+        "paymentDate": "Ngày nạp",
+        "amount": "Số tiền",
+        "content": "Nội dung",
+        "createdBy": "Người ghi nhận",
+        "addPayment": "Nạp tiền",
+        "noDebt": "Không có công nợ trong năm này",
+        "saveSuccess": "Lưu nợ đầu kỳ thành công!",
+        "saveError": "Lỗi khi lưu nợ đầu kỳ",
+        "month": "Tháng {{month}}",
+        "orderCode": "Mã đơn hàng",
+        "productName": "Tên sản phẩm",
+        "noProductCodes": "Không có mã hàng"
     },
     "error": {
         "99001": "Vui lòng nhập tên đăng nhập và mật khẩu",

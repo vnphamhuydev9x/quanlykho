@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
+const { invalidateDebtCache } = require('../utils/debtCacheHelper');
 
 const CACHE_KEY_LIST = 'export-orders:list';
 const CACHE_KEY_DETAIL = 'export-orders:detail';
@@ -479,6 +480,12 @@ const exportOrderController = {
 
             await invalidateExportOrderCache(id);
             await invalidateProductCodeCache();
+
+            // Invalidate debt cache khi chuyển sang DA_XUAT_KHO (phát sinh công nợ)
+            if (status === 'DA_XUAT_KHO' && exportOrder.customerId) {
+                const eoYear = new Date(exportOrder.createdAt).getFullYear();
+                await invalidateDebtCache(redisClient, exportOrder.customerId, eoYear);
+            }
 
             logger.info(`[ExportOrder.updateStatus] ID: ${id} → ${status}`);
             return res.status(200).json({ code: 200, message: 'Success' });

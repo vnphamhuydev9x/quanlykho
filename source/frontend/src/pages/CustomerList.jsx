@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card, Tabs } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SyncOutlined, EyeOutlined, DownloadOutlined, SearchOutlined, ReloadOutlined, UserOutlined, ProfileOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Switch, Row, Col, Card, Tabs, Typography } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SyncOutlined, EyeOutlined, DownloadOutlined, SearchOutlined, ReloadOutlined, UserOutlined, ProfileOutlined, DollarOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../utils/axios';
 import * as XLSX from 'xlsx';
@@ -8,10 +8,15 @@ import { useLocation } from 'react-router-dom';
 import { CUSTOMER_STATUS_FILTER_OPTIONS } from '../constants/enums';
 import { formatCurrency } from '../utils/format';
 import ProductCodeTable from '../components/ProductCodeTable';
+import CustomerDebtTab from './customer/CustomerDebtTab';
+import debtService from '../services/debtService';
+
+const { Text } = Typography;
 
 const { Option } = Select;
 
-const TAB_KEYS = { INFO: 'info', PRODUCT_CODES: 'productCodes' };
+const TAB_KEYS = { INFO: 'info', PRODUCT_CODES: 'productCodes', DEBT: 'debt' };
+const CURRENT_YEAR = new Date().getFullYear();
 
 const CustomerList = () => {
     const { t } = useTranslation();
@@ -40,6 +45,7 @@ const CustomerList = () => {
         if (isModalVisible) setActiveTab(TAB_KEYS.INFO);
     }, [isModalVisible]);
 
+    const [debtSummaryMap, setDebtSummaryMap] = useState({});
     const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
     const [filters, setFilters] = useState({ search: '', status: undefined, saleId: undefined });
 
@@ -80,10 +86,25 @@ const CustomerList = () => {
         }
     };
 
+    const fetchDebtSummary = async () => {
+        try {
+            const res = await debtService.getSummary(CURRENT_YEAR);
+            const map = {};
+            for (const row of res.data || []) {
+                if (row.customer?.id != null) map[row.customer.id] = row.totalRunningBalance;
+            }
+            setDebtSummaryMap(map);
+        } catch (_) {}
+    };
+
     useEffect(() => {
         fetchCustomers(pagination.current, pagination.pageSize, filters);
         fetchEmployees();
     }, []);
+
+    useEffect(() => {
+        if (userRole === 'ADMIN') fetchDebtSummary();
+    }, [userRole]);
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
@@ -247,6 +268,21 @@ const CustomerList = () => {
                 </Tag>
             ),
         },
+        ...(userRole === 'ADMIN' ? [{
+            title: `${t('debt.totalRemaining')} ${CURRENT_YEAR}`,
+            key: 'debtBalance',
+            width: 160,
+            align: 'right',
+            render: (_, record) => {
+                const balance = debtSummaryMap[record.id];
+                if (balance == null) return <Text type="secondary">—</Text>;
+                return (
+                    <Text strong style={{ color: balance > 0 ? '#cf1322' : '#389e0d' }}>
+                        {formatCurrency(balance)}
+                    </Text>
+                );
+            },
+        }] : []),
         {
             title: t('common.action'),
             key: 'action',
@@ -356,8 +392,8 @@ const CustomerList = () => {
         ? t('common.view')
         : (editingCustomer ? t('customer.edit') : t('customer.add'));
 
-    // Modal rộng hơn khi view (để hiện bảng mã hàng)
-    const modalWidth = isViewMode ? 900 : 520;
+    // Modal rộng hơn khi view (để hiện bảng mã hàng / công nợ)
+    const modalWidth = isViewMode ? (activeTab === TAB_KEYS.DEBT ? 1100 : 900) : 520;
 
     return (
         <div>
@@ -507,6 +543,21 @@ const CustomerList = () => {
                                     />
                                 ),
                             },
+                            ...(userRole === 'ADMIN' ? [{
+                                key: TAB_KEYS.DEBT,
+                                label: (
+                                    <span>
+                                        <DollarOutlined />
+                                        {t('menu.debt')}
+                                    </span>
+                                ),
+                                children: (
+                                    <CustomerDebtTab
+                                        customerId={editingCustomer?.id}
+                                        customerName={editingCustomer?.fullName}
+                                    />
+                                ),
+                            }] : []),
                         ]}
                     />
                 ) : (

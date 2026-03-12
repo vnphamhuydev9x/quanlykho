@@ -383,20 +383,29 @@ async function main() {
     const accountantUser = await prisma.user.findFirst({ where: { role: 'ACCOUNTANT', deletedAt: null } });
     const debtCustomers = await prisma.user.findMany({ where: { type: 'CUSTOMER', deletedAt: null }, orderBy: { id: 'asc' } });
 
-    // Guard: dùng marker trong notes để idempotent
-    const markerOrder = await prisma.exportOrder.findFirst({ where: { notes: { contains: '[DEBT_SEED]' } } });
+    const MARKER = '[DEBT_SEED_V2]';
+    const markerOrder = await prisma.exportOrder.findFirst({ where: { notes: { contains: MARKER } } });
 
-    if (!markerOrder && adminUser && accountantUser && debtCustomers.length >= 4) {
-        // Lấy tất cả product codes còn trống (chưa có exportOrderId)
+    // Nếu còn data V1 cũ → xóa sạch để reseed
+    const oldMarker = await prisma.exportOrder.findFirst({ where: { notes: { contains: '[DEBT_SEED]' } } });
+    if (oldMarker && !markerOrder) {
+        console.log('  Cleaning up old DEBT_SEED V1 data...');
+        const oldOrders = await prisma.exportOrder.findMany({ where: { notes: { contains: '[DEBT_SEED]' } } });
+        for (const o of oldOrders) {
+            await prisma.productCode.updateMany({ where: { exportOrderId: o.id }, data: { exportOrderId: null, exportStatus: null, exportDeliveryDateTime: null } });
+        }
+        await prisma.exportOrder.deleteMany({ where: { notes: { contains: '[DEBT_SEED]' } } });
+        console.log(`  Deleted ${oldOrders.length} old export orders`);
+    }
+
+    if (!markerOrder && adminUser && accountantUser && debtCustomers.length >= 6) {
         const freePcs = await prisma.productCode.findMany({
             where: { exportOrderId: null, deletedAt: null },
             orderBy: { id: 'asc' },
         });
 
-        // Helper: tạo Date cho năm/tháng/ngày cụ thể
         const dt = (year, month, day) => new Date(year, month - 1, day, randInt(8, 17), randInt(0, 59));
 
-        // Helper: tạo export order và gán product codes
         async function createDebtOrder(customerId, date, deliveryCost, paymentReceived, pcs) {
             const order = await prisma.exportOrder.create({
                 data: {
@@ -407,7 +416,7 @@ async function main() {
                     deliveryCost,
                     deliveryDateTime: date,
                     createdAt: date,
-                    notes: `[DEBT_SEED] Xuất kho ${date.getMonth() + 1}/${date.getFullYear()}`,
+                    notes: `${MARKER} Xuất kho ${date.getMonth() + 1}/${date.getFullYear()}`,
                 },
             });
             for (const pc of pcs) {
@@ -419,108 +428,115 @@ async function main() {
             return order;
         }
 
-        // Helper: tạo transaction nạp tiền
         async function createPayment(customerId, date, amount, content) {
             return prisma.transaction.create({
-                data: {
-                    customerId,
-                    createdById: accountantUser.id,
-                    amount,
-                    content,
-                    status: 'SUCCESS',
-                    createdAt: date,
-                },
+                data: { customerId, createdById: accountantUser.id, amount, content, status: 'SUCCESS', createdAt: date },
             });
         }
 
-        let pi = 0; // product code index
-        const pop = (n) => { const s = freePcs.slice(pi, pi + n); pi += n; return s; };
+        let pi = 0;
+        const pop = (n) => { const s = freePcs.slice(pi, Math.min(pi + n, freePcs.length)); pi += n; return s; };
 
-        const c0 = debtCustomers[0]; // kh_minh
-        const c1 = debtCustomers[1]; // kh_hang
-        const c2 = debtCustomers[2]; // kh_tuan
-        const c3 = debtCustomers[3]; // kh_ngoc
+        const [c0, c1, c2, c3, c4, c5] = debtCustomers; // kh_minh, kh_hang, kh_tuan, kh_ngoc, kh_duc, kh_ly
 
-        // ── KH001 kh_minh: nhiều đơn, 1 tháng có 2 đơn, có nạp tiền trong tháng nợ ──
-        // 2025
+        // ── KH001 kh_minh: đặt hàng nhiều, nạp tiền ít — NỢ TÍCH LŨY ──
+        // 2025: phát sinh ~3 đợt, nạp 1 lần nhỏ
         await createDebtOrder(c0.id, dt(2025, 2, 10), 150000, false, pop(2));
-        await createDebtOrder(c0.id, dt(2025, 2, 22), 0,      false, pop(1)); // tháng 2 có 2 lệnh xuất
-        await createPayment(c0.id,   dt(2025, 3, 5),  8000000,  'Nạp tiền tháng 3/2025');
-        await createDebtOrder(c0.id, dt(2025, 5, 14), 200000, false, pop(2));
-        await createDebtOrder(c0.id, dt(2025, 5, 28), 100000, false, pop(1)); // tháng 5 có 2 lệnh
-        await createPayment(c0.id,   dt(2025, 5, 20), 15000000, 'Nạp một phần tháng 5/2025');
-        await createDebtOrder(c0.id, dt(2025, 8, 3),  0,      false, pop(2));
-        await createPayment(c0.id,   dt(2025, 9, 10), 10000000, 'Nạp tiền tháng 9/2025');
+        await createDebtOrder(c0.id, dt(2025, 2, 22), 200000, false, pop(2)); // tháng 2 có 2 lệnh
+        await createDebtOrder(c0.id, dt(2025, 5, 14), 180000, false, pop(2));
+        await createDebtOrder(c0.id, dt(2025, 5, 28), 100000, false, pop(1));
+        await createPayment(c0.id,   dt(2025, 6, 5),  3000000, 'Nạp một phần T6/2025');
+        await createDebtOrder(c0.id, dt(2025, 9, 3),  250000, false, pop(2));
         await createDebtOrder(c0.id, dt(2025, 11, 7), 300000, false, pop(2));
-        // 2026
+        await createPayment(c0.id,   dt(2025, 12, 10), 2000000, 'Nạp cuối năm 2025');
+        // 2026: tiếp tục phát sinh, nạp nhỏ giọt
         await createDebtOrder(c0.id, dt(2026, 1, 15), 120000, false, pop(2));
-        await createDebtOrder(c0.id, dt(2026, 1, 28), 80000,  false, pop(1)); // tháng 1/2026 có 2 lệnh
-        await createPayment(c0.id,   dt(2026, 2, 5),  20000000, 'Nạp tiền đầu năm 2026');
+        await createDebtOrder(c0.id, dt(2026, 1, 28), 80000,  false, pop(1));
+        await createPayment(c0.id,   dt(2026, 2, 5),  3000000, 'Nạp T2/2026');
         await createDebtOrder(c0.id, dt(2026, 3, 10), 250000, false, pop(2));
-        await createPayment(c0.id,   dt(2026, 3, 20), 12000000, 'Nạp 1 phần tháng 3/2026');
-        console.log(`  [${c0.username}] 2025-2026: nhiều lệnh xuất, có nạp xen kẽ`);
+        console.log(`  [${c0.username}] đặt nhiều nạp ít — nợ tích lũy`);
 
-        // ── KH002 kh_hang: đơn đều đặn, có tháng nợ + nạp cùng tháng ──
+        // ── KH002 kh_hang: đơn đều, nạp từng phần — VẪN CÒN NỢ ──
         // 2025
-        await createDebtOrder(c1.id, dt(2025, 1, 8),  0,      false, pop(2));
+        await createDebtOrder(c1.id, dt(2025, 1, 8),  200000, false, pop(2));
         await createDebtOrder(c1.id, dt(2025, 4, 12), 180000, false, pop(2));
-        await createPayment(c1.id,   dt(2025, 4, 25), 5000000,  'Trả nợ tháng 4');
+        await createDebtOrder(c1.id, dt(2025, 4, 25), 150000, false, pop(1)); // 2 lệnh tháng 4
+        await createPayment(c1.id,   dt(2025, 5, 10), 2000000, 'Trả 1 phần T5');
         await createDebtOrder(c1.id, dt(2025, 7, 3),  150000, false, pop(2));
-        await createDebtOrder(c1.id, dt(2025, 7, 18), 0,      false, pop(1)); // 2 lệnh tháng 7
-        await createPayment(c1.id,   dt(2025, 7, 30), 18000000, 'Nạp bù tháng 7/2025');
+        await createDebtOrder(c1.id, dt(2025, 7, 18), 200000, false, pop(1));
+        await createPayment(c1.id,   dt(2025, 8, 5),  3000000, 'Nạp T8/2025');
         await createDebtOrder(c1.id, dt(2025, 10, 5), 200000, false, pop(2));
         await createDebtOrder(c1.id, dt(2025, 12, 20),120000, false, pop(1));
         // 2026
-        await createDebtOrder(c1.id, dt(2026, 2, 14), 0,      false, pop(2));
-        await createPayment(c1.id,   dt(2026, 2, 28), 25000000, 'Thanh toán lớn tháng 2/2026');
+        await createDebtOrder(c1.id, dt(2026, 2, 14), 180000, false, pop(2));
+        await createPayment(c1.id,   dt(2026, 2, 28), 2500000, 'Trả 1 phần T2/2026');
         await createDebtOrder(c1.id, dt(2026, 3, 5),  180000, false, pop(1));
-        console.log(`  [${c1.username}] 2025-2026: đơn đều, nạp xen tháng`);
+        console.log(`  [${c1.username}] đơn đều, nạp từng phần — vẫn nợ`);
 
-        // ── KH003 kh_tuan: có đơn đã thanh toán (không phát sinh nợ) xen kẽ ──
+        // ── KH003 kh_tuan: ít đơn nhưng nạp ít hơn — NỢ TĂNG DẦN ──
         // 2025
         await createDebtOrder(c2.id, dt(2025, 3, 15), 100000, false, pop(2));
-        await createDebtOrder(c2.id, dt(2025, 3, 22), 50000,  true,  pop(1)); // đã thanh toán → k phát sinh nợ
-        await createPayment(c2.id,   dt(2025, 4, 10), 7000000,  'Nạp tiền quý 2/2025');
+        await createDebtOrder(c2.id, dt(2025, 3, 22), 50000,  true,  pop(1)); // đã TT — không ghi nợ
         await createDebtOrder(c2.id, dt(2025, 6, 5),  200000, false, pop(2));
-        await createDebtOrder(c2.id, dt(2025, 9, 11), 0,      false, pop(2));
-        await createPayment(c2.id,   dt(2025, 9, 28), 9000000,  'Nạp tháng 9/2025');
-        await createDebtOrder(c2.id, dt(2025, 11, 3), 150000, true,  pop(1)); // đã thanh toán
+        await createPayment(c2.id,   dt(2025, 7, 10), 1500000, 'Nạp T7/2025');
+        await createDebtOrder(c2.id, dt(2025, 9, 11), 150000, false, pop(2));
+        await createDebtOrder(c2.id, dt(2025, 11, 3), 150000, false, pop(1));
         // 2026
         await createDebtOrder(c2.id, dt(2026, 1, 20), 200000, false, pop(2));
         await createDebtOrder(c2.id, dt(2026, 2, 8),  100000, false, pop(1));
-        await createPayment(c2.id,   dt(2026, 2, 25), 30000000, 'Thanh toán dứt điểm tháng 2/2026');
-        console.log(`  [${c2.username}] 2025-2026: xen kẽ đơn đã/chưa TT`);
+        await createPayment(c2.id,   dt(2026, 3, 5),  2000000, 'Nạp T3/2026');
+        console.log(`  [${c2.username}] nợ tăng dần, ít nạp`);
 
-        // ── KH004 kh_ngoc: ít đơn hơn, nợ lớn ──
+        // ── KH004 kh_ngoc: nợ lớn, nạp thưa — NỢ RẤT NHIỀU ──
         // 2025
+        await createDebtOrder(c3.id, dt(2025, 2, 10), 500000, false, pop(2));
         await createDebtOrder(c3.id, dt(2025, 4, 5),  500000, false, pop(2));
+        await createDebtOrder(c3.id, dt(2025, 6, 20), 400000, false, pop(2));
+        await createPayment(c3.id,   dt(2025, 7, 15), 2000000, 'Nạp T7/2025');
         await createDebtOrder(c3.id, dt(2025, 8, 14), 350000, false, pop(2));
-        await createPayment(c3.id,   dt(2025, 8, 30), 5000000,  'Trả một phần');
         await createDebtOrder(c3.id, dt(2025, 11,20), 400000, false, pop(2));
         // 2026
         await createDebtOrder(c3.id, dt(2026, 1, 10), 300000, false, pop(2));
-        await createPayment(c3.id,   dt(2026, 1, 25), 10000000, 'Nạp đầu năm');
-        console.log(`  [${c3.username}] 2025-2026: ít đơn, nợ lớn`);
+        await createPayment(c3.id,   dt(2026, 2, 1),  1500000, 'Nạp đầu năm');
+        await createDebtOrder(c3.id, dt(2026, 3, 8),  350000, false, pop(1));
+        console.log(`  [${c3.username}] nợ rất lớn, nạp rất ít`);
+
+        // ── KH005 kh_duc: mới phát sinh nợ năm 2026 thôi ──
+        await createDebtOrder(c4.id, dt(2026, 1, 12), 150000, false, pop(2));
+        await createDebtOrder(c4.id, dt(2026, 2, 20), 200000, false, pop(1));
+        await createPayment(c4.id,   dt(2026, 2, 28), 1000000, 'Nạp T2/2026');
+        await createDebtOrder(c4.id, dt(2026, 3, 15), 100000, false, pop(1));
+        console.log(`  [${c4.username}] mới phát sinh nợ 2026`);
+
+        // ── KH006 kh_ly: có nợ 2025, đã nạp gần hết nhưng chưa xong ──
+        // 2025
+        await createDebtOrder(c5.id, dt(2025, 3, 5),  200000, false, pop(2));
+        await createDebtOrder(c5.id, dt(2025, 6, 10), 150000, false, pop(2));
+        await createPayment(c5.id,   dt(2025, 8, 20), 2000000, 'Nạp T8/2025');
+        await createDebtOrder(c5.id, dt(2025, 10, 3), 180000, false, pop(1));
+        // 2026
+        await createDebtOrder(c5.id, dt(2026, 1, 8),  150000, false, pop(1));
+        await createPayment(c5.id,   dt(2026, 2, 10), 1500000, 'Trả bớt T2/2026');
+        console.log(`  [${c5.username}] 2025-2026: gần trả hết nhưng vẫn còn`);
 
     } else if (markerOrder) {
-        console.log('  Export Orders (debt demo) already seeded.');
+        console.log('  Export Orders (debt demo V2) already seeded.');
     } else {
-        console.warn('  Skipping debt orders (Need ADMIN + ACCOUNTANT + ≥4 Customers).');
+        console.warn('  Skipping debt orders (Need ADMIN + ACCOUNTANT + ≥6 Customers).');
     }
 
     // ─── SEED DEBT PERIODS (NỢ ĐẦU KỲ) ─────────────────────────────────────
     console.log('Seeding Debt Periods...');
-    const allDebtCus = await prisma.user.findMany({ where: { type: 'CUSTOMER', deletedAt: null }, orderBy: { id: 'asc' }, take: 4 });
+    const allDebtCus = await prisma.user.findMany({ where: { type: 'CUSTOMER', deletedAt: null }, orderBy: { id: 'asc' }, take: 6 });
 
     const debtPeriodDefs = [
         // [customerIndex, year, openingBalance]
-        [0, 2025, 5000000],   // kh_minh nợ đầu kỳ 2025
-        [0, 2026, 0],         // kh_minh 2026 không có nợ đầu kỳ
-        [1, 2025, 12000000],  // kh_hang
-        [1, 2026, 0],
-        [2, 2025, 8000000],   // kh_tuan
-        [3, 2025, 20000000],  // kh_ngoc nợ lớn từ trước
-        [3, 2026, 15000000],
+        [0, 2025, 8000000],   // kh_minh: nợ đầu kỳ 2025 — 8 triệu
+        [1, 2025, 15000000],  // kh_hang: 15 triệu
+        [2, 2025, 5000000],   // kh_tuan: 5 triệu
+        [3, 2025, 25000000],  // kh_ngoc: 25 triệu (khách nợ lớn)
+        [3, 2026, 20000000],  // kh_ngoc 2026: carry-over 20 triệu
+        [5, 2025, 3000000],   // kh_ly: 3 triệu
     ];
 
     for (const [idx, year, balance] of debtPeriodDefs) {

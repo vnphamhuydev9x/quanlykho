@@ -15,7 +15,8 @@
       "Bash(find /d/projects/quanlykho -type f -name *.prisma)",
       "Bash(node prisma/seed.js)",
       "Bash(node -e \":*)",
-      "Bash(curl -s \"http://localhost:3000/api/debts/years\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQURNSU4iLCJ0eXBlIjoiRU1QTE9ZRUUiLCJpYXQiOjE3NzMzMjA0NjAsImV4cCI6MTc3MzQwNjg2MH0.x8ymKkR2O4IpbGgz5_-3bEvlV2sZYV-kkr3zdFb9KM4\")"
+      "Bash(curl -s \"http://localhost:3000/api/debts/years\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQURNSU4iLCJ0eXBlIjoiRU1QTE9ZRUUiLCJpYXQiOjE3NzMzMjA0NjAsImV4cCI6MTc3MzQwNjg2MH0.x8ymKkR2O4IpbGgz5_-3bEvlV2sZYV-kkr3zdFb9KM4\")",
+      "Bash(find d:/projects/quanlykho/source/frontend/src/pages -type f -name *ustomers* -o -name *ustomer*)"
     ]
   }
 }

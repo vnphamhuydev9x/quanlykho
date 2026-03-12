@@ -152,6 +152,19 @@ const ManifestListPage = () => {
         },
         { title: 'Ghi chú', dataIndex: 'note', key: 'note', ellipsis: true },
         {
+            title: 'Lợi nhuận tạm tính',
+            dataIndex: 'estimatedProfit',
+            key: 'estimatedProfit',
+            width: 170,
+            align: 'right',
+            fixed: 'right',
+            render: v => {
+                const val = Number(v || 0);
+                const formatted = new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
+                return <strong style={{ color: val >= 0 ? '#389e0d' : '#cf1322' }}>{formatted}</strong>;
+            }
+        },
+        {
             title: 'Thao tác',
             key: 'actions',
             width: 100,

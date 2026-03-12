@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Modal, Form, Input, Select, DatePicker, Row, Col, Table,
     Tag, Space, Button, Tooltip, Popconfirm, message, Spin,
-    Typography, Divider, Alert
+    Typography, Divider, Alert, InputNumber, Statistic
 } from 'antd';
 import {
     TruckOutlined, PlusOutlined, DeleteOutlined,
@@ -45,6 +45,8 @@ const ManifestModal = ({
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [manifest, setManifest] = useState(null);
+
+    const rentalCostWatch = Form.useWatch('rentalCost', form);
 
     // Danh sách mã hàng trong xe (cho edit/view)
     const [productCodes, setProductCodes] = useState([]);
@@ -89,6 +91,7 @@ const ManifestModal = ({
                 date: data.date ? dayjs(data.date) : dayjs(),
                 status: data.status,
                 note: data.note,
+                rentalCost: data.rentalCost ?? 0,
             });
         } catch {
             message.error('Lỗi khi tải thông tin chuyến xe');
@@ -270,8 +273,13 @@ const ManifestModal = ({
         }
     };
 
-    // ─── Columns danh sách mã hàng ────────────────────────────────────
+    // ─── Tính lợi nhuận tạm tính realtime khi rentalCost hoặc danh sách PC thay đổi ───
     const displayedPCs = isCreate ? pendingPCs : productCodes;
+    const currentProfit = displayedPCs.reduce((s, pc) => s + Number(pc.totalImportCostToCustomer || 0), 0) - Number(rentalCostWatch || 0);
+
+    useEffect(() => {
+        form.setFieldValue('estimatedProfit', currentProfit);
+    }, [currentProfit]);
 
     const pcColumns = [
         { title: 'ID', dataIndex: 'id', key: 'id', width: 70, align: 'center' },
@@ -440,9 +448,39 @@ const ManifestModal = ({
                                 </Form.Item>
                             </Col>
                         </Row>
-                        <Form.Item name="note" label="Ghi chú">
-                            <Input.TextArea rows={2} placeholder="Ghi chú thêm..." />
-                        </Form.Item>
+                        <Row gutter={16}>
+                            <Col span={8}>
+                                <Form.Item name="rentalCost" label="Chi phí thuê xe (VND)">
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        min={0}
+                                        step={100000}
+                                        formatter={v => v ? new Intl.NumberFormat('vi-VN').format(v) : ''}
+                                        parser={v => v ? parseInt(v.replace(/[^\d]/g, ''), 10) || 0 : 0}
+                                        placeholder="0"
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
+                                <Form.Item name="estimatedProfit" label="Lợi nhuận tạm tính">
+                                    <InputNumber
+                                        style={{
+                                            width: '100%',
+                                            color: currentProfit >= 0 ? '#389e0d' : '#cf1322',
+                                            fontWeight: 600,
+                                        }}
+                                        disabled
+                                        formatter={v => v !== undefined && v !== null ? new Intl.NumberFormat('vi-VN').format(v) + ' ₫' : '0 ₫'}
+                                        parser={v => parseInt((v || '0').replace(/[^\d-]/g, ''), 10) || 0}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
+                                <Form.Item name="note" label="Ghi chú">
+                                    <Input.TextArea rows={1} placeholder="Ghi chú thêm..." />
+                                </Form.Item>
+                            </Col>
+                        </Row>
                     </Form>
 
                     <Divider style={{ margin: '8px 0' }} />

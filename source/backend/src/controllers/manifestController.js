@@ -21,12 +21,16 @@ const invalidateProductCodeCache = async () => {
 const VALID_STATUSES = ['CHO_XEP_XE', 'DA_XEP_XE', 'DANG_KIEM_HOA', 'CHO_THONG_QUAN', 'DA_THONG_QUAN', 'DA_NHAP_KHO_VN'];
 const callerSelect = { id: true, fullName: true, username: true };
 
-// Tính tổng cân/khối/số mã hàng từ productCodes
-const calcTotals = (productCodes) => ({
-    totalProductCodes: productCodes.length,
-    totalWeight: productCodes.reduce((s, pc) => s + (Number(pc.totalWeight) || 0), 0),
-    totalVolume: productCodes.reduce((s, pc) => s + parseFloat(pc.totalVolume || 0), 0),
-});
+// Tính tổng cân/khối/số mã hàng từ productCodes; estimatedProfit cần rentalCost từ manifest
+const calcTotals = (productCodes, rentalCost = 0) => {
+    const totalImportCost = productCodes.reduce((s, pc) => s + Number(pc.totalImportCostToCustomer || 0), 0);
+    return {
+        totalProductCodes: productCodes.length,
+        totalWeight: productCodes.reduce((s, pc) => s + (Number(pc.totalWeight) || 0), 0),
+        totalVolume: productCodes.reduce((s, pc) => s + parseFloat(pc.totalVolume || 0), 0),
+        estimatedProfit: totalImportCost - Number(rentalCost || 0),
+    };
+};
 
 // Validate tất cả PC trong danh sách phải có vehicleStatus = null
 const validateVehicleStatus = async (productCodeIds) => {
@@ -49,7 +53,7 @@ const manifestController = {
     // 1. Tạo chuyến xe mới (nhận thêm productCodeIds)
     create: async (req, res) => {
         try {
-            const { licensePlate, callerId, date, status, note, productCodeIds = [] } = req.body;
+            const { licensePlate, callerId, date, status, note, rentalCost, productCodeIds = [] } = req.body;
 
             if (!licensePlate || !licensePlate.trim()) {
                 return res.status(400).json({ code: 400, message: 'Biển số xe là bắt buộc' });
@@ -86,6 +90,7 @@ const manifestController = {
                         date: date ? new Date(date) : new Date(),
                         status: manifestStatus,
                         note: note || null,
+                        rentalCost: rentalCost !== undefined ? parseInt(rentalCost) : 0,
                     },
                     include: { caller: { select: callerSelect } }
                 });
@@ -133,7 +138,7 @@ const manifestController = {
                         caller: { select: callerSelect },
                         productCodes: {
                             where: { deletedAt: null },
-                            select: { totalWeight: true, totalVolume: true }
+                            select: { totalWeight: true, totalVolume: true, totalImportCostToCustomer: true }
                         }
                     }
                 }),
@@ -142,7 +147,7 @@ const manifestController = {
 
             const items = manifests.map(m => {
                 const { productCodes, ...rest } = m;
-                return { ...rest, ...calcTotals(productCodes) };
+                return { ...rest, ...calcTotals(productCodes, m.rentalCost) };
             });
 
             return res.status(200).json({
@@ -168,8 +173,8 @@ const manifestController = {
                         where: { deletedAt: null },
                         include: {
                             customer: { select: { id: true, fullName: true, customerCode: true } },
-                            items: { select: { packageCount: true, packageUnit: true } }
-                        }
+                            items: { select: { packageCount: true, packageUnit: true } },
+                        },
                     }
                 }
             });
@@ -178,7 +183,7 @@ const manifestController = {
                 return res.status(404).json({ code: 404, message: 'Không tìm thấy chuyến xe' });
             }
 
-            const totals = calcTotals(manifest.productCodes);
+            const totals = calcTotals(manifest.productCodes, manifest.rentalCost);
             return res.status(200).json({ code: 200, message: 'Success', data: { ...manifest, ...totals } });
         } catch (error) {
             logger.error(`[Manifest.getById] ${error.message}`);
@@ -190,7 +195,7 @@ const manifestController = {
     update: async (req, res) => {
         try {
             const { id } = req.params;
-            const { licensePlate, callerId, date, status, note } = req.body;
+            const { licensePlate, callerId, date, status, note, rentalCost } = req.body;
 
             const existing = await prisma.manifest.findFirst({ where: { id: parseInt(id), deletedAt: null } });
             if (!existing) return res.status(404).json({ code: 404, message: 'Không tìm thấy chuyến xe' });
@@ -208,6 +213,7 @@ const manifestController = {
                         date: date ? new Date(date) : undefined,
                         status: status || undefined,
                         note: note !== undefined ? note : undefined,
+                        rentalCost: rentalCost !== undefined ? parseInt(rentalCost) : undefined,
                     },
                     include: { caller: { select: callerSelect } }
                 });

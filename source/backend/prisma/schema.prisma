@@ -326,6 +326,7 @@ model Manifest {
   date         DateTime       @default(now()) // Ngày xếp xe
   status       ManifestStatus @default(CHO_XEP_XE)
   note         String?
+  rentalCost   Int            @default(0)      // Chi phí thuê xe (VND)
 
   productCodes ProductCode[]
 

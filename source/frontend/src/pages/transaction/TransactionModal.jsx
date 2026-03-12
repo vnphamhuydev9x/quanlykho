@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, Input, Spin, message, Space } from 'antd';
+import { Modal, Form, Select, Input, Spin, message, Space, Row, Col } from 'antd';
 import { useTranslation } from 'react-i18next';
 import transactionService from '../../services/transactionService';
 import customerService from '../../services/customerService';
@@ -80,50 +80,58 @@ const TransactionModal = ({ visible, onCancel, onSuccess }) => {
                 layout="vertical"
                 name="transactionForm"
             >
-                <Form.Item
-                    name="customer"
-                    label={t('transaction.customer')}
-                    rules={[{ required: true, message: t('validation.required') }]}
-                >
-                    <Select
-                        showSearch
-                        placeholder={t('transaction.selectCustomer')}
-                        style={{ width: '100%' }}
-                        loading={fetchingCustomers}
-                        filterOption={(input, option) => {
-                            const label = option?.children ? option.children.toString() : '';
-                            return label.toLowerCase().includes(input.toLowerCase());
-                        }}
-                    >
-                        {customers.map(customer => (
-                            <Option key={customer.id} value={customer.id}>
-                                {`${customer.fullName} (${customer.username} - ${customer.phone || 'N/A'})`}
-                            </Option>
-                        ))}
-                    </Select>
-                </Form.Item>
-
-                <Form.Item
-                    label={t('transaction.amount')}
-                    rules={[{ required: true, message: t('validation.required') }]}
-                >
-                    <Space.Compact block>
-                        <Form.Item name="amount" noStyle rules={[{ required: true, message: t('validation.required') }]}>
-                            <CustomNumberInput isInteger={true}
-                                style={{ width: 'calc(100% - 60px)' }}
-                                min={0}
-                            />
+                <Row gutter={16}>
+                    <Col span={12}>
+                        <Form.Item
+                            name="customer"
+                            label={t('transaction.customer')}
+                            rules={[{ required: true, message: t('validation.required') }]}
+                        >
+                            <Select
+                                showSearch
+                                placeholder={t('transaction.selectCustomer')}
+                                style={{ width: '100%' }}
+                                loading={fetchingCustomers}
+                                filterOption={(input, option) => {
+                                    const label = option?.children ? option.children.toString() : '';
+                                    return label.toLowerCase().includes(input.toLowerCase());
+                                }}
+                            >
+                                {customers.map(customer => (
+                                    <Option key={customer.id} value={customer.id}>
+                                        {`${customer.fullName} (${customer.username} - ${customer.phone || 'N/A'})`}
+                                    </Option>
+                                ))}
+                            </Select>
                         </Form.Item>
-                        <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
-                    </Space.Compact>
-                </Form.Item>
-
-                <Form.Item
-                    name="content"
-                    label={t('transaction.content')}
-                >
-                    <TextArea rows={3} />
-                </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            label={t('transaction.amount')}
+                            rules={[{ required: true, message: t('validation.required') }]}
+                        >
+                            <Space.Compact block>
+                                <Form.Item name="amount" noStyle rules={[{ required: true, message: t('validation.required') }]}>
+                                    <CustomNumberInput isInteger={true}
+                                        style={{ width: 'calc(100% - 60px)' }}
+                                        min={0}
+                                    />
+                                </Form.Item>
+                                <Input style={{ width: '60px', textAlign: 'center', pointerEvents: 'none' }} className="bg-gray-100" placeholder="VND" disabled />
+                            </Space.Compact>
+                        </Form.Item>
+                    </Col>
+                </Row>
+                <Row gutter={16}>
+                    <Col span={12} offset={12}>
+                        <Form.Item
+                            name="content"
+                            label={t('transaction.content')}
+                        >
+                            <TextArea rows={4} />
+                        </Form.Item>
+                    </Col>
+                </Row>
             </Form>
         </Modal>
     );

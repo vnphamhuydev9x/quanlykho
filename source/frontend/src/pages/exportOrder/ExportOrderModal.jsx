@@ -1,20 +1,23 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
-    Modal, Form, Input, InputNumber, DatePicker, Select,
+    Modal, Form, Input, DatePicker, Select,
     Button, Space, Tag, Table, Checkbox, Descriptions,
     message, Spin, Divider, Typography, Popconfirm, Alert,
     Row, Col
 } from 'antd';
+import CustomNumberInput from '../../components/CustomNumberInput';
 import {
     ExportOutlined, CheckOutlined, SendOutlined, DeleteOutlined,
-    PlusOutlined, CheckCircleOutlined
+    PlusOutlined, CheckCircleOutlined, EditOutlined, SaveOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import exportOrderService from '../../services/exportOrderService';
 import productCodeService from '../../services/productCodeService';
+import customerService from '../../services/customerService';
 import ProductCodeTable from '../../components/ProductCodeTable';
 import axiosInstance from '../../utils/axios';
 import { EXPORT_ORDER_STATUS_OPTIONS } from '../../constants/enums';
+import DeliveryForm from './DeliveryForm';
 
 const { Text } = Typography;
 
@@ -62,8 +65,26 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
     const [reweighData, setReweighData] = useState({});
     const [confirmData, setConfirmData] = useState({});
 
-    // Delivery form
-    const [deliveryForm] = Form.useForm();
+    // Delivery form — ref nhận form instance từ DeliveryForm component
+    const deliveryFormRef = useRef(null);
+
+    // Edit mode for view
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm] = Form.useForm();
+
+    // Customer locking — đảm bảo 1 lệnh = 1 khách hàng
+    const [lockedCustomerId, setLockedCustomerId] = useState(null);
+    const [lockedCustomer, setLockedCustomer] = useState(null); // { id, fullName, customerCode }
+    const [customers, setCustomers] = useState([]);             // Danh sách cho dropdown filter trong popup
+    const [loadingCustomers, setLoadingCustomers] = useState(false);
+    const [customerFilter, setCustomerFilter] = useState(null); // Filter trong popup "Thêm mã hàng"
+
+    // PCs hiển thị trong popup: nếu đã lock thì chỉ show cùng KH, nếu chưa thì filter theo customerFilter
+    const displayedPCs = useMemo(() => {
+        const effectiveId = lockedCustomerId || customerFilter;
+        if (!effectiveId) return availablePCs;
+        return availablePCs.filter(pc => pc.customerId === effectiveId);
+    }, [availablePCs, lockedCustomerId, customerFilter]);
 
     // 1. Initial Load Effect - Only runs when visible or mode/id changes
     useEffect(() => {
@@ -72,6 +93,11 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
             setOrder(null);
             setSelectedPCIds([]);
             setSelectedPCs([]);
+            setIsEditing(false);
+            setLockedCustomerId(null);
+            setLockedCustomer(null);
+            setCustomers([]);
+            setCustomerFilter(null);
             form.resetFields();
             return;
         }
@@ -91,11 +117,23 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                 setLoading(true);
                 productCodeService.getAll(1, 1000, '').then(res => {
                     const all = res.data?.items || res.items || [];
-                    setSelectedPCs(all.filter(pc => ids.includes(pc.id)));
+                    const filtered = all.filter(pc => ids.includes(pc.id));
+                    setSelectedPCs(filtered);
+                    // Lock customer từ PC đầu tiên (Luồng A)
+                    if (filtered.length > 0 && filtered[0].customer) {
+                        setLockedCustomerId(filtered[0].customerId);
+                        setLockedCustomer(filtered[0].customer);
+                    }
                 }).catch(() => {
                     message.error('Lỗi khi tải thông tin mã hàng');
                 }).finally(() => setLoading(false));
             }
+            // Load danh sách khách hàng cho filter trong popup
+            setLoadingCustomers(true);
+            customerService.getAll({ page: 1, limit: 0, status: 'active' })
+                .then(res => setCustomers(res.data?.customers || []))
+                .catch(() => { })
+                .finally(() => setLoadingCustomers(false));
         } else {
             // View / Reweigh / Confirm / Delivery modes
             if (exportOrderId) {
@@ -134,13 +172,34 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
         }
     }, [order, mode]);
 
+    // Populate editForm khi order load xong (không cần đợi isEditing)
+    useEffect(() => {
+        if (order) {
+            editForm.setFieldsValue({
+                deliveryDateTime: order.deliveryDateTime ? dayjs(order.deliveryDateTime) : null,
+                notes: order.notes || '',
+            });
+        }
+    }, [order]);
+
+    // Load/reload order data
+    const loadOrder = useCallback(() => {
+        if (!exportOrderId) return;
+        setLoading(true);
+        exportOrderService.getById(exportOrderId).then(res => {
+            setOrder(res.data || res);
+        }).catch(() => {
+            message.error('Lỗi khi tải chi tiết lệnh xuất kho');
+        }).finally(() => setLoading(false));
+    }, [exportOrderId]);
+
     // 3. Fetch danh sách PC có thể xuất (NHAP_KHO_VN + chưa có lệnh)
     const fetchAvailablePCs = async () => {
         setLoadingAvailable(true);
         try {
             const res = await productCodeService.getAll(1, 1000, '');
             const all = res.data?.items || res.items || [];
-            // Filter: Đã nhập kho VN VÀ Chưa có lệnh xuất kho VÀ chưa có trong danh sách chọn
+            // Filter: Đã nhập kho VN + Chưa có lệnh xuất kho + chưa chọn
             const eligible = all.filter(pc =>
                 pc.vehicleStatus === 'DA_NHAP_KHO_VN' &&
                 !pc.exportOrderId &&
@@ -189,7 +248,6 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
             await exportOrderService.create({
                 productCodeIds: selectedPCIds,
                 deliveryDateTime: values.deliveryDateTime ? values.deliveryDateTime.toISOString() : undefined,
-                deliveryCost: values.deliveryCost || undefined,
                 notes: values.notes || undefined,
             });
             message.success('Tạo lệnh xuất kho thành công');
@@ -251,13 +309,15 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
     };
 
     const handleDelivery = async () => {
+        const form = deliveryFormRef.current;
+        if (!form) return;
         try {
-            const values = await deliveryForm.validateFields();
+            const values = await form.validateFields();
             setSubmitting(true);
             await exportOrderService.updateStatus(exportOrderId, {
                 status: 'DA_XUAT_KHO',
-                amountReceived: values.amountReceived,
-                actualShippingCost: values.actualShippingCost || undefined,
+                deliveryCost: Number(values.deliveryCost) || 0,
+                paymentReceived: values.paymentReceived === true,
             });
             message.success('Đã xác nhận xuất kho');
             onSuccess();
@@ -278,6 +338,26 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
             onSuccess();
         } catch (err) {
             const msg = err?.response?.data?.message || 'Lỗi khi hủy lệnh';
+            message.error(msg);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleUpdate = async () => {
+        try {
+            const values = await editForm.validateFields();
+            setSubmitting(true);
+            await exportOrderService.update(exportOrderId, {
+                deliveryDateTime: values.deliveryDateTime ? values.deliveryDateTime.toISOString() : null,
+                notes: values.notes || null,
+            });
+            message.success('Đã cập nhật lệnh xuất kho');
+            setIsEditing(false);
+            loadOrder();
+        } catch (err) {
+            if (err?.errorFields) return;
+            const msg = err?.response?.data?.message || 'Lỗi khi cập nhật';
             message.error(msg);
         } finally {
             setSubmitting(false);
@@ -334,9 +414,20 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                 </Button>,
             ];
         }
+        // view mode — edit state buttons
+        if (isEditing) {
+            return [
+                <Button key="cancel-edit" onClick={() => setIsEditing(false)}>Hủy</Button>,
+                <Button key="save" type="primary" icon={<SaveOutlined />} loading={submitting} onClick={handleUpdate}>Lưu</Button>,
+            ];
+        }
+
         // view mode — buttons based on order status
         if (!order) return [<Button key="close" onClick={onClose}>Đóng</Button>];
-        const buttons = [<Button key="close" onClick={onClose}>Đóng</Button>];
+        const buttons = [
+            <Button key="close" onClick={onClose}>Đóng</Button>,
+            <Button key="edit" icon={<EditOutlined />} onClick={() => setIsEditing(true)}>Sửa</Button>,
+        ];
         if (order.status === 'DA_TAO_LENH') {
             buttons.push(
                 <Popconfirm
@@ -380,7 +471,9 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                     key="delivery"
                     type="primary"
                     icon={<ExportOutlined />}
-                    onClick={() => setMode('delivery')}
+                    onClick={() => {
+                        setMode('delivery');
+                    }}
                 >
                     Hoàn thành xuất kho
                 </Button>
@@ -459,27 +552,25 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                             </Form.Item>
                         </Col>
                         <Col span={12}>
-                            <Form.Item label="Chi phí giao hàng (₫)" name="deliveryCost">
-                                <InputNumber
-                                    style={{ width: '100%' }}
-                                    min={0}
-                                    formatter={v => v ? new Intl.NumberFormat('de-DE').format(v) : ''}
-                                    parser={v => v.replace(/\./g, '')}
-                                    placeholder="Nhập chi phí giao hàng"
-                                />
+                            <Form.Item label="Ghi chú" name="notes">
+                                <Input.TextArea rows={1} placeholder="Ghi chú thêm..." />
                             </Form.Item>
                         </Col>
                     </Row>
-                    <Form.Item label="Ghi chú" name="notes">
-                        <Input.TextArea rows={2} placeholder="Ghi chú thêm..." />
-                    </Form.Item>
                 </Form>
 
                 <Divider style={{ margin: '8px 0 12px' }} />
 
                 <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
                     <Col>
-                        <Text strong>Chọn mã hàng ({selectedPCIds.length})</Text>
+                        <Space size={8}>
+                            <Text strong>Chọn mã hàng ({selectedPCIds.length})</Text>
+                            {lockedCustomer && (
+                                <Tag color="blue">
+                                    KH: {lockedCustomer.customerCode ? `${lockedCustomer.customerCode} — ` : ''}{lockedCustomer.fullName}
+                                </Tag>
+                            )}
+                        </Space>
                     </Col>
                     <Col>
                         <Button type="primary" ghost icon={<PlusOutlined />} size="small" onClick={handleOpenAddModal}>
@@ -501,13 +592,44 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                 <Modal
                     title="Thêm mã hàng vào lệnh xuất kho"
                     open={addModalVisible}
-                    onCancel={() => setAddModalVisible(false)}
+                    onCancel={() => { setAddModalVisible(false); setCustomerFilter(null); }}
                     onOk={handleAddItems}
                     okText={`Thêm${selectedAddKeys.length > 0 ? ` (${selectedAddKeys.length})` : ''}`}
                     cancelText="Hủy"
                     width={900}
                     destroyOnClose
                 >
+                    {/* Filter theo khách hàng */}
+                    <div style={{ marginBottom: 12 }}>
+                        {lockedCustomerId ? (
+                            <Alert
+                                type="info"
+                                showIcon
+                                message={`Chỉ hiển thị mã hàng của: ${lockedCustomer?.customerCode ? lockedCustomer.customerCode + ' — ' : ''}${lockedCustomer?.fullName}`}
+                                style={{ marginBottom: 0 }}
+                            />
+                        ) : (
+                            <Select
+                                style={{ width: 320 }}
+                                placeholder="Lọc theo khách hàng..."
+                                allowClear
+                                showSearch
+                                loading={loadingCustomers}
+                                value={customerFilter}
+                                filterOption={(input, option) =>
+                                    (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                }
+                                onChange={val => setCustomerFilter(val || null)}
+                            >
+                                {customers.map(c => (
+                                    <Select.Option key={c.id} value={c.id}>
+                                        {`${c.fullName}${c.username ? ` (${c.username})` : ''}`}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        )}
+                    </div>
+
                     {selectedAddKeys.length > 0 && (
                         <Alert
                             type="success"
@@ -517,7 +639,7 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                         />
                     )}
                     <ProductCodeTable
-                        dataSource={availablePCs}
+                        dataSource={displayedPCs}
                         externalLoading={loadingAvailable}
                         rowSelection={useMemo(() => ({
                             selectedRowKeys: selectedAddKeys,
@@ -646,12 +768,12 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                     />
                 )}
 
-                {/* Thông tin lệnh - dạng Form read-only */}
-                <Form layout="vertical" style={{ marginBottom: 8 }}>
+                {/* Thông tin lệnh — 1 form duy nhất, disabled khi không edit */}
+                <Form form={editForm} layout="vertical" style={{ marginBottom: 8 }} disabled={!isEditing}>
                     <Row gutter={16}>
                         <Col span={4}>
                             <Form.Item label="Mã lệnh">
-                                <Input value={`#${order.id}`} disabled className="bg-gray-100" />
+                                <Input value={`#${order.id}`} disabled />
                             </Form.Item>
                         </Col>
                         <Col span={6}>
@@ -662,56 +784,46 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                             </Form.Item>
                         </Col>
                         <Col span={7}>
-                            <Form.Item label="Ngày giao dự kiến">
-                                <Input
-                                    value={order.deliveryDateTime ? dayjs(order.deliveryDateTime).format('DD/MM/YYYY HH:mm') : '—'}
-                                    disabled className="bg-gray-100"
-                                />
+                            <Form.Item label="Ngày giao dự kiến" name="deliveryDateTime">
+                                <DatePicker showTime format="DD/MM/YYYY HH:mm" style={{ width: '100%' }} />
                             </Form.Item>
                         </Col>
                         <Col span={7}>
-                            <Form.Item label="Chi phí giao hàng">
-                                <Input value={formatVND(order.deliveryCost)} disabled className="bg-gray-100" />
+                            <Form.Item label="Ghi chú" name="notes">
+                                <Input.TextArea rows={1} autoSize={{ minRows: 1, maxRows: 3 }} />
                             </Form.Item>
                         </Col>
                     </Row>
-                    <Row gutter={16}>
-                        {order.amountReceived != null && (
-                            <Col span={8}>
-                                <Form.Item label="Số tiền đã thu">
-                                    <Input
-                                        value={formatVND(order.amountReceived)}
-                                        disabled className="bg-gray-100"
-                                        style={{ color: '#389e0d', fontWeight: 'bold' }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        )}
-                        {order.actualShippingCost != null && (
-                            <Col span={8}>
-                                <Form.Item label="Phí vận chuyển thực tế">
-                                    <Input value={formatVND(order.actualShippingCost)} disabled className="bg-gray-100" />
-                                </Form.Item>
-                            </Col>
-                        )}
-                        <Col span={order.amountReceived != null || order.actualShippingCost != null ? 8 : 12}>
-                            <Form.Item label="Người tạo">
-                                <Input
-                                    value={order.createdBy ? `${order.createdBy.username} — ${order.createdBy.fullName}` : '—'}
-                                    disabled className="bg-gray-100"
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col span={order.amountReceived != null || order.actualShippingCost != null ? 24 : 12}>
-                            <Form.Item label="Ghi chú">
-                                <Input.TextArea
-                                    value={order.notes || '—'}
-                                    disabled className="bg-gray-100"
-                                    autoSize={{ minRows: 1, maxRows: 3 }}
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
+                    {!isEditing && order.status === 'DA_XUAT_KHO' && (
+                        <Row gutter={16} style={{ marginBottom: 8 }}>
+                            {(() => {
+                                const totalNK = (order.productCodes || []).reduce((s, pc) => s + (Number(pc.totalImportCostToCustomer) || 0), 0);
+                                const shippingFee = Number(order.deliveryCost) || 0;
+                                const total = totalNK + shippingFee;
+                                return (
+                                    <>
+                                        <Col span={6}>
+                                            <Form.Item label="Phí ship">
+                                                <Input value={formatVND(shippingFee || null)} disabled style={{ fontWeight: 'bold' }} />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item label="Tổng tiền khách phải trả">
+                                                <Input value={formatVND(total)} disabled style={{ color: '#cf1322', fontWeight: 'bold' }} />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={6}>
+                                            <Form.Item label="Đã nhận tiền">
+                                                <Tag color={order.paymentReceived ? 'green' : 'red'} style={{ fontSize: 13, padding: '2px 10px' }}>
+                                                    {order.paymentReceived ? 'Đã nhận đủ' : 'Chưa nhận — Công nợ'}
+                                                </Tag>
+                                            </Form.Item>
+                                        </Col>
+                                    </>
+                                );
+                            })()}
+                        </Row>
+                    )}
                 </Form>
 
                 <Divider style={{ margin: '8px 0 12px' }}>
@@ -745,9 +857,10 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                 key: 'actualWeight',
                 width: 180,
                 render: (_, item) => (
-                    <InputNumber
+                    <CustomNumberInput
                         size="small"
                         min={0}
+                        isInteger={true}
                         style={{ width: '100%' }}
                         value={reweighData[item.id]?.actualWeight}
                         onChange={val => setReweighData(prev => ({
@@ -762,7 +875,7 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
                 key: 'actualVolume',
                 width: 190,
                 render: (_, item) => (
-                    <InputNumber
+                    <CustomNumberInput
                         size="small"
                         min={0}
                         step={0.001}
@@ -1068,39 +1181,10 @@ const ExportOrderModal = ({ visible, mode: initialMode, exportOrderId, initialPr
     };
 
     const renderDelivery = () => (
-        <Form form={form} layout="vertical">
-            <Alert
-                type="warning"
-                showIcon
-                message="Sau khi xác nhận, lệnh xuất kho sẽ chuyển sang trạng thái ĐÃ XUẤT KHO và không thể thay đổi."
-                style={{ marginBottom: 16 }}
-            />
-            <Form.Item
-                label="Số tiền đã thu từ khách hàng (₫)"
-                name="amountReceived"
-                rules={[{ required: true, message: 'Vui lòng nhập số tiền đã thu' }]}
-            >
-                <InputNumber
-                    style={{ width: '100%' }}
-                    min={0}
-                    formatter={v => v ? new Intl.NumberFormat('de-DE').format(v) : ''}
-                    parser={v => v.replace(/\./g, '')}
-                    placeholder="Nhập số tiền đã thu"
-                />
-            </Form.Item>
-            <Form.Item
-                label="Chi phí vận chuyển thực tế (₫)"
-                name="actualShippingCost"
-            >
-                <InputNumber
-                    style={{ width: '100%' }}
-                    min={0}
-                    formatter={v => v ? new Intl.NumberFormat('de-DE').format(v) : ''}
-                    parser={v => v.replace(/\./g, '')}
-                    placeholder="Nhập chi phí vận chuyển thực tế"
-                />
-            </Form.Item>
-        </Form>
+        <DeliveryForm
+            order={order}
+            formRef={(f) => { deliveryFormRef.current = f; }}
+        />
     );
 
     const renderContent = () => {

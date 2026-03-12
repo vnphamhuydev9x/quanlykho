@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma:*)",
+      "Bash(tasklist)",
+      "Bash(findstr \"node\")",
+      "Bash(wmic process:*)",
+      "Bash(findstr \"quanlykho\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3000\\\\|:5000\\\\|:8000\\\\|:3001\\\\|:4000\")",
+      "Bash(findstr \"LISTEN\")",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(handle \"query_engine-windows.dll.node\")",
+      "Bash(findstr \":3000 :3001 :4000\")"
+    ]
+  }
+}

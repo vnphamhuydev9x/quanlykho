@@ -523,6 +523,7 @@
         "submitReweigh": "提交实际重量",
         "confirmReweigh": "确认重量",
         "delivery": "完成出库",
+        "statusAll": "全部",
         "statusDaTaoLenh": "已创建",
         "statusDangXacNhanCan": "正在确认重量",
         "statusDaXacNhanCan": "已确认重量",

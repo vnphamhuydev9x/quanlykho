@@ -156,6 +156,28 @@ const ProductCodePage = () => {
             });
             return;
         }
+        // Kiểm tra tất cả mã hàng phải cùng 1 khách hàng
+        const uniqueCustomerIds = [...new Set(selectedRows.map(r => r.customerId).filter(Boolean))];
+        if (uniqueCustomerIds.length > 1) {
+            Modal.warning({
+                title: 'Mã hàng thuộc nhiều khách hàng khác nhau',
+                width: 520,
+                content: (
+                    <div>
+                        <p>Lệnh xuất kho chỉ được tạo cho <strong>1 khách hàng</strong>. Các mã hàng đã chọn thuộc nhiều khách hàng khác nhau, vui lòng chọn lại chỉ mã hàng của 1 khách.</p>
+                        <ul style={{ paddingLeft: 20 }}>
+                            {selectedRows.map(c => (
+                                <li key={c.id}>
+                                    <strong>#{c.id} — {c.orderCode || '(chưa có mã)'}</strong>
+                                    {c.customer ? ` — KH: ${c.customer.customerCode || c.customer.fullName}` : ''}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )
+            });
+            return;
+        }
         setExportInitialPCIds(selectedRowKeys.map(k => parseInt(k)));
         setExportOrderModalVisible(true);
     };

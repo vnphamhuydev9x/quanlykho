@@ -16,6 +16,12 @@ const exportOrderService = {
         return response.data;
     },
 
+    // Cập nhật thông tin lệnh (deliveryDateTime, deliveryCost, notes)
+    update: async (id, data) => {
+        const response = await axiosInstance.put(`/export-orders/${id}`, data);
+        return response.data;
+    },
+
     // Gửi số cân thực tế - DA_TAO_LENH → DANG_XAC_NHAN_CAN
     submitReweigh: async (id, items) => {
         const response = await axiosInstance.patch(`/export-orders/${id}/submit-reweigh`, { items });

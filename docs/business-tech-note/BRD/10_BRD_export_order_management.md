@@ -1,8 +1,10 @@
 # Tài Liệu Nghiệp Vụ: Quản Lý Xuất Kho (Export Order)
 
-> **Phiên bản**: v1.1
-> **Ngày**: 2026-03-10
-> **Thay đổi v1.1**: Bỏ ràng buộc "1 lệnh = 1 khách hàng" — cho phép 1 lệnh xuất kho chứa mã hàng của nhiều khách hàng khác nhau.
+> **Phiên bản**: v1.3
+> **Ngày**: 2026-03-12
+> **Thay đổi v1.3**: Thêm tính năng thanh toán khi giao hàng — hiển thị "Tổng tiền khách phải trả" (chi phí NK + phí ship), checkbox "Đã nhận tiền" (`paymentReceived`). Đổi tên "chi phí giao hàng" → "phí ship". Phí ship chỉ nhập tại bước giao hàng, không nhập khi tạo lệnh.
+> **Thay đổi v1.2**: Khôi phục ràng buộc "1 lệnh = 1 khách hàng" — mỗi lệnh xuất kho chỉ được chứa mã hàng của đúng 1 khách hàng. Thêm validate FE khi chọn mã hàng từ nhiều khách. Thêm filter khách hàng trong popup thêm mã hàng (Luồng B).
+> **Thay đổi v1.1**: ~~Bỏ ràng buộc "1 lệnh = 1 khách hàng"~~ — ĐÃ ĐẢO NGƯỢC ở v1.2.
 > **Tham chiếu**: BRD Xếp Xe (`08_BRD_manifest_management.md`), BRD Mã Hàng (`07_BRD_product_code_management.md`)
 
 ---
@@ -29,15 +31,17 @@ Luồng Xuất Kho có thiết kế tương tự luồng Xếp Xe:
 
 | STT | Tên trường | Kiểu dữ liệu | Ràng buộc | Mô tả |
 |-----|------------|--------------|-----------|-------|
-| 1 | **Ngày giờ khách nhận hàng** | DateTime | | Ngày giờ dự kiến khách đến nhận hoặc shipper giao |
-| 2 | **Chi phí giao hàng** | Integer | Đơn vị: VND | Chi phí giao hàng dự kiến |
-| 3 | **Ghi chú** | String | Text Area | Ghi chú về lệnh xuất kho |
-| 4 | **Trạng thái** | Enum | Bắt buộc | Trạng thái lệnh xuất kho (xem mục 2.3). Lúc tạo tự động = `DA_TAO_LENH`, không cho chọn |
-| 5 | **Số tiền đã nhận** | Integer | Disabled khi tạo, VND | Số tiền thực tế đã thu của khách. Chỉ điền được ở bước giao hàng |
-| 6 | **Phí ship thực tế** | Integer | Disabled khi tạo, VND | Phí ship thực tế. Chỉ điền được ở bước giao hàng |
-| 7 | **Người tạo lệnh** | Read-only | Auto-fill | Tự động gán người dùng đang đăng nhập |
+| 1 | **Khách hàng** | FK → User | Bắt buộc, Read-only sau khi tạo | Khách hàng của lệnh xuất kho. Tự động lấy từ `customerId` của các mã hàng được chọn (tất cả phải cùng 1 khách) |
+| 2 | **Ngày giờ khách nhận hàng** | DateTime | | Ngày giờ dự kiến khách đến nhận hoặc shipper giao |
+| 3 | **Phí ship** (`deliveryCost`) | Integer | Disabled khi tạo, VND | Phí ship thực tế do nhân viên kho nhập tại bước giao hàng. **Không nhập khi tạo lệnh.** |
+| 4 | **Tổng tiền khách phải trả** | Integer | Derived, VND | = Tổng `totalImportCostToCustomer` của tất cả mã hàng + Phí ship. Hiển thị tự động, không lưu riêng. |
+| 5 | **Đã nhận tiền** (`paymentReceived`) | Boolean | Default: false | Nhân viên kho tick khi đã nhận đủ tiền từ khách. `false` = khách chưa trả → công nợ (implement sau). Không có trường hợp nhận thiếu. |
+| 6 | **Ghi chú** | String | Text Area | Ghi chú về lệnh xuất kho |
+| 7 | **Trạng thái** | Enum | Bắt buộc | Trạng thái lệnh xuất kho (xem mục 2.3). Lúc tạo tự động = `DA_TAO_LENH`, không cho chọn |
+| 8 | **Người tạo lệnh** | Read-only | Auto-fill | Tự động gán người dùng đang đăng nhập |
 
-> **Lưu ý v1.1**: Lệnh xuất kho **không** gắn với 1 khách hàng cố định. Các mã hàng trong lệnh có thể thuộc nhiều khách hàng khác nhau. Thông tin khách hàng được tra cứu qua từng `ProductCode.customerId` khi cần.
+> **Lưu ý v1.3**: "Phí ship" chỉ được nhập tại bước giao hàng. Khi nhập phí ship, "Tổng tiền khách phải trả" tự động cập nhật = chi phí NK + phí ship. Checkbox "Đã nhận tiền" quyết định công nợ.
+> **Lưu ý v1.2**: Lệnh xuất kho **bắt buộc** gắn với đúng 1 khách hàng (`customerId`). Tất cả mã hàng trong lệnh phải cùng `customerId`. Backend tự lấy `customerId` từ mã hàng đầu tiên khi tạo.
 
 ### 2.2 Thông Tin Cân Đo Lại — Bổ sung vào Mặt Hàng (`ProductItem`)
 
@@ -72,10 +76,13 @@ Backend kiểm tra theo thứ tự, trả về lỗi ngay khi gặp vi phạm đ
 1. **Tất cả mã hàng phải có `vehicleStatus = DA_NHAP_KHO_VN`**
    - Lỗi: `"Các mã hàng sau chưa về kho VN: [danh sách ID + trạng thái hiện tại]"`
 
-2. **Tất cả mã hàng phải có `exportOrderId = null`** (chưa thuộc lệnh xuất kho nào)
+2. **Tất cả mã hàng phải cùng 1 khách hàng (`customerId`)**
+   - Lỗi: `"Lệnh xuất kho chỉ được tạo cho 1 khách hàng. Các mã hàng sau thuộc khách hàng khác: [danh sách ID + tên khách hàng]"`
+
+3. **Tất cả mã hàng phải có `exportOrderId = null`** (chưa thuộc lệnh xuất kho nào)
    - Lỗi: `"Các mã hàng sau đã có lệnh xuất kho: [danh sách ID + lệnh #yyy]"`
 
-> **Lưu ý v1.1**: Đã xóa rule "cùng 1 khách hàng". Các mã hàng thuộc nhiều khách hàng khác nhau vẫn được phép tạo chung 1 lệnh xuất kho.
+> **Lưu ý v1.2**: Khôi phục rule "cùng 1 khách hàng". FE cũng validate trước khi gọi API (xem mục 4.1).
 
 ### 3.2 Validation Hủy Lệnh Xuất Kho
 - **Chỉ cho phép hủy** khi `status = DA_TAO_LENH`
@@ -93,12 +100,19 @@ Có 2 điểm khởi đầu:
 ```
 1. Admin tick chọn ≥1 mã hàng trong bảng ProductCode
 2. Summary bar xuất hiện nút [Tạo lệnh xuất kho] (bên cạnh nút [Xếp xe])
-3. Bấm [Tạo lệnh xuất kho] → FE validate nhanh:
-   - Tất cả phải có vehicleStatus = DA_NHAP_KHO_VN
-   - Không mã nào đã có exportOrderId
-   (Không cần check cùng khách hàng)
-4. Nếu hợp lệ → Mở ExportOrderModal (chế độ Create), danh sách mã hàng đã chọn hiển thị sẵn
+3. Bấm [Tạo lệnh xuất kho] → FE validate nhanh (theo thứ tự):
+   a. Tất cả phải có vehicleStatus = DA_NHAP_KHO_VN
+      → Nếu không: toast lỗi "Các mã hàng sau chưa về kho VN: [danh sách]"
+   b. Tất cả phải có cùng customerId
+      → Nếu không: toast lỗi "Lệnh xuất kho chỉ được tạo cho 1 khách hàng.
+         Các mã hàng sau thuộc khách hàng khác: [ID #xxx — Khách: ...]"
+   c. Không mã nào đã có exportOrderId
+      → Nếu có: toast lỗi "Các mã hàng sau đã có lệnh xuất kho: [danh sách]"
+4. Nếu hợp lệ → Mở ExportOrderModal (chế độ Create)
+   - Danh sách mã hàng đã chọn hiển thị sẵn
+   - Trường "Khách hàng" auto-fill + read-only (lấy từ customerId chung)
 5. User có thể thêm mã hàng khác bằng nút [Thêm mã hàng]
+   → Popup chỉ hiển thị mã hàng cùng customerId với lệnh đang tạo
 6. Điền form: ngày giờ khách nhận, chi phí giao hàng, ghi chú
 7. Bấm [Tạo lệnh xuất kho]
 ```
@@ -107,15 +121,21 @@ Có 2 điểm khởi đầu:
 ```
 1. Admin bấm [Tạo lệnh xuất kho] trên màn danh sách Xuất Kho
 2. Mở ExportOrderModal (chế độ Create) với danh sách mã hàng trống
-3. Bấm [Thêm mã hàng] → Popup chọn mã hàng (filter: vehicleStatus=DA_NHAP_KHO_VN + chưa có lệnh)
-4. Có thể thêm mã hàng từ nhiều khách hàng khác nhau
+3. User chọn Khách hàng trước (dropdown bắt buộc)
+   → Sau khi chọn khách, trường Khách hàng lock lại (không đổi được)
+4. Bấm [Thêm mã hàng] → Popup chọn mã hàng với filter:
+   - vehicleStatus = DA_NHAP_KHO_VN
+   - chưa có exportOrderId
+   - customerId = khách hàng đã chọn ở bước 3
+   → Popup có thêm thanh search theo mã hàng / tên hàng
 5. Điền form: ngày giờ khách nhận, chi phí giao hàng, ghi chú
 6. Bấm [Tạo lệnh xuất kho]
 ```
 
 **Backend (trong 1 transaction)**:
 ```
-- Tạo ExportOrder (không có customerId)
+- Validate (theo thứ tự): vehicleStatus → cùng customerId → exportOrderId = null
+- Tạo ExportOrder với customerId lấy từ mã hàng đầu tiên
 - Gán tất cả productCodeIds vào ExportOrder
 - Set exportOrderId, exportStatus = DA_TAO_LENH, exportDeliveryDateTime trên từng ProductCode
 ```
@@ -156,11 +176,17 @@ Có 2 điểm khởi đầu:
 ```
 1. Nhân viên vào [Tồn kho VN] → thấy mã hàng exportStatus = DA_XAC_NHAN_CAN
 2. Gọi shipper đến lấy hàng
-3. Nhân viên mở ExportOrder → điền:
-   - Số tiền đã nhận từ khách
-   - Phí ship thực tế
-4. Bấm [Đã giao hàng]
+3. Nhân viên mở ExportOrder → màn hình giao hàng hiển thị:
+   - Chi phí NK hàng hóa (tổng totalImportCostToCustomer các mã hàng) — chỉ đọc
+   - Nhập: Phí ship (deliveryCost)
+   - Hiển thị: Tổng tiền khách phải trả = Chi phí NK + Phí ship (tự động cập nhật)
+   - Tick: "Đã nhận tiền" (paymentReceived)
+     + Tick = đã nhận đủ tiền từ khách
+     + Không tick = khách nợ → ghi nhận công nợ (implement sau)
+4. Bấm [Xác nhận xuất kho]
 5. Backend: ExportOrder.status = DA_XUAT_KHO
+           + ExportOrder.deliveryCost = phí ship
+           + ExportOrder.paymentReceived = true/false
            + ProductCode.exportStatus = DA_XUAT_KHO
 ```
 
@@ -230,7 +256,12 @@ Có 2 điểm khởi đầu:
 | Không ghi đè số liệu gốc — dùng flag `useActualData` per-item | Giữ audit trail đầy đủ. Luôn biết số liệu trước/sau và ai quyết định dùng cái nào |
 | Xác nhận số cân per-item + nút bulk | Linh hoạt: admin chọn riêng lẻ hoặc approve nhanh toàn bộ |
 | Chỉ cho hủy khi `DA_TAO_LENH` | Bảo vệ tính toàn vẹn sau khi đã có action thực tế |
-| **1 ExportOrder = nhiều khách hàng (v1.1)** | Thực tế kho thường giao nhiều mã hàng nhiều khách trong 1 lần xuất. Không cần gắn cứng 1 khách. Thông tin khách tra qua `ProductCode.customerId` |
-| ExportOrder không có `customerId` (v1.1) | Không còn ràng buộc 1 khách → remove field để tránh dư thừa. Mỗi PC đã biết khách của nó |
+| **1 ExportOrder = 1 khách hàng (v1.2)** | Đảm bảo logic xuất kho theo từng khách, tránh nhầm lẫn khi giao hàng và tính toán công nợ |
+| ExportOrder có `customerId` (v1.2) | Khôi phục field sau khi đánh giá lại — cần để link với khách hàng phục vụ báo cáo / công nợ sau này |
+| FE validate cùng `customerId` trước khi mở modal | Phản hồi nhanh cho user ngay trên UI, không cần round-trip API |
+| Popup thêm mã hàng (Luồng B) filter theo `customerId` | Loại bỏ lựa chọn sai ngay từ đầu, user không thể chọn nhầm mã hàng khách khác |
 | Clone `exportDeliveryDateTime` sang `ProductCode` | Sort đơn giản không cần JOIN khi render bảng "Tồn kho VN" |
 | `exportStatus` clone xuống `ProductCode` | Hiển thị nhanh trên bảng mà không cần JOIN vào ExportOrder (tương tự `vehicleStatus`) |
+| **Phí ship nhập tại bước giao hàng (v1.3)** | Phí ship thực tế chỉ biết khi giao — không ước tính trước. Gắn với bước DA_XUAT_KHO để đảm bảo tính chính xác |
+| **`paymentReceived` boolean thay vì nhập tay số tiền (v1.3)** | Không có trường hợp nhận thiếu — nhận đủ hoặc không nhận. Boolean đơn giản hơn, tránh lỗi nhập liệu. `false` = công nợ cho module công nợ xử lý sau |
+| **Tổng tiền khách phải trả tính trên FE (v1.3)** | Derived value = NK + phí ship. Không lưu riêng để tránh inconsistency. FE tính real-time khi nhập phí ship |

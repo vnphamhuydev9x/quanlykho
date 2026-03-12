@@ -65,7 +65,7 @@ const ExportOrderListPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [pagination.current, pagination.pageSize, searchText, statusFilter]);
+    }, [pagination.current, pagination.pageSize, searchText, statusFilter, urlStatus]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -95,14 +95,11 @@ const ExportOrderListPage = () => {
         },
         {
             title: 'Khách hàng',
-            key: 'customers',
+            key: 'customer',
             width: 200,
-            render: (_, r) => {
-                const codes = [...new Set((r.productCodes || []).map(pc => pc.customer?.customerCode).filter(Boolean))];
-                if (codes.length === 0) return '—';
-                if (codes.length === 1) return codes[0];
-                return `${codes[0]} (+${codes.length - 1} khác)`;
-            },
+            render: (_, r) => r.customer
+                ? `${r.customer.customerCode || ''} — ${r.customer.fullName}`.trim()
+                : '—',
         },
         {
             title: 'Trạng thái',
@@ -129,20 +126,22 @@ const ExportOrderListPage = () => {
             render: d => d ? dayjs(d).format('DD/MM/YYYY HH:mm') : '—',
         },
         {
-            title: 'Chi phí giao hàng',
+            title: 'Phí ship',
             dataIndex: 'deliveryCost',
             key: 'deliveryCost',
-            width: 150,
+            width: 130,
             align: 'right',
             render: v => v ? `${new Intl.NumberFormat('de-DE').format(v)} ₫` : '—',
         },
         {
-            title: 'Số tiền đã thu',
-            dataIndex: 'amountReceived',
-            key: 'amountReceived',
-            width: 140,
-            align: 'right',
-            render: v => v != null ? `${new Intl.NumberFormat('de-DE').format(v)} ₫` : '—',
+            title: 'Đã nhận tiền',
+            dataIndex: 'paymentReceived',
+            key: 'paymentReceived',
+            width: 120,
+            align: 'center',
+            render: (v, r) => r.status === 'DA_XUAT_KHO'
+                ? <Tag color={v ? 'green' : 'red'}>{v ? 'Đã nhận' : 'Công nợ'}</Tag>
+                : '—',
         },
         {
             title: 'Ghi chú',

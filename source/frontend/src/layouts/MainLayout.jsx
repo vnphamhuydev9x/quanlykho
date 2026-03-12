@@ -285,14 +285,29 @@ const MainLayout = ({ children }) => {
             children: [
                 {
                     key: '/export-orders',
-                    label: 'Tất cả',
+                    label: t('exportOrder.statusAll') || 'Tất cả',
                     onClick: () => navigate('/export-orders'),
                 },
                 {
+                    key: '/export-orders?status=DA_TAO_LENH',
+                    label: t('exportOrder.statusDaTaoLenh') || 'Đã tạo lệnh',
+                    onClick: () => navigate('/export-orders?status=DA_TAO_LENH'),
+                },
+                {
                     key: '/export-orders?status=DANG_XAC_NHAN_CAN',
-                    label: 'Đang xác nhận cân',
+                    label: t('exportOrder.statusDangXacNhanCan') || 'Đang xác nhận cân',
                     onClick: () => navigate('/export-orders?status=DANG_XAC_NHAN_CAN'),
-                }
+                },
+                {
+                    key: '/export-orders?status=DA_XAC_NHAN_CAN',
+                    label: t('exportOrder.statusDaXacNhanCan') || 'Đã xác nhận cân',
+                    onClick: () => navigate('/export-orders?status=DA_XAC_NHAN_CAN'),
+                },
+                {
+                    key: '/export-orders?status=DA_XUAT_KHO',
+                    label: t('exportOrder.statusDaXuatKho') || 'Đã xuất kho',
+                    onClick: () => navigate('/export-orders?status=DA_XUAT_KHO'),
+                },
             ]
         },
         {

@@ -44,6 +44,7 @@ model User {
   manifestsCalled     Manifest[]    @relation("ManifestCaller")
 
   createdExportOrders    ExportOrder[] @relation("ExportOrderCreatedBy")
+  customerExportOrders   ExportOrder[] @relation("ExportOrderCustomer")
 
   deletedAt DateTime? // Soft Delete
 
@@ -335,6 +336,9 @@ model Manifest {
 model ExportOrder {
   id                 Int               @id @default(autoincrement())
 
+  customerId         Int?
+  customer           User?             @relation("ExportOrderCustomer", fields: [customerId], references: [id])
+
   createdById        Int?
   createdBy          User?             @relation("ExportOrderCreatedBy", fields: [createdById], references: [id])
 
@@ -343,8 +347,7 @@ model ExportOrder {
   notes              String?           @db.Text
   status             ExportOrderStatus @default(DA_TAO_LENH)
 
-  amountReceived     Int?              // Số tiền đã nhận (VND) - điền khi giao hàng
-  actualShippingCost Int?              // Phí ship thực tế (VND) - điền khi giao hàng
+  paymentReceived    Boolean           @default(false) // Đã nhận tiền từ khách (tick khi giao hàng)
 
   productCodes       ProductCode[]
 

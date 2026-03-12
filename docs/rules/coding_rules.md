@@ -1025,3 +1025,92 @@ useEffect(() => {
 - [ ] `userRole` được parse từ JWT và truyền đúng vào modal **và cả sub-modal**
 - [ ] Sub-list bên trong modal: Delete/View **không** bị điều kiện bởi `viewOnly` của form cha
 - [ ] Nút `[+ Thêm mới]` ở header page: chỉ hiện cho ADMIN (modal tạo mới không cần view mode)
+
+---
+
+## Rule N+1: Tách Component — Tránh Component Quá Dài
+
+### Nguyên tắc
+Một component **không nên vừa quản lý state tổng thể vừa render nhiều UI phức tạp** trong cùng một file. Khi một component dài hơn ~300-400 dòng, **hãy tách** những phần UI độc lập ra thành component con riêng biệt.
+
+### Dấu hiệu cần tách
+- Component có nhiều hơn 2-3 `render*()` functions lớn bên trong.
+- Một "section" UI có state/logic riêng (form riêng, xử lý riêng).
+- File dài hơn 400 dòng và khó đọc.
+
+### Cách tách đúng
+```
+// ❌ Sai: renderDelivery() là một hàm khổng lồ bên trong component cha
+const ExportOrderModal = () => {
+    const [deliveryForm] = Form.useForm(); // form ở parent
+    const renderDelivery = () => (
+        <Form form={deliveryForm}>  // nhưng <Form> render ở child render fn
+            ...
+        </Form>
+    );
+};
+
+// ✅ Đúng: Tách thành component riêng, form sống đúng level
+const DeliveryForm = ({ order, formRef }) => {
+    const [form] = Form.useForm(); // form ở đúng component render nó
+    useEffect(() => { formRef?.(form); }, [form]);
+    return <Form form={form}>...</Form>;
+};
+```
+
+### Lợi ích
+- Dễ maintain, dễ đọc.
+- Tránh bug Ant Design Form context bị disconnect khi form instance khai báo sai level.
+- Mỗi component chịu trách nhiệm một việc duy nhất.
+
+---
+
+## Rule N+2: Ant Design Form — Quy tắc dùng đúng cách
+
+### Nguyên tắc
+`Form.useForm()` **phải được khai báo tại chính component** mà render `<Form form={...}>` đó. Nếu khai báo ở component cha nhưng `<Form>` render ở component con (hoặc render function), form instance sẽ bị **disconnect** — `validateFields()` trả về `{}`.
+
+### Form.useWatch — Dùng để đọc giá trị realtime
+```jsx
+// ✅ Pattern chuẩn (xem ProductItemModal.jsx)
+const [form] = Form.useForm();
+const deliveryCost = Number(Form.useWatch('deliveryCost', form)) || 0;
+// → Dùng để cập nhật UI realtime (tính tổng, hiển thị preview...)
+// → KHÔNG cần value/onChange thủ công trên input
+```
+
+### Reset Form — Dùng đúng method
+```jsx
+// ✅ setFieldsValue: chỉ cập nhật giá trị, KHÔNG unregister fields
+form.setFieldsValue({ deliveryCost: null, paymentReceived: false });
+
+// ⚠️ resetFields: unregister toàn bộ fields rồi re-register
+// → Có thể gây race condition nếu gọi trước khi form mount
+// → Chỉ dùng khi thực sự muốn reset toàn bộ (vd: đóng modal xong mở lại)
+form.resetFields();
+```
+
+### Không cần value/onChange khi dùng Form.Item
+```jsx
+// ❌ Không cần — Form.Item tự inject value/onChange
+<Form.Item name="deliveryCost">
+    <CustomNumberInput
+        value={someState}        // ← bỏ đi
+        onChange={v => setState} // ← bỏ đi
+    />
+</Form.Item>
+
+// ✅ Đúng — Form.Item tự quản lý
+<Form.Item name="deliveryCost">
+    <CustomNumberInput />
+</Form.Item>
+```
+
+### Checkbox với Form.Item
+```jsx
+// ✅ Dùng valuePropName="checked" để bind boolean
+<Form.Item name="paymentReceived" valuePropName="checked">
+    <Checkbox>Đã nhận tiền</Checkbox>
+</Form.Item>
+// → values.paymentReceived sẽ là true/false khi validateFields()
+```

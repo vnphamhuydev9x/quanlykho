@@ -59,12 +59,7 @@ const exportOrderController = {
 
             const where = { deletedAt: null };
             if (status) where.status = status;
-            // v1.1: customerId filter now checks if any linked productCode belongs to this customer
-            if (customerId) {
-                where.productCodes = {
-                    some: { customerId: parseInt(customerId) }
-                };
-            }
+            if (customerId) where.customerId = parseInt(customerId);
 
             const [items, total] = await prisma.$transaction([
                 prisma.exportOrder.findMany({
@@ -73,13 +68,8 @@ const exportOrderController = {
                     take: parseInt(limit),
                     orderBy: { createdAt: 'desc' },
                     include: {
+                        customer: { select: { id: true, fullName: true, customerCode: true } },
                         createdBy: { select: { id: true, fullName: true } },
-                        productCodes: {
-                            take: 1, // Để lấy thông tin khách hàng tiêu biểu hoặc check
-                            include: {
-                                customer: { select: { id: true, fullName: true, customerCode: true } }
-                            }
-                        },
                         _count: { select: { productCodes: true } }
                     }
                 }),
@@ -124,6 +114,7 @@ const exportOrderController = {
             const exportOrder = await prisma.exportOrder.findFirst({
                 where: { id: parseInt(id), deletedAt: null },
                 include: {
+                        customer: { select: { id: true, fullName: true, customerCode: true } },
                         createdBy: { select: { id: true, fullName: true } },
                         productCodes: {
                             where: { deletedAt: null },
@@ -202,7 +193,31 @@ const exportOrderController = {
                 });
             }
 
-            // Bước 2 (v1.1): KHÔNG validate cùng customerId — cho phép nhiều khách hàng
+            // Bước 2: Validate tất cả mã hàng phải cùng 1 khách hàng
+            const allPCs = await prisma.productCode.findMany({
+                where: { id: { in: ids }, deletedAt: null },
+                select: {
+                    id: true, orderCode: true, customerId: true,
+                    customer: { select: { fullName: true, customerCode: true } }
+                }
+            });
+            const uniqueCustomerIds = [...new Set(allPCs.map(pc => pc.customerId).filter(id => id != null))];
+            if (uniqueCustomerIds.length > 1) {
+                return res.status(400).json({
+                    code: 400,
+                    errorCode: 'MIXED_CUSTOMERS',
+                    message: 'Lệnh xuất kho chỉ được tạo cho 1 khách hàng',
+                    conflicts: allPCs.map(pc => ({
+                        id: pc.id,
+                        orderCode: pc.orderCode,
+                        customerId: pc.customerId,
+                        customerName: pc.customer
+                            ? `${pc.customer.customerCode || ''} — ${pc.customer.fullName}`.trim()
+                            : null
+                    }))
+                });
+            }
+            const customerId = uniqueCustomerIds[0] || null;
 
             // Bước 3: Validate exportOrderId = null
             const alreadyExported = await prisma.productCode.findMany({
@@ -226,6 +241,7 @@ const exportOrderController = {
             const exportOrder = await prisma.$transaction(async (tx) => {
                 const eo = await tx.exportOrder.create({
                     data: {
+                        customerId,
                         createdById: req.user?.id || null,
                         deliveryDateTime: deliveryDateTime ? new Date(deliveryDateTime) : null,
                         deliveryCost: deliveryCost ? parseInt(deliveryCost) : null,
@@ -417,11 +433,11 @@ const exportOrderController = {
     },
 
     // PATCH /api/export-orders/:id/status
-    // Giao hàng: DA_XAC_NHAN_CAN → DA_XUAT_KHO (kèm amountReceived, actualShippingCost)
+    // Giao hàng: DA_XAC_NHAN_CAN → DA_XUAT_KHO (kèm deliveryCost/phí ship, paymentReceived)
     updateStatus: async (req, res) => {
         try {
             const { id } = req.params;
-            const { status, amountReceived, actualShippingCost } = req.body;
+            const { status, deliveryCost, paymentReceived } = req.body;
 
             if (!status) {
                 return res.status(400).json({ code: 99001, message: 'status is required' });
@@ -445,8 +461,8 @@ const exportOrderController = {
 
             const updateData = { status };
             if (status === 'DA_XUAT_KHO') {
-                if (amountReceived != null) updateData.amountReceived = parseInt(amountReceived);
-                if (actualShippingCost != null) updateData.actualShippingCost = parseInt(actualShippingCost);
+                if (deliveryCost != null) updateData.deliveryCost = parseInt(deliveryCost);
+                updateData.paymentReceived = paymentReceived === true || paymentReceived === 'true';
             }
 
             await prisma.$transaction(async (tx) => {
@@ -468,6 +484,51 @@ const exportOrderController = {
             return res.status(200).json({ code: 200, message: 'Success' });
         } catch (error) {
             logger.error(`[ExportOrder.updateStatus] Error: ${error.message}`);
+            return res.status(500).json({ code: 99500, message: 'Internal Server Error' });
+        }
+    },
+
+    // PUT /api/export-orders/:id
+    // Cập nhật thông tin lệnh: deliveryDateTime, notes (deliveryCost chỉ nhập tại bước giao hàng)
+    update: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { deliveryDateTime, notes } = req.body;
+
+            const exportOrder = await prisma.exportOrder.findFirst({
+                where: { id: parseInt(id), deletedAt: null }
+            });
+
+            if (!exportOrder) {
+                return res.status(404).json({ code: 99006, message: 'Export order not found' });
+            }
+
+            const updateData = {};
+            if (deliveryDateTime !== undefined) updateData.deliveryDateTime = deliveryDateTime ? new Date(deliveryDateTime) : null;
+            if (notes !== undefined) updateData.notes = notes || null;
+
+            await prisma.$transaction(async (tx) => {
+                await tx.exportOrder.update({
+                    where: { id: parseInt(id) },
+                    data: updateData
+                });
+
+                // Sync exportDeliveryDateTime on linked ProductCodes if deliveryDateTime changed
+                if (deliveryDateTime !== undefined) {
+                    await tx.productCode.updateMany({
+                        where: { exportOrderId: parseInt(id) },
+                        data: { exportDeliveryDateTime: deliveryDateTime ? new Date(deliveryDateTime) : null }
+                    });
+                }
+            });
+
+            await invalidateExportOrderCache(id);
+            await invalidateProductCodeCache();
+
+            logger.info(`[ExportOrder.update] ID: ${id}`);
+            return res.status(200).json({ code: 200, message: 'Success' });
+        } catch (error) {
+            logger.error(`[ExportOrder.update] Error: ${error.message}`);
             return res.status(500).json({ code: 99500, message: 'Internal Server Error' });
         }
     },

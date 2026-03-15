@@ -49,6 +49,10 @@ source/**/coverage/
 .next/
 source/**/.next/
 
+# Vite cache
+.vite/
+source/**/.vite/
+
 # Prisma
 source/**/prisma/*.db
 source/**/prisma/*.db-journal

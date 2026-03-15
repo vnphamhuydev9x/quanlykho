@@ -2,8 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
+import zhCN from 'antd/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
+import 'dayjs/locale/zh-cn';
+import { useTranslation } from 'react-i18next';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
@@ -23,10 +26,21 @@ import ManifestDetailPage from './pages/manifest/ManifestDetailPage';
 import ExportOrderListPage from './pages/exportOrder/ExportOrderListPage';
 import DebtPage from './pages/debt/DebtPage';
 import DebtDetailPage from './pages/debt/DebtDetailPage';
+import InquiryPage from './pages/inquiry/InquiryPage';
+import NotificationPage from './pages/notification/NotificationPage';
+import LandingPage from './pages/landing/LandingPage';
 import MainLayout from './layouts/MainLayout';
 
 // Set dayjs global locale to Vietnamese
 dayjs.locale('vi');
+
+// Dynamic Ant Design locale based on i18n language
+const LocaleProvider = ({ children }) => {
+  const { i18n } = useTranslation();
+  const antLocale = i18n.language === 'zh' ? zhCN : viVN;
+  dayjs.locale(i18n.language === 'zh' ? 'zh-cn' : 'vi');
+  return <ConfigProvider locale={antLocale}>{children}</ConfigProvider>;
+};
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -39,10 +53,12 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <ConfigProvider locale={viVN}>
-      <Router>
+    <Router>
+      <LocaleProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          {/* Public landing page — không cần auth */}
+          <Route path="/consulting" element={<LandingPage />} />
           <Route
             path="/"
             element={
@@ -213,11 +229,31 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/customer-inquiry"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <InquiryPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notification-history"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <NotificationPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
           {/* Redirect unknown routes to Dashboard */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Router>
-    </ConfigProvider>
+      </LocaleProvider>
+    </Router>
   );
 }
 

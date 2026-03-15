@@ -406,11 +406,39 @@ model Notification {
   user        User     @relation("UserNotifications", fields: [userId], references: [id])
   content     String
   isRead      Boolean  @default(false)
-  
+  type        String?  // "PRODUCT_CODE" | "INQUIRY"
+  refId       Int?     // ID của entity liên quan (inquiryId, productCodeId, ...)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@map("notifications")
+}
+
+// InquiryStatus dùng Int thay vì enum để hỗ trợ DB-level sort theo priority
+// Mapping: 1=PENDING_REVIEW, 2=PENDING_ANSWER, 3=PENDING_SEND, 4=EMAIL_SENT, 5=ANSWER_REJECTED, 6=QUESTION_REJECTED
+// Xem chi tiết tại src/constants/enums.js
+
+model CustomerInquiry {
+  id            Int           @id @default(autoincrement())
+  email         String        // Email khách hàng (bắt buộc)
+  productName   String?       @db.Text // Tên sản phẩm
+  material      String?       @db.Text // Chất liệu
+  usage         String?       @db.Text // Công dụng
+  size          String?                // Kích thước / kích cỡ
+  brand         String?                // Nhãn hàng
+  specialInfo   String?       @db.Text // Thông tin đặc thù (pin, điện áp, áp suất...)
+  techSpec      String?       @db.Text // Thông số kỹ thuật / catalogue / tem etiket
+  demand        String?                // Nhu cầu (CSNK, giá khai...)
+  answer        String?       @db.Text // Câu trả lời của nhân viên chứng từ
+  internalNote  String?       @db.Text // Ghi chú nội bộ (không gửi email)
+  status        Int           @default(1) // 1=PENDING_REVIEW — xem enums.js
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?     // Soft Delete
+
+  @@map("customer_inquiries")
 }
 
 model DebtPeriod {

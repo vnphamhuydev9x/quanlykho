@@ -112,7 +112,7 @@ const Profile = () => {
                     {/* Address is hidden as requested */}
 
                     <Descriptions.Item label={t('profile.role')}>
-                        {user?.type === 'CUSTOMER' ? t('roles.CUSTOMER') : user?.role}
+                        {t(`roles.${user?.role}`, user?.role)}
                     </Descriptions.Item>
                 </Descriptions>
             </Card>

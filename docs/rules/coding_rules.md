@@ -244,6 +244,34 @@ logger.info(`[CreateEmployee] Success. New ID: ${newUser.id}`);
 
 ---
 
+## 8b. Backend Constants & Enums
+
+### Quy tắc BẮT BUỘC
+
+*   **TUYỆT ĐỐI KHÔNG** dùng plain text string trực tiếp trong controller/route/service cho các giá trị cố định như **role**, **status**, **type**...
+*   Tất cả các hằng số phải được định nghĩa tại **`src/constants/enums.js`** và import vào nơi sử dụng.
+
+```javascript
+// ❌ SAI — plain text string trực tiếp
+if (role === 'CHUNG_TU') { ... }
+whereClause.status = { in: ['PENDING_ANSWER', 'ANSWER_REJECTED'] };
+
+// ✅ ĐÚNG — dùng enum
+const { ROLES, INQUIRY_STATUS } = require('../constants/enums');
+if (role === ROLES.CHUNG_TU) { ... }
+whereClause.status = { in: [INQUIRY_STATUS.PENDING_ANSWER, INQUIRY_STATUS.ANSWER_REJECTED] };
+```
+
+*   **Role Middleware**: Khi implement API có phân quyền, **BẮT BUỘC** phải khai báo roles tường minh trong route (không để ngầm hiểu). Nếu chưa rõ roles nào được phép, **phải hỏi** trước khi implement.
+
+```javascript
+// ✅ ĐÚNG — khai báo roles rõ ràng tại route
+const roleMiddleware = require('../middlewares/roleMiddleware');
+router.put('/:id/review', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.SALE]), controller.review);
+```
+
+---
+
 # FRONTEND RULES
 
 ## 8. Frontend API Calls (axiosInstance)
@@ -806,6 +834,10 @@ const DetailModal = ({ open, onClose, data }) => {
 *   **Import/Require**: Giữ style nhất quán trong cùng 1 file.
     *   Ví dụ: Nếu đã dùng `const variable = require(...)` thì áp dụng cho tất cả.
     *   **TRÁNH** việc `require` trực tiếp trong hàm sử dụng (Inline require) trừ khi có lý do đặc biệt (Lazy load).
+*   **Yoda Condition (BẮT BUỘC)**: Khi so sánh biến với hằng số / enum, **hằng số / enum luôn đứng bên trái**.
+    *   ✅ Đúng: `if (ROLES.CHUNG_TU === role)`, `if (INQUIRY_STATUS.PENDING_REVIEW === status)`
+    *   ❌ Sai: `if (role === ROLES.CHUNG_TU)`, `if (status === INQUIRY_STATUS.PENDING_REVIEW)`
+    *   **Lý do**: Tránh null pointer exception — nếu `role` là `undefined`/`null`, phép so sánh vẫn trả về `false` đúng; tránh lỗi gán nhầm (`=` thay vì `===`) vì constant không thể đứng bên trái phép gán.
 
 ## 14. Test-Driven Development (TDD) Methodology
 *   **TDD Workflow**:
@@ -820,6 +852,41 @@ const DetailModal = ({ open, onClose, data }) => {
 ## 15. Communication Rules (Quy tắc giao tiếp)
 *   **Language**: Luôn trả lời và giao tiếp bằng **Tiếng Việt** (Vietnamese) trong mọi tình huống (trừ khi viết code hoặc tên biến tiếng Anh).
 *   **Plan**: Các file kế hoạch (`implementation_plan.md`) phải được viết hoàn toàn bằng **Tiếng Việt**.
+*   **Rephrase Doc Update (BẮT BUỘC)**:
+
+    ### Cấu trúc tài liệu requirement
+    Mỗi chức năng có 2 file đặt trong `docs/business-tech-note/Draft_requirement/<tên-chức-năng>/`:
+    - `<tên-chức-năng>_requirement.md` — Draft gốc do user viết tay (thô, ngắn gọn)
+    - `<tên-chức-năng>_requirement_rephrase.md` — Bản chính thức được chuẩn hóa, **luôn phản ánh trạng thái requirement hiện tại**
+
+    ### Quy tắc BẮT BUỘC
+    Khi user viết **review implement** trong file `*_requirement.md` và có bất kỳ thay đổi nào về **business requirement** (functional hoặc non-functional), **BẮT BUỘC** phải cập nhật file `*_requirement_rephrase.md` trước hoặc cùng lúc với việc fix code.
+
+    ### Ví dụ cụ thể
+    User thêm vào `landing_page_requirement.md`:
+    ```
+    # review implement 2
+    - nhân viên chứng từ họ chỉ nhìn thấy như sau:
+        - đã có những câu hỏi nào (PENDING_ANSWER, PENDING_SEND, EMAIL_SENT)
+        - họ không biết là trước đó có cái nào đã bị reject
+    ```
+
+    ✅ **Đúng quy trình**:
+    1. Đọc thay đổi trong `landing_page_requirement.md`
+    2. Cập nhật `landing_page_requirement_rephrase.md` → thêm bảng visibility của CHUNG_TU (mục 3.4)
+    3. Fix code controller/route tương ứng
+
+    ❌ **Sai quy trình**:
+    - Fix code ngay mà không update `*_rephrase.md`
+    - Chỉ update `*_rephrase.md` sau khi code xong
+
+    ### Phân biệt loại thay đổi
+    | Loại thay đổi | Phải update rephrase? |
+    |---|---|
+    | Functional requirement (luồng, phân quyền, visibility...) | ✅ BẮT BUỘC |
+    | Non-functional requirement (notification, performance...) | ✅ BẮT BUỘC |
+    | Bug fix thuần kỹ thuật (không đổi business logic) | ❌ Không cần |
+    | Refactor code (không đổi behavior) | ❌ Không cần |
 
 ---
 
@@ -1114,3 +1181,61 @@ form.resetFields();
 </Form.Item>
 // → values.paymentReceived sẽ là true/false khi validateFields()
 ```
+
+---
+
+## Rule N+3: Redis Cache — Quy tắc sử dụng (Backend)
+
+### Nguyên tắc cốt lõi
+
+**KHÔNG được dùng `KEYS pattern`** để tìm và xóa cache. Dùng `SCAN` thay thế.
+
+| | `KEYS` | `SCAN` (via `scanIterator`) |
+|---|---|---|
+| Blocking | ✅ Block Redis thread | ❌ Non-blocking |
+| An toàn production | ❌ | ✅ |
+| Keyspace lớn | Gây lag toàn hệ thống | Xử lý từng batch ~100 keys |
+
+### Utility dùng chung
+
+Tất cả logic xóa cache theo prefix **phải** dùng hàm `deleteByPrefix` từ `src/utils/redisUtils.js`:
+
+```javascript
+const { deleteByPrefix } = require('../utils/redisUtils');
+
+// ✅ Đúng — SCAN+DEL, non-blocking
+await deleteByPrefix('inquiries:list:admin_sale:');
+
+// ❌ Sai — KEYS block Redis
+const keys = await redisClient.keys('inquiries:list:admin_sale:*');
+```
+
+### Quy ước đặt tên cache key
+
+```
+{domain}:{type}:{scope}:{params}
+```
+
+Ví dụ:
+- `inquiries:list:admin_sale:p1:l20` — list, trang 1, limit 20, role admin/sale
+- `inquiries:detail:42` — detail của inquiry id=42
+- `roles_user_ids:ADMIN,SALE` — danh sách userId theo role (sorted)
+
+### TTL chuẩn
+
+| Loại data | TTL gợi ý | Lý do |
+|---|---|---|
+| List / paginated | 30s | Thay đổi thường xuyên |
+| Detail | 30s | Có thể bị update |
+| Role → userIds | 600s (10 phút) | Ít thay đổi, tốn query |
+
+### `COUNT` trong `scanIterator`
+
+`COUNT: 100` là **hint** (gợi ý) cho Redis mỗi batch trả về ~100 keys — không phải giới hạn cứng. Giá trị 100 phù hợp cho internal app keyspace nhỏ.
+
+### Invalidation Strategy
+
+- Khi dữ liệu thay đổi → **xóa cache liên quan ngay**, không chờ TTL hết hạn.
+- Với paginated list: dùng `deleteByPrefix` xóa toàn bộ page cache của prefix đó.
+- `updateNote` (chỉ cập nhật note): chỉ xóa detail cache, **không** cần xóa list cache.
+- Cache failure là **non-critical** — wrap trong `try/catch`, không để lỗi Redis ảnh hưởng đến response.

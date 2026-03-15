@@ -73,6 +73,7 @@ async function main() {
         { username: 'manager_vu', fullName: 'Vũ Quản Lý', email: 'vu.manager@3t.com', role: 'ADMIN', phone: '0909000002' },
         { username: 'sale_thuy', fullName: 'Nguyễn Thị Thủy', email: 'thuy.sale@3t.com', role: 'SALE', phone: '0909000011' },
         { username: 'sale_hung', fullName: 'Phạm Văn Hùng', email: 'hung.sale@3t.com', role: 'SALE', phone: '0909000012' },
+        { username: 'chungtuu_mai', fullName: 'Trần Thị Mai', email: 'mai.chungtuu@3t.com', role: 'CHUNG_TU', phone: '0909000041' },
         { username: 'kho_an', fullName: 'Trần Văn An', email: 'an.kho@3t.com', role: 'WAREHOUSE', phone: '0909000021' },
         { username: 'kho_binh', fullName: 'Lê Văn Bình', email: 'binh.kho@3t.com', role: 'WAREHOUSE', phone: '0909000022' },
         { username: 'ketoan_lan', fullName: 'Hoàng Thị Lan', email: 'lan.kt@3t.com', role: 'ACCOUNTANT', phone: '0909000031' },
@@ -549,6 +550,173 @@ async function main() {
         } else {
             console.log(`  DebtPeriod exists: ${cus.username} ${year}`);
         }
+    }
+
+    // ─── SEED CUSTOMER INQUIRIES + NOTIFICATIONS ──────────────────────────────
+    console.log('Seeding CustomerInquiries...');
+    const existingInquiry = await prisma.customerInquiry.findFirst();
+    if (!existingInquiry) {
+        const adminUsers  = await prisma.user.findMany({ where: { role: 'ADMIN', deletedAt: null } });
+        const saleUsers   = await prisma.user.findMany({ where: { role: 'SALE', deletedAt: null } });
+        const chungTuUsers= await prisma.user.findMany({ where: { role: 'CHUNG_TU', deletedAt: null } });
+        const adminSaleIds = [...adminUsers, ...saleUsers].map(u => u.id);
+        const chungTuIds   = chungTuUsers.map(u => u.id);
+
+        const notiKey = (key, params) => JSON.stringify({ key, params });
+
+        // Helper: tính createdAt lùi N ngày
+        const daysAgo = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+
+        // 8 inquiries ở các trạng thái khác nhau, trải đều nhiều ngày
+        const inquiryDefs = [
+            {
+                email: 'nguyen.a@gmail.com', productName: 'Máy bơm nước ly tâm',
+                material: 'Inox 304', usage: 'Bơm nước sạch sinh hoạt',
+                size: 'DN50, công suất 1.5kW', brand: 'Không hiệu',
+                specialInfo: 'Điện áp 220V, tần số 50Hz', demand: 'CSNK, giá khai',
+                techSpec: 'Q=3m3/h, H=30m, N=1.5kW',
+                status: 1, // PENDING_REVIEW
+                _daysAgo: 0, // hôm nay
+            },
+            {
+                email: 'tran.b@company.vn', productName: 'Van bi inox',
+                material: 'Inox 316', usage: 'Đóng/mở đường ống hóa chất',
+                size: 'DN25, PN16', brand: 'Kitz',
+                specialInfo: 'Chịu nhiệt độ cao đến 200°C', demand: 'CSNK',
+                status: 2, // PENDING_ANSWER
+                _daysAgo: 1, // hôm qua
+            },
+            {
+                email: 'le.c@factory.com', productName: 'Đệm cao su EPDM',
+                material: 'Cao su EPDM', usage: 'Làm kín mặt bích',
+                size: 'DN100, dày 3mm', brand: 'Không hiệu', demand: 'Giá khai',
+                status: 3, // PENDING_SEND
+                answer: 'Sản phẩm thuộc HS Code 4016.93, thuế NK 15%, VAT 10%. Khai báo theo đúng vật liệu EPDM, xuất xứ CN.',
+                _daysAgo: 3,
+            },
+            {
+                email: 'pham.d@trading.vn', productName: 'Cảm biến nhiệt độ PT100',
+                material: 'Thép không gỉ, đầu đo platinum', usage: 'Đo nhiệt độ lò sấy',
+                size: 'Chiều dài 150mm, đường kính ống 6mm', brand: 'Omron',
+                specialInfo: 'Điện áp 24VDC, đầu ra 4-20mA', demand: 'CSNK, giá khai',
+                techSpec: 'Dải đo -50 đến +500°C, độ chính xác ±0.5°C',
+                status: 4, // EMAIL_SENT
+                answer: 'Cảm biến PT100 thuộc HS 9025.19, thuế NK 0%, VAT 10%. Khi khai báo cần có catalogue và invoice ghi rõ thông số kỹ thuật.',
+                _daysAgo: 7,
+            },
+            {
+                email: 'hoang.e@gmail.com', productName: 'Bơm định lượng hóa chất',
+                material: 'PVC, PTFE', usage: 'Định lượng hóa chất xử lý nước',
+                size: 'Lưu lượng 10L/h, áp suất 10 bar', brand: 'Prominent',
+                specialInfo: 'Có pin dự phòng, điện áp 220V', demand: 'CSNK',
+                techSpec: 'Pump head PVC, diaphragm PTFE',
+                status: 5, // ANSWER_REJECTED
+                answer: 'Bơm định lượng HS 8413.50, thuế NK 0%.',
+                _daysAgo: 5,
+            },
+            {
+                email: 'vu.f@corp.com', productName: 'Pin lithium 18650',
+                material: 'Lithium', usage: 'Lắp vào thiết bị cầm tay',
+                size: '18650, dung lượng 3000mAh', brand: 'Samsung SDI',
+                specialInfo: 'Pin nguy hiểm, cần khai báo đặc biệt',
+                demand: 'CSNK',
+                status: 6, // QUESTION_REJECTED
+                _daysAgo: 10,
+            },
+            {
+                email: 'dao.g@gmail.com', productName: 'Vòng bi bạc đạn',
+                material: 'Thép, bi cầu thép không gỉ', usage: 'Lắp vào trục động cơ',
+                size: '6205 (25x52x15mm)', brand: 'NSK',
+                demand: 'Giá khai',
+                status: 2, // PENDING_ANSWER
+                _daysAgo: 2,
+            },
+            {
+                email: 'bui.h@gmail.com', productName: 'Dây cáp điện 3x4mm2',
+                material: 'Đồng, vỏ PVC', usage: 'Đấu nối tủ điện',
+                size: '3 lõi x 4mm2, cuộn 100m', brand: 'Không hiệu',
+                demand: 'CSNK, giá khai',
+                status: 1, // PENDING_REVIEW
+                _daysAgo: 0, // hôm nay (khác giờ)
+            },
+        ];
+
+        for (const def of inquiryDefs) {
+            const { _daysAgo: n, ...inquiryData } = def;
+            const createdAt = daysAgo(n);
+            const inq = await prisma.customerInquiry.create({ data: { ...inquiryData, createdAt } });
+            console.log(`  Created Inquiry id=${inq.id} status=${inq.status} email=${inq.email}`);
+
+            // Tạo notifications tương ứng (cùng createdAt với inquiry)
+            if (inq.status === 1) {
+                // PENDING_REVIEW → noti cho admin/sale (chưa đọc)
+                for (const uid of adminSaleIds) {
+                    await prisma.notification.create({
+                        data: {
+                            userId: uid, type: 'INQUIRY', refId: inq.id, isRead: false,
+                            content: notiKey('notification.newInquiry', { email: inq.email }),
+                            createdAt,
+                        }
+                    });
+                }
+            } else if (inq.status === 2) {
+                // PENDING_ANSWER → noti cho admin/sale (đã đọc) + noti cho chung_tu (chưa đọc)
+                for (const uid of adminSaleIds) {
+                    await prisma.notification.create({
+                        data: {
+                            userId: uid, type: 'INQUIRY', refId: inq.id, isRead: true,
+                            content: notiKey('notification.newInquiry', { email: inq.email }),
+                            createdAt,
+                        }
+                    });
+                }
+                for (const uid of chungTuIds) {
+                    await prisma.notification.create({
+                        data: {
+                            userId: uid, type: 'INQUIRY', refId: inq.id, isRead: false,
+                            content: notiKey('notification.inquiryNeedsAnswer', { email: inq.email }),
+                            createdAt,
+                        }
+                    });
+                }
+            } else if (inq.status === 3) {
+                // PENDING_SEND → noti cho admin/sale (chưa đọc)
+                for (const uid of adminSaleIds) {
+                    await prisma.notification.create({
+                        data: {
+                            userId: uid, type: 'INQUIRY', refId: inq.id, isRead: false,
+                            content: notiKey('notification.inquiryAnswered', { email: inq.email }),
+                            createdAt,
+                        }
+                    });
+                }
+            } else if (inq.status === 4) {
+                // EMAIL_SENT → tất cả đã đọc
+                for (const uid of adminSaleIds) {
+                    await prisma.notification.create({
+                        data: {
+                            userId: uid, type: 'INQUIRY', refId: inq.id, isRead: true,
+                            content: notiKey('notification.newInquiry', { email: inq.email }),
+                            createdAt,
+                        }
+                    });
+                }
+            } else if (inq.status === 5) {
+                // ANSWER_REJECTED → noti cho chung_tu (chưa đọc)
+                for (const uid of chungTuIds) {
+                    await prisma.notification.create({
+                        data: {
+                            userId: uid, type: 'INQUIRY', refId: inq.id, isRead: false,
+                            content: notiKey('notification.answerRejected', { id: inq.id }),
+                            createdAt,
+                        }
+                    });
+                }
+            }
+        }
+        console.log('  Inquiry seeding done.');
+    } else {
+        console.log('  Inquiries already exist, skipping.');
     }
 
     console.log('\nSeeding finished.');

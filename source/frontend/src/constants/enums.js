@@ -164,3 +164,29 @@ export const MANIFEST_STATUS_OPTIONS = [
     { value: 'DA_NHAP_KHO_VN', label: 'Đã nhập kho VN', color: 'purple' },
 ];
 
+// Inquiry Status (numeric, khớp với BE INQUIRY_STATUS)
+// Số = thứ tự ưu tiên hiển thị (ORDER BY status ASC)
+export const INQUIRY_STATUS = {
+    PENDING_REVIEW:    1,
+    PENDING_ANSWER:    2,
+    PENDING_SEND:      3,
+    EMAIL_SENT:        4,
+    ANSWER_REJECTED:   5,
+    QUESTION_REJECTED: 6,
+};
+
+export const INQUIRY_STATUS_OPTIONS = [
+    { value: INQUIRY_STATUS.PENDING_REVIEW,    labelKey: 'inquiry.statusPendingReview',    color: 'orange' },
+    { value: INQUIRY_STATUS.PENDING_ANSWER,    labelKey: 'inquiry.statusPendingAnswer',    color: 'blue'   },
+    { value: INQUIRY_STATUS.PENDING_SEND,      labelKey: 'inquiry.statusPendingSend',      color: 'gold'   },
+    { value: INQUIRY_STATUS.EMAIL_SENT,        labelKey: 'inquiry.statusEmailSent',        color: 'green'  },
+    { value: INQUIRY_STATUS.ANSWER_REJECTED,   labelKey: 'inquiry.statusAnswerRejected',   color: 'red'    },
+    { value: INQUIRY_STATUS.QUESTION_REJECTED, labelKey: 'inquiry.statusQuestionRejected', color: 'default'},
+];
+
+// Notification types (khớp với BE NOTIFICATION_TYPE)
+export const NOTIFICATION_TYPE = {
+    PRODUCT_CODE: 'PRODUCT_CODE',
+    INQUIRY: 'INQUIRY',
+};
+

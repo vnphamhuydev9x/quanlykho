@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Button, Dropdown, Avatar, Typography, Space, message, Drawer, Grid, Badge, Tooltip } from 'antd';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import dayjs from 'dayjs';
+import { Layout, Menu, Button, Dropdown, Avatar, Typography, Space, message, Drawer, Grid, Badge, Tooltip, List } from 'antd';
 const { useBreakpoint } = Grid;
 import {
     MenuFoldOutlined,
@@ -9,22 +10,26 @@ import {
     GlobalOutlined,
     SettingOutlined,
     LogoutOutlined,
-    TeamOutlined, // Added TeamOutlined
-    HomeOutlined, // Added HomeOutlined
-    FileTextOutlined, // Added FileTextOutlined
-
+    TeamOutlined,
+    HomeOutlined,
+    FileTextOutlined,
     InboxOutlined,
     ShoppingOutlined,
     BarChartOutlined,
-    PieChartOutlined,
     CarOutlined,
     CreditCardOutlined,
     ExportOutlined,
+    BellOutlined,
+    CustomerServiceOutlined,
+    LinkOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+
+const LANDING_PAGE_URL = import.meta.env.VITE_LANDING_PAGE_URL || '/consulting';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../utils/axios';
 import ChangePasswordModal from '../components/ChangePasswordModal';
+import { ROLES, NOTIFICATION_TYPE } from '../constants/enums';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -79,38 +84,69 @@ const MainLayout = ({ children }) => {
     }, [mustChangePassword]);
 
     const [notifications, setNotifications] = useState([]);
+    const [staffBellOpen, setStaffBellOpen] = useState(false);
+    const [dropdownItems, setDropdownItems] = useState([]);
+
+    // Cập nhật browser tab title theo số notification chưa đọc
+    useEffect(() => {
+        const count = notifications.length;
+        document.title = count > 0
+            ? `(${count}) 3T Group Management`
+            : '3T Group Management';
+    }, [notifications]);
+
+    // Staff roles nhận inquiry notifications
+    const isStaffWithNotif = ROLES.ADMIN === userRole || ROLES.SALE === userRole || ROLES.CHUNG_TU === userRole;
 
     const fetchNotifications = async () => {
-        if (userType === 'CUSTOMER') {
-            try {
-                const response = await axiosInstance.get('/notifications');
-                if (response.data && response.data.data) {
-                    setNotifications(response.data.data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch notifications", error);
+        try {
+            const response = await axiosInstance.get('/notifications');
+            if (response.data && response.data.data) {
+                setNotifications(response.data.data);
             }
+        } catch (error) {
+            console.error("Failed to fetch notifications", error);
         }
     };
 
-    const markNotificationsAsRead = async () => {
-        if (notifications.length > 0) {
-            try {
-                await axiosInstance.put('/notifications/read');
-                setNotifications([]);
-            } catch (error) {
-                console.error("Failed to mark notifications as read", error);
+    // Fetch tất cả noti (đọc + chưa đọc) để hiển thị trong dropdown
+    const fetchDropdownItems = async () => {
+        try {
+            const response = await axiosInstance.get('/notifications/list', { params: { page: 1, limit: 10 } });
+            if (response.data?.data?.items) {
+                setDropdownItems(response.data.data.items);
             }
+        } catch (_) {}
+    };
+
+    // Khi mở dropdown, fetch danh sách mới nhất
+    useEffect(() => {
+        if (staffBellOpen && isStaffWithNotif) {
+            fetchDropdownItems();
+        }
+    }, [staffBellOpen]);
+
+    const markAllAsRead = async () => {
+        try {
+            await axiosInstance.put('/notifications/read');
+            setNotifications([]);
+            // Refresh dropdown items để cập nhật màu đã đọc
+            fetchDropdownItems();
+        } catch (error) {
+            console.error("Failed to mark notifications as read", error);
         }
     };
+
+    // Giữ lại alias cũ để không break code CUSTOMER bên dưới
+    const markNotificationsAsRead = markAllAsRead;
 
     useEffect(() => {
-        if (userType === 'CUSTOMER') {
+        if (userType === 'CUSTOMER' || isStaffWithNotif) {
             fetchNotifications();
-            const interval = setInterval(fetchNotifications, 5000); // Poll every 5s
+            const interval = setInterval(fetchNotifications, 5000);
             return () => clearInterval(interval);
         }
-    }, [userType]);
+    }, [userType, userRole]);
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
@@ -157,6 +193,12 @@ const MainLayout = ({ children }) => {
     ];
 
     const items = [
+        {
+            key: '/customer-inquiry',
+            icon: <CustomerServiceOutlined />,
+            label: t('menu.inquiry'),
+            onClick: () => navigate('/customer-inquiry'),
+        },
         {
             key: '/',
             icon: <DashboardOutlined />,
@@ -377,6 +419,8 @@ const MainLayout = ({ children }) => {
     let menuItems = items;
     if (userType === 'CUSTOMER') {
         menuItems = items.filter(item => item.key === '/' || item.key === 'product-codes');
+    } else if (ROLES.CHUNG_TU === userRole) {
+        menuItems = items.filter(item => item.key === '/customer-inquiry');
     }
 
     const currentKey = location.pathname + location.search;
@@ -471,6 +515,116 @@ const MainLayout = ({ children }) => {
                                 {t('header.language')}
                             </Button>
                         </Dropdown>
+
+                        {/* Notification bell — chỉ cho ADMIN/SALE/CHUNG_TU */}
+                        {isStaffWithNotif && (
+                            <Dropdown
+                                open={staffBellOpen}
+                                onOpenChange={setStaffBellOpen}
+                                placement="bottomRight"
+                                trigger={['click']}
+                                dropdownRender={() => (
+                                    <div style={{
+                                        background: '#fff',
+                                        borderRadius: 8,
+                                        boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+                                        width: 380,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        maxHeight: 520,
+                                    }}>
+                                        {/* Header — cố định */}
+                                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                                            <Text strong>{t('notification.title')}</Text>
+                                            {notifications.length > 0 && (
+                                                <Button
+                                                    type="link"
+                                                    size="small"
+                                                    onClick={() => { markAllAsRead(); setStaffBellOpen(false); }}
+                                                >
+                                                    {t('notification.markAllRead')}
+                                                </Button>
+                                            )}
+                                        </div>
+                                        {/* Body — scrollable */}
+                                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+                                        {dropdownItems.length === 0 ? (
+                                            <div style={{ padding: '24px 16px', textAlign: 'center', color: '#bbb' }}>
+                                                {t('notification.empty')}
+                                            </div>
+                                        ) : (() => {
+                                            const today = dayjs().format('YYYY-MM-DD');
+                                            const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+                                            const groups = {};
+                                            dropdownItems.forEach(item => {
+                                                const d = dayjs(item.createdAt).format('YYYY-MM-DD');
+                                                if (!groups[d]) groups[d] = [];
+                                                groups[d].push(item);
+                                            });
+                                            return Object.entries(groups)
+                                                .sort(([a], [b]) => b.localeCompare(a))
+                                                .map(([date, gItems]) => {
+                                                    const label = date === today ? t('common.today') : date === yesterday ? t('common.yesterday') : dayjs(date).format('DD/MM/YYYY');
+                                                    return (
+                                                        <div key={date}>
+                                                            <div style={{ padding: '6px 16px 2px', fontSize: 11, color: '#999', fontWeight: 600, letterSpacing: 0.5 }}>{label}</div>
+                                                            {gItems.map(item => (
+                                                                <div
+                                                                    key={item.id}
+                                                                    style={{
+                                                                        padding: '10px 16px',
+                                                                        cursor: 'pointer',
+                                                                        borderBottom: '1px solid #f5f5f5',
+                                                                        background: item.isRead ? 'transparent' : '#e6f4ff',
+                                                                        display: 'flex', alignItems: 'flex-start', gap: 10,
+                                                                    }}
+                                                                    onClick={() => {
+                                                                        if (!item.isRead) {
+                                                                            // Chỉ mark notification này là đã đọc
+                                                                            axiosInstance.put(`/notifications/${item.id}/read`).catch(() => {});
+                                                                            setDropdownItems(prev => prev.map(n => n.id === item.id ? { ...n, isRead: true } : n));
+                                                                            setNotifications(prev => prev.filter(n => n.id !== item.id));
+                                                                        }
+                                                                        setStaffBellOpen(false);
+                                                                        if (item.refId) {
+                                                                            navigate(`/customer-inquiry?inquiryId=${item.refId}`);
+                                                                        } else {
+                                                                            navigate('/customer-inquiry');
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <CustomerServiceOutlined style={{ color: item.isRead ? '#aaa' : '#1890ff', fontSize: 16, marginTop: 2, flexShrink: 0 }} />
+                                                                    <div>
+                                                                        <Text style={{ fontSize: 13, fontWeight: item.isRead ? 'normal' : 500, display: 'block' }}>
+                                                                            {(() => { try { const p = JSON.parse(item.content); return p.key ? t(p.key, p.params) : item.content; } catch { return item.content; } })()}
+                                                                        </Text>
+                                                                        <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(item.createdAt).format('HH:mm')}</Text>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                });
+                                        })()}
+                                        </div>
+                                        {/* Footer — pin cố định ở dưới */}
+                                        <div style={{ padding: '8px 16px', borderTop: '1px solid #f0f0f0', textAlign: 'center', flexShrink: 0 }}>
+                                            <Button
+                                                type="link"
+                                                size="small"
+                                                onClick={() => { setStaffBellOpen(false); navigate('/notification-history'); }}
+                                            >
+                                                {t('notification.viewAll')}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            >
+                                <Badge count={notifications.length} size="small">
+                                    <Button type="text" icon={<BellOutlined style={{ fontSize: 18 }} />} />
+                                </Badge>
+                            </Dropdown>
+                        )}
 
                         <Dropdown menu={{ items: userMenu }} placement="bottomRight">
                             <Space style={{ cursor: 'pointer' }}>

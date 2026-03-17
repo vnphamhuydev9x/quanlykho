@@ -121,16 +121,27 @@ Tài liệu này tổng hợp các bộ quy tắc lập trình chuẩn dành cho
 *   **Chiến lược Log (Audit Trail)**:
     *   **Entrance**: Vào hàm bắt buộc log ID, UserId, Entity Target để traceback. (Giấu Password).
     *   **Process & Exit**: Log bước xử lý và log Result (Success/Fail).
+*   **Bắt Buộc Log Lỗi (Error Logging)**:
+    *   Bất cứ khi nào bắt được lỗi (trong block `catch`) hoặc trong các đoạn rẽ nhánh (if) cần ném ra một lỗi tùy chỉnh (throw Error), **TUYỆT ĐỐI BẮT BUỘC phải dùng `logger.error(...)`** để ghi lại nguyên nhân trước khi thực hiện `throw` rỗng hoặc return HTTP 500. Tránh tình trạng quăng lỗi mà server console hoặc file log im ru không có vết tích để debug.
 
     *Ví dụ Logging Information:*
     ```javascript
     exports.createOrder = async (req, res) => {
         logger.info(`[OrderService][Create] Initiated by User ID: ${req.user.id}, Payload: ${JSON.stringify(req.body)}`);
         try {
+            // Check condition failure
+            if (!validRole) {
+                // Phải log trước khi quăng lỗi
+                logger.error(`[OrderService][Create] Validation failed for User ${req.user.id}: Invalid Role`);
+                return res.status(403).json({ message: "Forbidden" });
+            }
+
             // ... processing
             logger.info(`[OrderService][Create] Success. Order ID: ${newOrder.id}`);
         } catch (e) {
+            // Khi ném lỗi tổng hoặc lỗi từ DB ra, bắt buộc phải log lại error message
             logger.error(`[OrderService][Create] Failed processing User ${req.user.id}: ${e.message}`);
+            return res.status(500).json({ message: 'Internal Error' });
         }
     };
     ```

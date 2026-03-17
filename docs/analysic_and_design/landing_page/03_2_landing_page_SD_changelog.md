@@ -1,3 +1,18 @@
+## Version SD-v1.0.9 | Base on Requirement v1.0.7
+
+- **[Section 3.10] Image preview dark overlay**: Bổ sung constraint — thumbnail ảnh trong Table phải dùng `<Image.PreviewGroup>` để preview có dark overlay và đủ nút điều hướng. Cũ: dùng `<Image preview={{ mask: false }}>` đơn lẻ. Mới: wrap bằng `<Image.PreviewGroup>`.
+
+## Version SD-v1.0.8 | Base on Requirement v1.0.6
+
+- **[Section 3.10] Bỏ Zebra Striping**: Cập nhật constraint phân biệt dòng. Cũ: dùng `rowClassName` + CSS `#fafafa` xen kẽ chẵn/lẻ. Mới: không dùng zebra striping — dùng Ant Design default hover highlight, không cần `rowClassName` hay CSS bổ sung. Lý do: zebra + hover effect gây rối mắt.
+- **[Section 3.10] FE Rule update**: Cập nhật coding rule note trong SD — đổi "Zebra Striping BẮT BUỘC" thành "Không dùng Zebra Striping".
+
+## Version SD-v1.0.7 | Base on Requirement v1.0.5
+
+- **[Section 3.10] No Row-Click**: Bổ sung constraint — Table không được đặt `onRow` click handler. Chỉ click icon mắt mới mở modal chi tiết. Cũ: không có quy định tường minh. Mới: cấm row-click navigation.
+- **[Section 3.10] Zebra Striping**: Bổ sung constraint — Table áp dụng `rowClassName` xen kẽ màu nền dòng (`#fafafa` cho dòng lẻ). Cũ: không có. Mới: bắt buộc toàn bộ Table danh sách.
+- **[Section 3.10] FE Rules**: Ghi chú 2 coding rules mới bắt buộc bổ sung vào `docs/rules/FE_rules.md`: No Row-Click Navigation và Zebra Striping.
+
 ## Version SD-v1.0.6 | Base on Requirement v1.0.4
 
 - **[Section 3.5] Anti-pattern FE ghép double-host**: Bổ sung ví dụ code cụ thể cho lỗi double-host (`http://localhost:3000http://localhost:3000/...`) do FE vẫn prefix `VITE_BE_URL` vào `imageUrl` dù API đã trả absolute URL. Cũ: chỉ có rule text. Mới: thêm snippet ❌/✅ để FE nhận diện và xóa bỏ pattern nguy hiểm này.

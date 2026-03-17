@@ -221,3 +221,13 @@ khi
 # comment 25 [Requirement-Checked] [System-Design-Checked]
 - [v] BE giờ đã ok rồi mà FE hình như vẫn cố ghép host vào link ảnh. hãy kiểm tra lại đây là 1 ví dụ tôi đang gặp khi admin reivew câu hỏi của khách hàng:
     - <img alt="inquiry" class="ant-image-img css-dev-only-do-not-override-1d8anct" src="http://localhost:3000http://localhost:3000/uploads/inquiries/2026/03/10/51fe35aa-caa1-4881-aa6a-2913a9409ecd.png" style="max-height: 240px; border-radius: 6px;">
+# comment 26 [Requirement-Checked] [System-Design-Checked]
+- [v] bỏ chức năng click vào record của table là tự view record đó đi. hiện tại ở table tư vấn khách hàng, khi admin, sale click vào 1 record thì nó sẽ tự động view chi tiết của record đó.
+    - [v] viết vào rule của FE điều này
+- [v] FE thêm 1 rule nữa cho table là các record sẽ có nền xem kẽ nhau để dễ nhận biết. ví dụ: dòng 1 trắng, dòng 2 xám, dòng 3 trắng, dòng 4 xám... nhưng màu xám nhẹ nhàng chuyên nghiệp thôi nhé
+
+# comment 27 [Requirement-Checked] [System-Design-Checked]
+- [v] tôi thấy việc các record màu xen kẽ nhau trắng xám kết hợp với hover xám nhìn nó rối mắt lắm bạn hãy chọn các màu khác đi. hoặc là bỏ hẳn cái zebra striping đi. vì tôi thấy nó không cần thiết lắm. mục tiêu là dễ đọc mà tôi thấy nó đang khó đọc hơn. hãy xem xét lại và đưa ra phương án tốt hơn nhé
+
+# comment 28 [Requirement-Checked] [System-Design-Checked]
+- [v] khi tôi view (icon của inquiry) rồi view image thì image hiển thị ra rất đẹp với nền bị làm mờ đi. nhưng khi tôi click trực tiếp vào ảnh ở table thì nền nó lại trong suốt dẫn đến không nhìn thấy các nút điều hướng kiểu nút x nút xoay zoom... hãy sửa lại cho giống với khi view image từ icon của inquiry nhé

@@ -1,3 +1,16 @@
+## Version v1.0.7
+
+- **[NFR] Preview ảnh thumbnail có dark overlay**: Bổ sung §2.2 — Click thumbnail ảnh trong table phải hiển thị image preview với nền tối mờ và đủ nút điều hướng, đồng nhất với preview ảnh trong modal chi tiết. (Trước: không có yêu cầu tường minh về UX preview ảnh ở table.)
+
+## Version v1.0.6
+
+- **[NFR] Bỏ zebra striping**: Cập nhật §2.2 — Xóa yêu cầu màu nền xen kẽ (zebra striping). Cũ: dòng chẵn/lẻ xen kẽ trắng/xám. Mới: dùng Ant Design default hover highlight — zebra striping gây rối mắt khi kết hợp với hover effect.
+
+## Version v1.0.5
+
+- **[FR] Bỏ row-click auto-view**: Bổ sung §2.2 — Click vào dòng table không còn tự động mở popup chi tiết. Chỉ click icon mắt mới mở. (Trước: click bất kỳ vị trí trên dòng đều mở modal.)
+- **[NFR] Zebra striping**: Bổ sung §2.2 — Table danh sách câu hỏi áp dụng màu nền xen kẽ (trắng / xám nhạt) để dễ đọc theo chiều ngang.
+
 ## Version v1.0.4
 
 - **[NFR] Image URL phải là absolute URL**: Bổ sung §NFR.3 — Tất cả `imageUrl` trong API response phải là absolute URL có host. BE có trách nhiệm ghép host; FE không tự ghép. (Trước: không có yêu cầu tường minh về format URL.)

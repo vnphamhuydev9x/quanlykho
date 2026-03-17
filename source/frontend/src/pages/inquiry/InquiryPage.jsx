@@ -1,7 +1,7 @@
 /**
  * @module landing_page
  * @SD_Ref 03_1_landing_page_SD.md
- * @SD_Version SD-v1.0.6
+ * @SD_Version SD-v1.0.9
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Card, Typography, Tag, Tooltip, message, Button, Input, Select, Row, Col, Space, Image } from 'antd';
@@ -251,7 +251,7 @@ const InquiryPage = () => {
             key: 'imageUrl',
             width: 90,
             render: (val) => val
-                ? <Image src={val} width={56} height={56} style={{ objectFit: 'cover', borderRadius: 4 }} preview={{ mask: false }} />
+                ? <Image src={val} width={56} height={56} style={{ objectFit: 'cover', borderRadius: 4 }} />
                 : <span style={{ color: '#bbb' }}>—</span>,
         },
         {
@@ -355,26 +355,27 @@ const InquiryPage = () => {
                 </Row>
             </Card>
 
-            <Table
-                rowKey="id"
-                columns={columns}
-                dataSource={data}
-                loading={loading}
-                scroll={{ x: 'max-content' }}
-                pagination={{
-                    current: page,
-                    pageSize: limit,
-                    total,
-                    pageSizeOptions: ['20', '30', '40', '50'],
-                    showSizeChanger: true,
-                    showTotal: (tot) => t('common.paginationTotal', { total: tot }),
-                    onChange: (p, l) => {
-                        setPage(p);
-                        setLimit(l);
-                    },
-                }}
-                onRow={(record) => ({ onClick: () => handleView(record), style: { cursor: 'pointer' } })}
-            />
+            <Image.PreviewGroup>
+                <Table
+                    rowKey="id"
+                    columns={columns}
+                    dataSource={data}
+                    loading={loading}
+                    scroll={{ x: 'max-content' }}
+                    pagination={{
+                        current: page,
+                        pageSize: limit,
+                        total,
+                        pageSizeOptions: ['20', '30', '40', '50'],
+                        showSizeChanger: true,
+                        showTotal: (tot) => t('common.paginationTotal', { total: tot }),
+                        onChange: (p, l) => {
+                            setPage(p);
+                            setLimit(l);
+                        },
+                    }}
+                />
+            </Image.PreviewGroup>
 
             <InquiryModal
                 visible={modalVisible}

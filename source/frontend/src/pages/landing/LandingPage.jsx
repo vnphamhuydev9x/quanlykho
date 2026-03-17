@@ -1,7 +1,7 @@
 /**
  * @module landing_page
  * @SD_Ref 03_1_landing_page_SD.md
- * @SD_Version SD-v1.0.6
+ * @SD_Version SD-v1.0.9
  */
 import React, { useState } from 'react';
 import { Form, Input, Button, Typography, Space, Divider, Row, Col, Tag, Upload, message, Image } from 'antd';

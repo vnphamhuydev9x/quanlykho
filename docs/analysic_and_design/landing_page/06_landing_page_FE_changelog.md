@@ -1,3 +1,50 @@
+## Version Code FE-v1.0.7 | Base on SD SD-v1.0.9
+
+**Date**: 2026-03-17
+
+### Files Updated
+
+| File | Loại thay đổi | Mô tả |
+|---|---|---|
+| `source/frontend/src/pages/inquiry/InquiryPage.jsx` | Fix + Tag | Bỏ `preview={{ mask: false }}` trên thumbnail; wrap `<Table>` trong `<Image.PreviewGroup>` để click ảnh hiển thị dark overlay + đủ nút điều hướng (SD §3.10); bump `@SD_Version SD-v1.0.9` |
+| `source/frontend/src/pages/inquiry/InquiryModal.jsx` | Tag | Bump `@SD_Version SD-v1.0.9` |
+| `source/frontend/src/pages/landing/LandingPage.jsx` | Tag | Bump `@SD_Version SD-v1.0.9` |
+
+### I18n
+- Không có key mới.
+
+## Version Code FE-v1.0.6 | Base on SD SD-v1.0.8
+
+**Date**: 2026-03-17
+
+### Files Updated
+
+| File | Loại thay đổi | Mô tả |
+|---|---|---|
+| `source/frontend/src/pages/inquiry/InquiryPage.jsx` | Fix + Tag | Xóa zebra striping (`<style>` tag, `className`, `rowClassName`) — dùng Ant Design default hover (SD §3.10); bump `@SD_Version SD-v1.0.8` |
+| `source/frontend/src/pages/inquiry/InquiryModal.jsx` | Tag | Bump `@SD_Version SD-v1.0.8` |
+| `source/frontend/src/pages/landing/LandingPage.jsx` | Tag | Bump `@SD_Version SD-v1.0.8` |
+| `docs/rules/FE_rules.md` | Rule | Cập nhật §9 — đổi "Zebra Striping BẮT BUỘC" thành "Không dùng Zebra Striping" |
+
+### I18n
+- Không có key mới.
+
+## Version Code FE-v1.0.5 | Base on SD SD-v1.0.7
+
+**Date**: 2026-03-17
+
+### Files Updated
+
+| File | Loại thay đổi | Mô tả |
+|---|---|---|
+| `source/frontend/src/pages/inquiry/InquiryPage.jsx` | Fix + Feature + Tag | Xóa `onRow` click handler (SD §3.10 No Row-Click); thêm `rowClassName` zebra striping + `<style>` scoped (SD §3.10 Zebra Striping); bump `@SD_Version SD-v1.0.7` |
+| `source/frontend/src/pages/inquiry/InquiryModal.jsx` | Tag | Bump `@SD_Version SD-v1.0.7` |
+| `source/frontend/src/pages/landing/LandingPage.jsx` | Tag | Bump `@SD_Version SD-v1.0.7` |
+| `docs/rules/FE_rules.md` | Rule | Thêm §8 "No Row-Click Navigation" và §9 "Zebra Striping" — hai quy tắc bắt buộc cho Table |
+
+### I18n
+- Không có key mới.
+
 ## Version Code FE-v1.0.4 | Base on SD SD-v1.0.6
 
 **Date**: 2026-03-17

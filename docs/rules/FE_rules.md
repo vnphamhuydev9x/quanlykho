@@ -149,6 +149,67 @@ Tài liệu này tổng hợp các bộ quy tắc lập trình chuẩn dành cho
 
 ---
 
+## 8. No Row-Click Navigation (BẮT BUỘC)
+
+*   **KHÔNG** đặt `onRow` click handler để mở modal hoặc điều hướng khi user click vào dòng table.
+*   Mọi hành động mở chi tiết / điều hướng đều phải thông qua nút action rõ ràng (icon mắt, icon edit...).
+*   Click nhầm vào vùng dữ liệu của dòng không được kích hoạt bất kỳ side-effect nào.
+
+    *Ví dụ chuẩn:*
+    ```jsx
+    // DỞ: click vào dòng tự mở modal
+    <Table onRow={(record) => ({ onClick: () => openModal(record), style: { cursor: 'pointer' } })} />
+
+    // CHUẨN: chỉ icon mắt mới mở modal
+    <Table /> {/* không có onRow */}
+    // action column dùng EyeOutlined button
+    ```
+
+---
+
+## 9. Không dùng Zebra Striping (BẮT BUỘC)
+
+*   **KHÔNG** áp dụng `rowClassName` xen kẽ màu nền dòng (zebra striping).
+*   Zebra striping gây rối mắt khi kết hợp với Ant Design default hover effect.
+*   Dùng Ant Design default hover highlight (tự động) để phân biệt dòng khi di chuột — không cần `rowClassName` hay CSS bổ sung.
+
+    ```jsx
+    // DỞ: zebra striping gây rối mắt
+    <Table rowClassName={(_, i) => i % 2 === 1 ? 'striped' : ''} />
+
+    // CHUẨN: để Ant Design tự xử lý hover
+    <Table />
+    ```
+
+---
+
+## 10. Image Preview — Dùng `Image.PreviewGroup` trong Table (BẮT BUỘC)
+
+*   Khi render ảnh thumbnail bên trong `<Table>`, **BẮT BUỘC** bọc `<Table>` (hoặc toàn bộ khu vực chứa ảnh) trong `<Image.PreviewGroup>`.
+*   **KHÔNG** dùng `<Image>` đơn lẻ với `preview={{ mask: false }}` trong cell của Table — cách này làm mất dark overlay khi click preview, khiến các nút điều hướng (đóng, xoay, zoom) không nhìn thấy được trên nền trắng.
+*   `<Image.PreviewGroup>` đảm bảo preview luôn có nền tối mờ (dark mask) và đủ nút điều hướng, đồng nhất với trải nghiệm preview ảnh ở mọi nơi trong app.
+
+    *Ví dụ chuẩn:*
+    ```jsx
+    // DỞ: Image đơn lẻ, preview trong suốt, không thấy nút điều hướng
+    {
+        dataIndex: 'imageUrl',
+        render: (val) => val
+            ? <Image src={val} width={56} preview={{ mask: false }} />
+            : '—'
+    }
+
+    // CHUẨN: wrap Table bằng Image.PreviewGroup
+    <Image.PreviewGroup>
+        <Table
+            columns={columns}  // column imageUrl dùng <Image src={val} width={56} /> bình thường
+            dataSource={data}
+        />
+    </Image.PreviewGroup>
+    ```
+
+---
+
 ## 7. Image URL — Không tự ghép host
 
 *   **Nguyên tắc bất biến**: Mọi `imageUrl` (hay bất kỳ field URL file nào) nhận từ API đã là **absolute URL** — dùng trực tiếp trong `<img src>` hoặc Ant Design `<Image src>`.

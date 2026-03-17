@@ -1,7 +1,12 @@
+/**
+ * @module landing_page
+ * @SD_Ref 03_1_landing_page_SD.md
+ * @SD_Version SD-v1.0.6
+ */
 import React, { useState, useEffect } from 'react';
 import {
     Modal, Descriptions, Tag, Button, Input, Space, Typography, Divider,
-    Popconfirm, message, Tooltip, Form,
+    Popconfirm, message, Tooltip, Image,
 } from 'antd';
 import {
     CheckOutlined, CloseOutlined, SendOutlined, InfoCircleOutlined, EditOutlined, SaveOutlined,
@@ -208,9 +213,25 @@ const InquiryModal = ({ visible, inquiry, userRole, onClose, onSuccess, onRefres
         >
             {/* Thông tin câu hỏi */}
             <Descriptions column={1} size="small" bordered style={{ marginBottom: 16 }}>
-                {!ROLES.CHUNG_TU === userRole && (
+                {/* BE tự mask các trường khách hàng với CHUNG_TU — FE chỉ render nếu có giá trị */}
+                {inquiry.email && (
                     <Descriptions.Item label={t('inquiry.email')}>
                         <Text copyable>{inquiry.email}</Text>
+                    </Descriptions.Item>
+                )}
+                {inquiry.customerName && (
+                    <Descriptions.Item label={t('inquiry.customerName')}>
+                        {inquiry.customerName}
+                    </Descriptions.Item>
+                )}
+                {inquiry.businessType && (
+                    <Descriptions.Item label={t('inquiry.businessType')}>
+                        {inquiry.businessType}
+                    </Descriptions.Item>
+                )}
+                {inquiry.phoneNumber && (
+                    <Descriptions.Item label={t('inquiry.phoneNumber')}>
+                        {inquiry.phoneNumber}
                     </Descriptions.Item>
                 )}
                 <Descriptions.Item label={t('inquiry.createdAt')}>
@@ -221,6 +242,15 @@ const InquiryModal = ({ visible, inquiry, userRole, onClose, onSuccess, onRefres
                         {f.value}
                     </Descriptions.Item>
                 ))}
+                {inquiry.imageUrl && (
+                    <Descriptions.Item label={t('inquiry.image')}>
+                        <Image
+                            src={inquiry.imageUrl}
+                            alt="inquiry"
+                            style={{ maxHeight: 240, borderRadius: 6 }}
+                        />
+                    </Descriptions.Item>
+                )}
             </Descriptions>
 
             {/* Câu trả lời */}

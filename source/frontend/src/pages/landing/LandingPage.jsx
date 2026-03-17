@@ -1,8 +1,13 @@
+/**
+ * @module landing_page
+ * @SD_Ref 03_1_landing_page_SD.md
+ * @SD_Version SD-v1.0.6
+ */
 import React, { useState } from 'react';
-import { Form, Input, Button, Typography, Space, Result, Divider, Row, Col, Tag } from 'antd';
+import { Form, Input, Button, Typography, Space, Divider, Row, Col, Tag, Upload, message, Image } from 'antd';
 import {
     SendOutlined, CheckCircleOutlined, MailOutlined, PhoneOutlined,
-    GlobalOutlined, SafetyCertificateOutlined,
+    GlobalOutlined, SafetyCertificateOutlined, PlusOutlined,
 } from '@ant-design/icons';
 import inquiryService from '../../services/inquiryService';
 
@@ -102,28 +107,46 @@ const SuccessScreen = ({ result, onReset }) => (
                 <Tag color="blue" style={{ marginTop: 10, fontSize: 13 }}>Mã tham chiếu: #{result.id}</Tag>
             </div>
 
-            {result.productName && (
-                <>
-                    <Divider style={{ margin: '16px 0' }}>Nội dung đã gửi</Divider>
-                    <Space direction="vertical" style={{ width: '100%' }} size={6}>
-                        {[
-                            ['Tên sản phẩm', result.productName],
-                            ['Chất liệu',    result.material],
-                            ['Công dụng',    result.usage],
-                            ['Kích thước',   result.size],
-                            ['Nhãn hàng',    result.brand],
-                            ['Thông tin đặc thù', result.specialInfo],
-                            ['Thông số kỹ thuật', result.techSpec],
-                            ['Nhu cầu',      result.demand],
-                        ].filter(([, v]) => v).map(([k, v]) => (
-                            <div key={k} style={{ display: 'flex', gap: 6 }}>
-                                <Text type="secondary" style={{ minWidth: 130, flexShrink: 0 }}>{k}:</Text>
-                                <Text>{v}</Text>
-                            </div>
-                        ))}
-                    </Space>
-                </>
-            )}
+            {(() => {
+                const textFields = [
+                    ['Tên khách hàng',     result.customerName],
+                    ['Ngành nghề KD',      result.businessType],
+                    ['Số điện thoại',      result.phoneNumber],
+                    ['Tên sản phẩm',       result.productName],
+                    ['Chất liệu',          result.material],
+                    ['Công dụng',          result.usage],
+                    ['Kích thước',         result.size],
+                    ['Nhãn hàng',          result.brand],
+                    ['Thông tin đặc thù',  result.specialInfo],
+                    ['Thông số kỹ thuật',  result.techSpec],
+                    ['Nhu cầu',            result.demand],
+                ].filter(([, v]) => v);
+                const hasContent = textFields.length > 0 || result.imageUrl;
+                if (!hasContent) return null;
+                return (
+                    <>
+                        <Divider style={{ margin: '16px 0' }}>Nội dung đã gửi</Divider>
+                        <Space direction="vertical" style={{ width: '100%' }} size={6}>
+                            {textFields.map(([k, v]) => (
+                                <div key={k} style={{ display: 'flex', gap: 6 }}>
+                                    <Text type="secondary" style={{ minWidth: 140, flexShrink: 0 }}>{k}:</Text>
+                                    <Text>{v}</Text>
+                                </div>
+                            ))}
+                            {result.imageUrl && (
+                                <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                                    <Text type="secondary" style={{ minWidth: 140, flexShrink: 0 }}>Ảnh sản phẩm:</Text>
+                                    <Image
+                                        src={result.imageUrl}
+                                        width={120}
+                                        style={{ borderRadius: 6, objectFit: 'cover' }}
+                                    />
+                                </div>
+                            )}
+                        </Space>
+                    </>
+                );
+            })()}
 
             <Button
                 type="primary"
@@ -144,11 +167,37 @@ const LandingPage = () => {
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [result, setResult] = useState(null);
+    const [imageFileList, setImageFileList] = useState([]);
+
+    const imageUploadProps = {
+        listType: 'picture-card',
+        maxCount: 1,
+        fileList: imageFileList,
+        beforeUpload: (file) => {
+            if (!file.type.startsWith('image/')) return Upload.LIST_IGNORE;
+            if (file.size > 5 * 1024 * 1024) {
+                message.error('Ảnh không được vượt quá 5MB');
+                return Upload.LIST_IGNORE;
+            }
+            return false;
+        },
+        onChange: ({ fileList: newList }) => setImageFileList(newList),
+    };
 
     const handleSubmit = async (values) => {
         setLoading(true);
         try {
-            const res = await inquiryService.submitInquiry(values);
+            const formData = new FormData();
+            Object.entries(values).forEach(([key, val]) => {
+                if (val !== undefined && val !== null && val !== '') {
+                    formData.append(key, val);
+                }
+            });
+            const imageFile = imageFileList[0]?.originFileObj;
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+            const res = await inquiryService.submitInquiry(formData);
             setResult(res.data);
             setSubmitted(true);
         } catch (error) {
@@ -163,6 +212,7 @@ const LandingPage = () => {
         form.resetFields();
         setSubmitted(false);
         setResult(null);
+        setImageFileList([]);
     };
 
     if (submitted && result) {
@@ -293,6 +343,28 @@ const LandingPage = () => {
                                         </Form.Item>
 
                                         <Divider style={{ margin: '8px 0 16px', borderColor: '#f0f0f0' }}>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>Thông tin liên hệ</Text>
+                                        </Divider>
+
+                                        <Row gutter={12}>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item label="Tên khách hàng" name="customerName" style={{ marginBottom: 12 }}>
+                                                    <Input placeholder="Họ và tên..." style={{ borderRadius: 8 }} />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item label="Số điện thoại" name="phoneNumber" style={{ marginBottom: 12 }}>
+                                                    <Input placeholder="VD: 0901234567" style={{ borderRadius: 8 }} />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col xs={24}>
+                                                <Form.Item label="Ngành nghề kinh doanh" name="businessType" style={{ marginBottom: 12 }}>
+                                                    <Input placeholder="VD: Thương mại, Sản xuất..." style={{ borderRadius: 8 }} />
+                                                </Form.Item>
+                                            </Col>
+                                        </Row>
+
+                                        <Divider style={{ margin: '8px 0 16px', borderColor: '#f0f0f0' }}>
                                             <Text type="secondary" style={{ fontSize: 12 }}>Thông tin sản phẩm</Text>
                                         </Divider>
 
@@ -343,13 +415,34 @@ const LandingPage = () => {
                                                 </span>
                                             }
                                             name="techSpec"
-                                            style={{ marginBottom: 20 }}
+                                            style={{ marginBottom: 12 }}
                                         >
                                             <TextArea
                                                 rows={3}
                                                 placeholder="Mô tả thông số kỹ thuật, hoặc dán link catalogue..."
                                                 style={{ borderRadius: 8 }}
                                             />
+                                        </Form.Item>
+
+                                        <Form.Item
+                                            label={
+                                                <span>
+                                                    Ảnh sản phẩm
+                                                    <Text type="secondary" style={{ fontSize: 12, marginLeft: 6 }}>
+                                                        (tùy chọn, tối đa 5MB)
+                                                    </Text>
+                                                </span>
+                                            }
+                                            style={{ marginBottom: 20 }}
+                                        >
+                                            <Upload {...imageUploadProps}>
+                                                {imageFileList.length < 1 && (
+                                                    <div>
+                                                        <PlusOutlined />
+                                                        <div style={{ marginTop: 8 }}>Chọn ảnh</div>
+                                                    </div>
+                                                )}
+                                            </Upload>
                                         </Form.Item>
 
                                         <Button

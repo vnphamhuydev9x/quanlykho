@@ -1,3 +1,8 @@
+/**
+ * @module notification
+ * @SD_Ref 03_1_notification_SD.md
+ * @SD_Version SD-v1.0.1
+ */
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { Layout, Menu, Button, Dropdown, Avatar, Typography, Space, message, Drawer, Grid, Badge, Tooltip, List } from 'antd';
@@ -86,6 +91,8 @@ const MainLayout = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [staffBellOpen, setStaffBellOpen] = useState(false);
     const [dropdownItems, setDropdownItems] = useState([]);
+    // -1 = chưa khởi tạo lần đầu (tránh false-positive dispatch khi load trang)
+    const prevNotifCountRef = useRef(-1);
 
     // Cập nhật browser tab title theo số notification chưa đọc
     useEffect(() => {
@@ -102,7 +109,15 @@ const MainLayout = ({ children }) => {
         try {
             const response = await axiosInstance.get('/notifications');
             if (response.data && response.data.data) {
-                setNotifications(response.data.data);
+                const data = response.data.data;
+                // SD §3.4: Khi phát hiện có noti mới loại INQUIRY → dispatch event để InquiryPage re-fetch
+                const isInitialized = prevNotifCountRef.current !== -1;
+                if (isInitialized && data.length > prevNotifCountRef.current &&
+                    data.some(n => NOTIFICATION_TYPE.INQUIRY === n.type)) {
+                    window.dispatchEvent(new CustomEvent('inquiry:refresh'));
+                }
+                prevNotifCountRef.current = data.length;
+                setNotifications(data);
             }
         } catch (error) {
             console.error("Failed to fetch notifications", error);

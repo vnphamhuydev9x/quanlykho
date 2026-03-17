@@ -422,6 +422,9 @@ model Notification {
 model CustomerInquiry {
   id            Int           @id @default(autoincrement())
   email         String        // Email khách hàng (bắt buộc)
+  customerName  String?                // Tên khách hàng; ẩn với CHUNG_TU
+  businessType  String?                // Ngành nghề kinh doanh; ẩn với CHUNG_TU
+  phoneNumber   String?                // Số điện thoại; ẩn với CHUNG_TU
   productName   String?       @db.Text // Tên sản phẩm
   material      String?       @db.Text // Chất liệu
   usage         String?       @db.Text // Công dụng
@@ -430,6 +433,7 @@ model CustomerInquiry {
   specialInfo   String?       @db.Text // Thông tin đặc thù (pin, điện áp, áp suất...)
   techSpec      String?       @db.Text // Thông số kỹ thuật / catalogue / tem etiket
   demand        String?                // Nhu cầu (CSNK, giá khai...)
+  imageUrl      String?                // URL ảnh đính kèm từ khách hàng (tùy chọn)
   answer        String?       @db.Text // Câu trả lời của nhân viên chứng từ
   internalNote  String?       @db.Text // Ghi chú nội bộ (không gửi email)
   status        Int           @default(1) // 1=PENDING_REVIEW — xem enums.js

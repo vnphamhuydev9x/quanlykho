@@ -653,7 +653,11 @@
         "filterAllStatus": "所有状态",
         "searchPlaceholder": "按ID、产品名称、材料搜索...",
         "id": "ID",
-        "waitingTimeDays": "{{count}} 天"
+        "waitingTimeDays": "{{count}} 天",
+        "image": "产品图片",
+        "customerName": "客户姓名",
+        "businessType": "行业类型",
+        "phoneNumber": "电话号码"
     },
     "roles": {
         "ADMIN": "管理员",

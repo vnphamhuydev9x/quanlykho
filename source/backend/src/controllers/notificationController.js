@@ -1,3 +1,8 @@
+/**
+ * @module notification
+ * @SD_Ref 03_1_notification_SD.md
+ * @SD_Version SD-v1.0.0
+ */
 const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
@@ -8,6 +13,7 @@ const notificationController = {
     getNotifications: async (req, res) => {
         try {
             const userId = req.user.userId;
+            logger.info(`[GetNotifications] userId=${userId}`);
             const cacheKey = `${CACHE_KEY_PREFIX}${userId}`;
 
             // Try to get from cache
@@ -43,6 +49,7 @@ const notificationController = {
     getNotificationsList: async (req, res) => {
         try {
             const userId = req.user.userId;
+            logger.info(`[GetNotificationsList] userId=${userId}`);
             const page  = Math.max(1, parseInt(req.query.page)  || 1);
             const limit = Math.max(1, parseInt(req.query.limit) || 20);
 
@@ -66,6 +73,7 @@ const notificationController = {
     markAsRead: async (req, res) => {
         try {
             const userId = req.user.userId;
+            logger.info(`[MarkAsRead] userId=${userId}`);
             const cacheKey = `${CACHE_KEY_PREFIX}${userId}`;
 
             await prisma.notification.updateMany({
@@ -91,10 +99,12 @@ const notificationController = {
         try {
             const userId = req.user.userId;
             const id = parseInt(req.params.id);
-            if (!id) return res.status(400).json({ code: 400, message: 'Invalid id' });
+            logger.info(`[MarkOneAsRead] userId=${userId} notificationId=${id}`);
+            if (!id) return res.status(400).json({ code: 99011, message: 'Invalid id' });
 
-            const notification = await prisma.notification.findFirst({ where: { id, userId } });
-            if (!notification) return res.status(404).json({ code: 404, message: 'Not found' });
+            const notification = await prisma.notification.findFirst({ where: { id } });
+            if (!notification) return res.status(404).json({ code: 404, message: 'Notification not found' });
+            if (notification.userId !== userId) return res.status(403).json({ code: 99021, message: 'Forbidden' });
 
             if (!notification.isRead) {
                 await prisma.notification.update({ where: { id }, data: { isRead: true } });

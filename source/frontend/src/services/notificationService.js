@@ -1,3 +1,8 @@
+/**
+ * @module notification
+ * @SD_Ref 03_1_notification_SD.md
+ * @SD_Version SD-v1.0.1
+ */
 import axiosInstance from '../utils/axios';
 
 const notificationService = {

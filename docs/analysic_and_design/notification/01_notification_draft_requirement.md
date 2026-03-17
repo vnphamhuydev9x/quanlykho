@@ -20,38 +20,34 @@ Hệ thống thông báo nội bộ cho phép nhân viên (Admin, Sale, Chứng 
 
 - FE polling mỗi 5 giây để kiểm tra thông báo mới (badge count)
 - Khi có thông báo mới → badge đỏ trên icon chuông + cập nhật tab title
-- Click vào thông báo → chuyển hướng đến menu "Tư vấn khách hàng" và tự động mở popup chi tiết câu hỏi tương ứng → đánh dấu thông báo là đã đọc
+- Click vào thông báo → nếu là thông báo về inquiry thì chuyển hướng đến menu "Tư vấn khách hàng" và tự động mở popup chi tiết câu hỏi tương ứng → đánh dấu thông báo là đã đọc
 
 ---
 
-## 4. Phân loại thông báo theo sự kiện
-
-| Sự kiện | Admin / Sale | Nhân viên chứng từ |
-|---|---|---|
-| Có câu hỏi mới từ khách | ✅ | ❌ |
-| Admin/Sale approve câu hỏi (lần 1) | ❌ | ✅ (lúc này mới biết có câu hỏi cần trả lời) |
-| Nhân viên chứng từ cập nhật câu trả lời | ✅ | ❌ |
-| Admin/Sale reject câu trả lời (lần 2) | ❌ | ✅ (nhận notification để biết cần sửa lại) |
-
----
-
-## 5. Trang lịch sử thông báo
+## 4. Trang lịch sử thông báo
 
 - URL: `/notification-history`
 - Hiển thị toàn bộ lịch sử thông báo (đọc + chưa đọc)
 - Phân biệt trạng thái đọc/chưa đọc bằng màu sắc
 - Hỗ trợ load more (phân trang)
-- Click vào thông báo chưa đọc → đánh dấu đã đọc + điều hướng đến câu hỏi tương ứng
+- Click vào thông báo chưa đọc → đánh dấu đã đọc + điều hướng đến câu hỏi tương ứng(nếu là thông báo về inquiry)
 
 ---
 
-## 6. Ghi chú kỹ thuật
+## 5. Ghi chú kỹ thuật
 
 - Tái sử dụng và mở rộng cơ chế notification hiện có
 - Thêm `type = 'INQUIRY'` và `refId = inquiry.id` để phân biệt loại thông báo
 - Nội dung thông báo hỗ trợ đa ngôn ngữ (vi/zh)
 - Giữ nguyên kiến trúc: bảng `Notification` trong DB
 
-# review implement 1
-- bạn cho cái thanh notification khi click vào hình chuông dài ra một tý và cho nút xem tất cả pin vào dưới cùng để người dùng đỡ phải scroll to end mới có thể click vào nút đó
-- hiện tại đang có lỗi là click vào 1 notification thì tất cả các unread notifications đều đc marked là read
+# comment 1 [Requirement-Checked] [System-Design-Checked]
+- [v] bạn cho cái thanh notification khi click vào hình chuông dài ra một tý và cho nút xem tất cả pin vào dưới cùng để người dùng đỡ phải scroll to end mới có thể click vào nút đó
+- [v] hiện tại đang có lỗi là click vào 1 notification thì tất cả các unread notifications đều đc marked là read(hình như fix rồi)
+
+# comment 2 [Requirement-Checked] [System-Design-Checked]
+- [v] việc sử dụng useRef trong MainLayout.jsx như sau có phải best practice không?
+    ```javascript
+    // -1 = chưa khởi tạo lần đầu (tránh false-positive dispatch khi load trang)
+    const prevNotifCountRef = useRef(-1);
+    ```

@@ -1,12 +1,19 @@
+/**
+ * @module landing_page
+ * @SD_Ref 03_1_landing_page_SD.md
+ * @SD_Version SD-v1.0.5
+ */
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 const inquiryController = require('../controllers/inquiryController');
+const createTempUpload = require('../config/upload');
+const uploadInquiry = createTempUpload({ maxFiles: 1 });
 const { ROLES } = require('../constants/enums');
 
 // Public — khách hàng gửi câu hỏi (không cần auth)
-router.post('/public', inquiryController.submitInquiry);
+router.post('/public', uploadInquiry.single('image'), inquiryController.submitInquiry);
 
 // Tất cả role nội bộ được xem danh sách và chi tiết
 router.get('/', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.SALE, ROLES.CHUNG_TU]), inquiryController.getInquiries);

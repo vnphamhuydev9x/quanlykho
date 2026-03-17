@@ -1,5 +1,10 @@
+/**
+ * @module landing_page
+ * @SD_Ref 03_1_landing_page_SD.md
+ * @SD_Version SD-v1.0.6
+ */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Card, Typography, Tag, Tooltip, message, Button, Input, Select, Row, Col, Space } from 'antd';
+import { Table, Card, Typography, Tag, Tooltip, message, Button, Input, Select, Row, Col, Space, Image } from 'antd';
 import { EyeOutlined, SearchOutlined, ReloadOutlined, LinkOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -99,6 +104,13 @@ const InquiryPage = () => {
         fetchData(page, limit, filters);
     }, [page, limit]);
 
+    // SD §3.4: Lắng nghe event inquiry:refresh từ MainLayout khi có INQUIRY notification mới
+    useEffect(() => {
+        const handler = () => fetchData(page, limit, filters);
+        window.addEventListener('inquiry:refresh', handler);
+        return () => window.removeEventListener('inquiry:refresh', handler);
+    }, [fetchData, page, limit, filters]);
+
     // Auto-open modal khi có ?inquiryId= trong URL (từ notification click)
     useEffect(() => {
         const inquiryId = searchParams.get('inquiryId');
@@ -152,13 +164,39 @@ const InquiryPage = () => {
             key: 'id',
             width: 70,
         },
-        ...(!isChungTu ? [{
-            title: t('inquiry.email'),
-            dataIndex: 'email',
-            key: 'email',
-            width: 190,
-            ellipsis: true,
-        }] : []),
+        ...(!isChungTu ? [
+            {
+                title: t('inquiry.email'),
+                dataIndex: 'email',
+                key: 'email',
+                width: 190,
+                ellipsis: true,
+            },
+            {
+                title: t('inquiry.customerName'),
+                dataIndex: 'customerName',
+                key: 'customerName',
+                width: 150,
+                ellipsis: true,
+                render: (val) => val || <span style={{ color: '#bbb' }}>—</span>,
+            },
+            {
+                title: t('inquiry.businessType'),
+                dataIndex: 'businessType',
+                key: 'businessType',
+                width: 170,
+                ellipsis: true,
+                render: (val) => val || <span style={{ color: '#bbb' }}>—</span>,
+            },
+            {
+                title: t('inquiry.phoneNumber'),
+                dataIndex: 'phoneNumber',
+                key: 'phoneNumber',
+                width: 130,
+                ellipsis: true,
+                render: (val) => val || <span style={{ color: '#bbb' }}>—</span>,
+            },
+        ] : []),
         {
             title: t('inquiry.productName'),
             dataIndex: 'productName',
@@ -206,6 +244,15 @@ const InquiryPage = () => {
             width: 130,
             ellipsis: true,
             render: (val) => val || <span style={{ color: '#bbb' }}>—</span>,
+        },
+        {
+            title: t('inquiry.image'),
+            dataIndex: 'imageUrl',
+            key: 'imageUrl',
+            width: 90,
+            render: (val) => val
+                ? <Image src={val} width={56} height={56} style={{ objectFit: 'cover', borderRadius: 4 }} preview={{ mask: false }} />
+                : <span style={{ color: '#bbb' }}>—</span>,
         },
         {
             title: t('inquiry.status'),

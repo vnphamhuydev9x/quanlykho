@@ -1,3 +1,8 @@
+/**
+ * @module notification
+ * @SD_Ref 03_1_notification_SD.md
+ * @SD_Version SD-v1.0.0
+ */
 const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/notificationController');

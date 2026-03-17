@@ -1,3 +1,8 @@
+/**
+ * @module landing_page
+ * @SD_Ref 03_1_landing_page_SD.md
+ * @SD_Version SD-v1.0.5
+ */
 const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
@@ -5,6 +10,8 @@ const { createInquiryNotification } = require('../utils/notification');
 const { sendInquiryReply } = require('../services/emailService');
 const { ROLES, INQUIRY_STATUS } = require('../constants/enums');
 const { deleteByPrefix } = require('../utils/redisUtils');
+const fileStorageService = require('../services/fileStorageService');
+const { buildImageUrl } = fileStorageService;
 
 // CHUNG_TU không nhìn thấy PENDING_REVIEW(1) và QUESTION_REJECTED(6) trong danh sách
 const CHUNG_TU_HIDDEN_STATUSES = [
@@ -18,8 +25,12 @@ const CHUNG_TU_DETAIL_BLOCKED = [
     INQUIRY_STATUS.QUESTION_REJECTED,
 ];
 
-// Mask data trả về cho CHUNG_TU: chỉ ẩn email, trạng thái thực được trả về đầy đủ
-const maskInquiryForChungTu = ({ email, ...rest }) => rest;
+// Mask data trả về cho CHUNG_TU: ẩn email, customerName, businessType, phoneNumber (SD §3.3)
+const maskInquiryForChungTu = ({ email, customerName, businessType, phoneNumber, ...rest }) => rest;
+
+// Build absolute imageUrl trước khi trả response (SD §3.5, BE_rules §8)
+const withAbsoluteImageUrl = (item) =>
+    item && item.imageUrl ? { ...item, imageUrl: buildImageUrl(item.imageUrl) } : item;
 
 // ─── Cache — SCAN+DEL Strategy ───────────────────────────────────────────────
 // Dùng SCAN+DEL để xóa toàn bộ page cache theo prefix khi có thay đổi.
@@ -101,15 +112,19 @@ const inquiryController = {
     // POST /api/inquiries/public — Public, không cần auth
     submitInquiry: async (req, res) => {
         try {
-            const { email, productName, material, usage, size, brand, specialInfo, techSpec, demand } = req.body;
+            const { email, customerName, businessType, phoneNumber, productName, material, usage, size, brand, specialInfo, techSpec, demand } = req.body;
 
             if (!email) {
                 return res.status(400).json({ code: 400, message: 'Missing required field: email' });
             }
 
+            // 1. Tạo inquiry trước để lấy id (chưa có imageUrl)
             const inquiry = await prisma.customerInquiry.create({
                 data: {
                     email: email.trim(),
+                    customerName: customerName?.trim() || null,
+                    businessType: businessType?.trim() || null,
+                    phoneNumber: phoneNumber?.trim() || null,
                     productName: productName?.trim() || null,
                     material: material?.trim() || null,
                     usage: usage?.trim() || null,
@@ -121,20 +136,32 @@ const inquiryController = {
                 }
             });
 
+            // 2. Nếu có file, di chuyển từ temp vào folder theo id rồi update imageUrl
+            let imageUrl = null;
+            if (req.file) {
+                const now = new Date();
+                const subDir = `inquiries/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${inquiry.id}`;
+                imageUrl = fileStorageService.moveTempFile(req.file.path, subDir, req.file.originalname);
+                await prisma.customerInquiry.update({ where: { id: inquiry.id }, data: { imageUrl } });
+            }
+
             await invalidateListCache();
 
             const adminSaleIds = await getUserIdsByRoles([ROLES.ADMIN, ROLES.SALE]);
             await createInquiryNotification(
                 adminSaleIds,
-                JSON.stringify({ key: 'notification.newInquiry', params: { email } }),
+                JSON.stringify({ key: 'notification.newInquiry', params: { email: email.trim() } }),
                 inquiry.id
             );
 
             logger.info(`[Inquiry] New inquiry submitted by ${email}, id=${inquiry.id}`);
-            return res.status(201).json({ code: 201, message: 'Success', data: inquiry });
+            return res.status(201).json({ code: 201, message: 'Success', data: withAbsoluteImageUrl({ ...inquiry, imageUrl }) });
         } catch (error) {
             logger.error(`[Inquiry][submitInquiry] ${error.message}`);
             return res.status(500).json({ code: 99500, message: 'Internal Server Error' });
+        } finally {
+            // Bao giờ cũng phải dọn dẹp file temp ở finally block
+            fileStorageService.deleteTempFiles(req.file);
         }
     },
 
@@ -188,7 +215,12 @@ const inquiryController = {
                     { specialInfo: { contains: search, mode: 'insensitive' } },
                     { demand:      { contains: search, mode: 'insensitive' } },
                     { techSpec:    { contains: search, mode: 'insensitive' } },
-                    ...(!isChungTu ? [{ email: { contains: search, mode: 'insensitive' } }] : []),
+                    ...(!isChungTu ? [
+                        { email:        { contains: search, mode: 'insensitive' } },
+                        { customerName: { contains: search, mode: 'insensitive' } },
+                        { businessType: { contains: search, mode: 'insensitive' } },
+                        { phoneNumber:  { contains: search, mode: 'insensitive' } },
+                    ] : []),
                 ];
                 if (idNum) textConditions.push({ id: idNum });
                 whereClause.OR = textConditions;
@@ -204,7 +236,8 @@ const inquiryController = {
                 }),
             ]);
 
-            const items = isChungTu ? rawItems.map(maskInquiryForChungTu) : rawItems;
+            const masked = isChungTu ? rawItems.map(maskInquiryForChungTu) : rawItems;
+            const items = masked.map(withAbsoluteImageUrl);
             const totalPages = Math.ceil(total / limit);
             const data = { items, total, page, totalPages };
 
@@ -250,8 +283,8 @@ const inquiryController = {
                 return res.status(403).json({ code: 99008, message: 'Forbidden' });
             }
 
-            const data = isChungTu ? maskInquiryForChungTu(inquiry) : inquiry;
-            return res.status(200).json({ code: 200, message: 'Success', data });
+            const masked = isChungTu ? maskInquiryForChungTu(inquiry) : inquiry;
+            return res.status(200).json({ code: 200, message: 'Success', data: withAbsoluteImageUrl(masked) });
         } catch (error) {
             logger.error(`[Inquiry][getInquiryById] ${error.message}`);
             return res.status(500).json({ code: 99500, message: 'Internal Server Error' });

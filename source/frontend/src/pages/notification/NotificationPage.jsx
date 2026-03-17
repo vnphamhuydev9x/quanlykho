@@ -1,3 +1,8 @@
+/**
+ * @module notification
+ * @SD_Ref 03_1_notification_SD.md
+ * @SD_Version SD-v1.0.1
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import { List, Card, Typography, Button, Tag, Spin, Empty, Space, Divider } from 'antd';
 import { CustomerServiceOutlined } from '@ant-design/icons';
@@ -72,10 +77,10 @@ const NotificationPage = () => {
     }, []);
 
     const handleItemClick = (item) => {
-        // Nếu chưa đọc → gọi API mark all as read + cập nhật local state
+        // Nếu chưa đọc → chỉ đánh dấu đúng notification này là đã đọc (SD §3.6)
         if (!item.isRead) {
-            notificationService.markAllAsRead().catch(() => {});
-            setItems(prev => prev.map(n => ({ ...n, isRead: true })));
+            notificationService.markOneAsRead(item.id).catch(() => {});
+            setItems(prev => prev.map(n => n.id === item.id ? { ...n, isRead: true } : n));
         }
         if (NOTIFICATION_TYPE.INQUIRY === item.type && item.refId) {
             navigate(`/customer-inquiry?inquiryId=${item.refId}`);

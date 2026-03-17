@@ -3,7 +3,10 @@ const router = express.Router();
 const declarationController = require('../controllers/declarationController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
-const upload = require('../config/upload');
+const createTempUpload = require('../config/upload');
+const upload = createTempUpload({
+    maxFiles: 3,
+});
 
 // ⚠️ QUAN TRỌNG: /export/all phải đăng ký TRƯỚC /:id
 // Nếu đổi thứ tự, Express sẽ match /export/all thành /:id với id="export" → 404

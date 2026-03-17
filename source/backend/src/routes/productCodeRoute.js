@@ -3,7 +3,6 @@ const router = express.Router();
 const productCodeController = require('../controllers/productCodeController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
-const upload = require('../config/upload');
 
 // All product code routes require authentication and ADMIN role base on new TechSpec
 router.use(authMiddleware);

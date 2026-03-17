@@ -650,7 +650,11 @@
         "filterAllStatus": "Tất cả trạng thái",
         "searchPlaceholder": "Tìm theo ID, tên sản phẩm, chất liệu...",
         "id": "ID",
-        "waitingTimeDays": "{{count}} ngày"
+        "waitingTimeDays": "{{count}} ngày",
+        "image": "Ảnh sản phẩm",
+        "customerName": "Tên khách hàng",
+        "businessType": "Ngành nghề kinh doanh",
+        "phoneNumber": "Số điện thoại"
     },
     "roles": {
         "ADMIN": "Quản trị viên",

@@ -1,3 +1,8 @@
+/**
+ * @module landing_page
+ * @SD_Ref 03_1_landing_page_SD.md
+ * @SD_Version SD-v1.0.2
+ */
 import axiosInstance from '../utils/axios';
 import axios from 'axios';
 
@@ -5,8 +10,10 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const inquiryService = {
     // Public — không cần auth
-    submitInquiry: async (data) => {
-        const response = await axios.post(`${API_BASE}/inquiries/public`, data);
+    submitInquiry: async (formData) => {
+        const response = await axios.post(`${API_BASE}/inquiries/public`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
         return response.data;
     },
 

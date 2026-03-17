@@ -1,20 +1,19 @@
 const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
+const fileStorageService = require('../services/fileStorageService');
+const fs = require('fs');
+
+const { buildImageUrl } = fileStorageService;
 
 const CACHE_KEY = 'declarations:list';
-const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 const formatImagesArray = (imagesJson) => {
     if (!imagesJson) return [];
     try {
         const images = JSON.parse(imagesJson);
         if (!Array.isArray(images)) return [];
-        return images.map(img => {
-            if (img.startsWith('http')) return img;
-            const cleanPath = img.startsWith('/') ? img : `/${img}`;
-            return `${APP_URL}${cleanPath}`;
-        });
+        return images.map(img => buildImageUrl(img));
     } catch (e) {
         return [];
     }
@@ -169,9 +168,10 @@ const declarationController = {
             // Handle Images
             let imagesJson = existing.images;
             if (req.files && req.files.length > 0) {
+                const now = new Date();
+                const subDir = `declarations/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${id}`;
                 const newPaths = req.files.map(file => {
-                    const relativePath = file.path.replace(/\\/g, '/').split('/uploads/')[1];
-                    return `/uploads/${relativePath}`;
+                    return fileStorageService.moveTempFile(file.path, subDir, file.originalname);
                 });
                 // Note: User can replace all or append, but here we append and limit to 3 if requested, 
                 // or just take the current upload as final.
@@ -266,6 +266,9 @@ const declarationController = {
         } catch (error) {
             logger.error(`[UpdateDeclaration] Error: ${error.message}`);
             return res.status(500).json({ code: 500, message: "Internal Server Error" });
+        } finally {
+            // Xóa file temp sau khi dùng (kể cả lỗi)
+            fileStorageService.deleteTempFiles(req.files);
         }
     },
 

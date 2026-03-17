@@ -1,15 +1,5 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(npx prisma migrate dev --name add_khoiPhuTrach_and_notes_to_product_code --create-only)",
-      "Bash(npx prisma db push)",
-      "Bash(npx prisma generate)",
-      "Bash(grep -E '\\\\.js$')",
-      "Bash(npm run dev:reset)",
-      "Bash(npm test -- --testPathPattern=exportOrder.test.js)",
-      "Bash(dotenv -e .env.test -- npx prisma db push --force-reset)",
-      "Bash(DATABASE_URL=\"postgresql://postgres:rootpassword@localhost:5433/quanlykho_test?schema=public\" npx prisma db push --force-reset)",
-      "Bash(npm run setup)"
-    ]
+    "allow": []
   }
 }

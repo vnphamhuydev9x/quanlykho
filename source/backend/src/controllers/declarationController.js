@@ -2,22 +2,18 @@ const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
 const logger = require('../config/logger');
 const fileStorageService = require('../services/fileStorageService');
-const fs = require('fs');
+const { STORAGE_PROVIDER, IMAGE_DELETION_STATUS } = require('../constants/enums');
 
 const { buildImageUrl } = fileStorageService;
 
 const CACHE_KEY = 'declarations:list';
 
-const formatImagesArray = (imagesJson) => {
-    if (!imagesJson) return [];
-    try {
-        const images = JSON.parse(imagesJson);
-        if (!Array.isArray(images)) return [];
-        return images.map(img => buildImageUrl(img));
-    } catch (e) {
-        return [];
-    }
-};
+// Build absolute URL array từ Image[] (sorted by sortOrder, backward compat)
+const toImageUrls = (images) =>
+    (images || [])
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(img => buildImageUrl(img))
+        .filter(Boolean);
 
 const declarationController = {
     getAllDeclarations: async (req, res) => {
@@ -60,6 +56,7 @@ const declarationController = {
                     take: parseInt(limit),
                     orderBy: { createdAt: 'desc' },
                     include: {
+                        images: { orderBy: { sortOrder: 'asc' } },
                         productItem: {
                             select: {
                                 id: true,
@@ -94,7 +91,7 @@ const declarationController = {
 
             const mappedItems = declarations.map(item => ({
                 ...item,
-                imageUrls: formatImagesArray(item.images)
+                imageUrls: toImageUrls(item.images)
             }));
 
             const responseData = {
@@ -123,6 +120,7 @@ const declarationController = {
             const declaration = await prisma.declaration.findFirst({
                 where: { id: parseInt(id), deletedAt: null },
                 include: {
+                    images: { orderBy: { sortOrder: 'asc' } },
                     productItem: true,
                     productCode: {
                         include: {
@@ -141,7 +139,7 @@ const declarationController = {
                 message: "Success",
                 data: {
                     ...declaration,
-                    imageUrls: formatImagesArray(declaration.images)
+                    imageUrls: toImageUrls(declaration.images)
                 }
             });
         } catch (error) {
@@ -155,36 +153,113 @@ const declarationController = {
             const { id } = req.params;
             const body = req.body;
 
-            // Check existence and get product item fee
+            // Check existence + load current images
             const existing = await prisma.declaration.findFirst({
                 where: { id: parseInt(id), deletedAt: null },
-                include: { productItem: true }
+                include: {
+                    productItem: true,
+                    images: { orderBy: { sortOrder: 'asc' } }
+                }
             });
 
             if (!existing) {
                 return res.status(404).json({ code: 404, message: "Declaration not found" });
             }
 
-            // Handle Images
-            let imagesJson = existing.images;
-            if (req.files && req.files.length > 0) {
-                const now = new Date();
-                const subDir = `declarations/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${id}`;
-                const newPaths = req.files.map(file => {
-                    return fileStorageService.moveTempFile(file.path, subDir, file.originalname);
-                });
-                // Note: User can replace all or append, but here we append and limit to 3 if requested, 
-                // or just take the current upload as final.
-                imagesJson = JSON.stringify(newPaths.slice(0, 3));
-            } else if (body.existingImages) {
-                // If user deleted some images from UI
-                const existingImages = Array.isArray(body.existingImages) ? body.existingImages : JSON.parse(body.existingImages);
-                imagesJson = JSON.stringify(existingImages.slice(0, 3));
+            // ── Xác định images cần giữ lại và xóa đi ────────────────────────
+            let keepImageIds = [];
+            let imagesToDelete = [];
+
+            if (body.keepImageIds !== undefined) {
+                // Format mới: FE gửi mảng ID của Image rows cần giữ
+                const rawIds = Array.isArray(body.keepImageIds)
+                    ? body.keepImageIds
+                    : JSON.parse(body.keepImageIds);
+                keepImageIds = rawIds.map(Number).filter(n => !isNaN(n));
+                imagesToDelete = existing.images.filter(img => !keepImageIds.includes(img.id));
+            } else if (body.existingImages !== undefined) {
+                // Format cũ (backward compat): FE gửi absolute URL strings
+                const existingRaw = Array.isArray(body.existingImages)
+                    ? body.existingImages
+                    : JSON.parse(body.existingImages);
+                const keepUrls = new Set(
+                    existingRaw.map(item => {
+                        if (item && typeof item === 'object' && item.url) return buildImageUrl(item);
+                        return typeof item === 'string' ? item : null;
+                    }).filter(Boolean)
+                );
+                imagesToDelete = existing.images.filter(img => !keepUrls.has(buildImageUrl(img)));
+                keepImageIds = existing.images
+                    .filter(img => keepUrls.has(buildImageUrl(img)))
+                    .map(img => img.id);
+            } else {
+                // Không có image instruction → giữ tất cả
+                keepImageIds = existing.images.map(img => img.id);
             }
 
-            // Calculations
-            // QUAN TRỌNG: Dùng giá trị từ DB (existing) khi field không được gửi lên (undefined/null/empty)
-            // Tránh trường hợp user ấn Save mà không đổi gì → backend reset về 0 do || 0 overrride
+            // Validate tổng số ảnh
+            const newFiles = req.files || [];
+            if (keepImageIds.length + newFiles.length > 3) {
+                return res.status(400).json({ code: 400, message: 'Declaration can have at most 3 images' });
+            }
+
+            // Upload files mới trước transaction
+            const keepCount = keepImageIds.length;
+            let uploadedImages = [];
+            if (newFiles.length > 0) {
+                uploadedImages = await Promise.all(
+                    newFiles.map((file, index) =>
+                        fileStorageService.moveTempFileToStorage(file.path, 'declarations', id, file.originalname)
+                            .then(imageObj => ({ ...imageObj, sortOrder: keepCount + index }))
+                    )
+                );
+            }
+
+            // R2 images cần enqueue để xóa
+            const r2ToDelete = imagesToDelete.filter(img => STORAGE_PROVIDER.CLOUDFLARE_R2 === img.provider);
+
+            // ── Transaction: enqueue + delete Image rows + insert mới ─────────
+            await prisma.$transaction(async (tx) => {
+                if (r2ToDelete.length > 0) {
+                    await tx.imageDeletionQueue.createMany({
+                        data: r2ToDelete.map(img => ({
+                            imageUrl: img.url,
+                            provider: img.provider,
+                            status:   IMAGE_DELETION_STATUS.PENDING,
+                        }))
+                    });
+                }
+                if (imagesToDelete.length > 0) {
+                    await tx.image.deleteMany({
+                        where: { id: { in: imagesToDelete.map(img => img.id) } }
+                    });
+                }
+                if (uploadedImages.length > 0) {
+                    await tx.image.createMany({
+                        data: uploadedImages.map(img => ({
+                            url:           img.url,
+                            provider:      img.provider,
+                            sortOrder:     img.sortOrder,
+                            declarationId: parseInt(id),
+                        }))
+                    });
+                }
+            });
+
+            // Best-effort: xóa R2 files + cập nhật queue
+            for (const img of r2ToDelete) {
+                try {
+                    await fileStorageService.deleteFile(img.url);
+                    await prisma.imageDeletionQueue.updateMany({
+                        where: { imageUrl: img.url, status: IMAGE_DELETION_STATUS.PENDING },
+                        data:  { status: IMAGE_DELETION_STATUS.DONE }
+                    });
+                } catch (deleteErr) {
+                    logger.error(`[UpdateDeclaration] R2 delete failed for ${img.url}: ${deleteErr.message}`);
+                }
+            }
+
+            // ── Calculations ──────────────────────────────────────────────────
             const parseOrKeep = (bodyVal, existingVal, isFloat = false) => {
                 if (bodyVal === undefined || bodyVal === null || bodyVal === '') {
                     return existingVal ?? 0;
@@ -194,35 +269,34 @@ const declarationController = {
             };
 
             const invoicePriceBeforeVat = parseOrKeep(body.invoicePriceBeforeVat, existing.invoicePriceBeforeVat);
-            const declarationQuantity = parseOrKeep(body.declarationQuantity, existing.declarationQuantity);
+            const declarationQuantity   = parseOrKeep(body.declarationQuantity, existing.declarationQuantity);
             const totalLotValueBeforeVat = invoicePriceBeforeVat * declarationQuantity;
 
             const importTax = parseOrKeep(body.importTax, existing.importTax, true);
-            const vatTax = parseOrKeep(body.vatTax, existing.vatTax, true);
+            const vatTax    = parseOrKeep(body.vatTax, existing.vatTax, true);
 
             const importTaxPayable = Math.round(totalLotValueBeforeVat * importTax / 100);
-            const vatTaxPayable = Math.round(totalLotValueBeforeVat * vatTax / 100);
+            const vatTaxPayable    = Math.round(totalLotValueBeforeVat * vatTax / 100);
 
-            const payableFee = parseOrKeep(body.payableFee, existing.payableFee);
-            const entrustmentFee = parseOrKeep(body.entrustmentFee, existing.entrustmentFee);
+            const payableFee      = parseOrKeep(body.payableFee, existing.payableFee);
+            const entrustmentFee  = parseOrKeep(body.entrustmentFee, existing.entrustmentFee);
 
             const itemFee = parseFloat(existing.productItem?.itemTransportFeeEstimate || 0);
 
-            const declarationCost = Math.round(importTaxPayable + vatTaxPayable + payableFee + entrustmentFee);
-            const importCostToCustomer = Math.round(itemFee + declarationCost);
+            const declarationCost       = Math.round(importTaxPayable + vatTaxPayable + payableFee + entrustmentFee);
+            const importCostToCustomer  = Math.round(itemFee + declarationCost);
 
             const dataToUpdate = {
-                images: imagesJson,
-                mainStamp: body.mainStamp,
-                subStamp: body.subStamp,
-                productQuantity: parseInt(body.productQuantity) || null,
-                specification: body.specification,
-                productDescription: body.productDescription,
-                brand: body.brand,
-                sellerTaxCode: body.sellerTaxCode,
-                sellerCompanyName: body.sellerCompanyName,
-                declarationNeed: body.declarationNeed,
-                declarationQuantity: parseInt(body.declarationQuantity) || 0,
+                mainStamp:            body.mainStamp,
+                subStamp:             body.subStamp,
+                productQuantity:      parseInt(body.productQuantity) || null,
+                specification:        body.specification,
+                productDescription:   body.productDescription,
+                brand:                body.brand,
+                sellerTaxCode:        body.sellerTaxCode,
+                sellerCompanyName:    body.sellerCompanyName,
+                declarationNeed:      body.declarationNeed,
+                declarationQuantity:  parseInt(body.declarationQuantity) || 0,
                 invoicePriceBeforeVat,
                 totalLotValueBeforeVat,
                 importTax,
@@ -230,7 +304,7 @@ const declarationController = {
                 importTaxPayable,
                 vatTaxPayable,
                 payableFee,
-                notes: body.notes,
+                notes:                body.notes,
                 entrustmentFee,
                 declarationCost,
                 importCostToCustomer
@@ -238,17 +312,19 @@ const declarationController = {
 
             const updated = await prisma.declaration.update({
                 where: { id: parseInt(id) },
-                data: dataToUpdate
+                data:  dataToUpdate
             });
 
             if (updated.productCodeId) {
                 const allDeclarations = await prisma.declaration.findMany({
                     where: { productCodeId: updated.productCodeId, deletedAt: null }
                 });
-                const totalImportCostToCustomer = allDeclarations.reduce((sum, d) => sum + (d.importCostToCustomer || 0), 0);
+                const totalImportCostToCustomer = allDeclarations.reduce(
+                    (sum, d) => sum + (d.importCostToCustomer || 0), 0
+                );
                 await prisma.productCode.update({
                     where: { id: updated.productCodeId },
-                    data: { totalImportCostToCustomer }
+                    data:  { totalImportCostToCustomer }
                 });
             }
 
@@ -267,7 +343,6 @@ const declarationController = {
             logger.error(`[UpdateDeclaration] Error: ${error.message}`);
             return res.status(500).json({ code: 500, message: "Internal Server Error" });
         } finally {
-            // Xóa file temp sau khi dùng (kể cả lỗi)
             fileStorageService.deleteTempFiles(req.files);
         }
     },
@@ -275,14 +350,63 @@ const declarationController = {
     deleteDeclaration: async (req, res) => {
         try {
             const { id } = req.params;
-            await prisma.declaration.update({
-                where: { id: parseInt(id) },
-                data: { deletedAt: new Date() }
+            const parsedId = parseInt(id);
+
+            // Load declaration + images trước khi xóa
+            const existing = await prisma.declaration.findFirst({
+                where: { id: parsedId, deletedAt: null },
+                include: { images: true }
             });
+
+            if (!existing) {
+                return res.status(404).json({ code: 404, message: 'Declaration not found' });
+            }
+
+            // Lọc R2 images cần enqueue
+            const r2Items = existing.images.filter(
+                img => STORAGE_PROVIDER.CLOUDFLARE_R2 === img.provider
+            );
+
+            // Transaction: enqueue R2 + hard-delete Image rows + soft-delete Declaration
+            await prisma.$transaction(async (tx) => {
+                if (r2Items.length > 0) {
+                    await tx.imageDeletionQueue.createMany({
+                        data: r2Items.map(img => ({
+                            imageUrl: img.url,
+                            provider: img.provider,
+                            status:   IMAGE_DELETION_STATUS.PENDING,
+                        }))
+                    });
+                }
+                if (existing.images.length > 0) {
+                    await tx.image.deleteMany({ where: { declarationId: parsedId } });
+                }
+                await tx.declaration.update({
+                    where: { id: parsedId },
+                    data:  { deletedAt: new Date() }
+                });
+            });
+
+            // Invalidate cache
             const keys = await redisClient.keys(`${CACHE_KEY}:*`);
             if (keys.length > 0) await redisClient.del(keys);
-            return res.status(200).json({ code: 200, message: "Deleted" });
+
+            // Best-effort: xóa R2 files + cập nhật queue status
+            for (const img of r2Items) {
+                try {
+                    await fileStorageService.deleteFile(img.url);
+                    await prisma.imageDeletionQueue.updateMany({
+                        where: { imageUrl: img.url, status: IMAGE_DELETION_STATUS.PENDING },
+                        data:  { status: IMAGE_DELETION_STATUS.DONE }
+                    });
+                } catch (deleteErr) {
+                    logger.error(`[DeleteDeclaration] R2 delete failed for ${img.url}: ${deleteErr.message}`);
+                }
+            }
+
+            return res.status(200).json({ code: 200, message: 'Deleted' });
         } catch (error) {
+            logger.error(`[DeleteDeclaration] Error: ${error.message}`);
             return res.status(500).json({ code: 500, message: error.message });
         }
     },
@@ -293,13 +417,20 @@ const declarationController = {
     },
 
     getAllDeclarationsForExport: async (req, res) => {
-        // ... Similar to getAll but without pagination if needed
         try {
             const declarations = await prisma.declaration.findMany({
                 where: { deletedAt: null },
-                include: { productItem: true, productCode: { include: { customer: true } } }
+                include: {
+                    images: { orderBy: { sortOrder: 'asc' } },
+                    productItem: true,
+                    productCode: { include: { customer: true } }
+                }
             });
-            return res.status(200).json({ code: 200, data: declarations });
+            const mapped = declarations.map(item => ({
+                ...item,
+                imageUrls: toImageUrls(item.images)
+            }));
+            return res.status(200).json({ code: 200, data: mapped });
         } catch (e) {
             return res.status(500).json({ message: e.message });
         }

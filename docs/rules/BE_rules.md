@@ -152,10 +152,41 @@ Tài liệu này tổng hợp các bộ quy tắc lập trình chuẩn dành cho
 *   **Tránh RAM/Disk Leak**:
     *   **TUYỆT ĐỐI KHÔNG** dùng `memoryStorage` của Multer, ưu tiên dùng `diskStorage` đổ thẳng ra đĩa qua hàm `createTempUpload`.
     *   Sử dụng kiến trúc Temp-to-Permanent: Đầu tiên Multer tự động lưu file từ request vào thư mục tạm `temp/YYYY/MM/DD`.
-    *   Trong Controller, sau khi thực thi block `try` và **đã đảm bảo mọi dữ liệu hợp lệ** (DB, quyền, đầu vào), mới dùng hàm `moveTempFile()` để copy file đó vào thư mục sống (VD: `uploads/...`). 
+    *   Trong Controller, sau khi thực thi block `try` và **đã đảm bảo mọi dữ liệu hợp lệ** (DB, quyền, đầu vào), mới dùng hàm `moveTempFileToStorage()` để copy file đó vào thư mục sống (VD: `uploads/...`).
 *   **Luôn dọn dẹp rác ở block `finally`**:
     *   Bắt buộc luôn có đoạn dọn dẹp tại block `finally` trong API Controller chặn xử lý File.
     *   Cấm viết lại logic dọn file bằng `fs.unlinkSync()`, mà hãy gọi hàm tái sử dụng `fileStorageService.deleteTempFiles(req.file)` (hoặc `req.files`) để xóa sạch file nháp trong `temp/`. Điều này triệt tiêu hoàn toàn khả năng tắc nghẽn rác hệ thống dù logic có ném ra Exception.
+
+---
+
+## 9. DRY — Không lặp lại Logic (Don't Repeat Yourself)
+
+*   **Không được viết lại logic inline khi đã có hàm đóng gói sẵn ở nơi khác.**
+    *   Khi nhiều nơi cùng cần một đoạn logic giống nhau, dù một nơi đã đóng gói thành hàm còn nơi kia viết inline — đó vẫn là vi phạm DRY.
+    *   Giải pháp: extract hàm đó ra file shared utility riêng, tất cả nơi dùng đều import chung.
+*   **Vị trí file shared utility**: Đặt cùng thư mục với các file dùng chung (VD: `src/services/storage/storageUtils.js`).
+
+    *Ví dụ (lỗi thực tế):*
+    ```javascript
+    // r2StorageProvider.js — đã đóng gói thành hàm buildKey()
+    const buildKey = (entityType, entityId, originalname) => {
+        const ext = path.extname(originalname);
+        return `${entityType}/${entityId}/${uuidv4()}${ext}`;
+    };
+
+    // SAI: localStorageProvider.js viết lại logic tương đương inline thay vì reuse
+    const ext      = path.extname(originalname);
+    const filename = `${uuidv4()}${ext}`;
+    const subDir   = `${entityType}/${entityId}`;
+
+    // ĐÚNG: tách buildKey ra storageUtils.js, cả 2 provider import dùng chung
+    // storageUtils.js
+    const buildKey = (entityType, entityId, originalname) => { ... };
+    module.exports = { buildKey };
+
+    // localStorageProvider.js & r2StorageProvider.js
+    const { buildKey } = require('./storageUtils');
+    ```
 
 ---
 
@@ -183,8 +214,7 @@ Tài liệu này tổng hợp các bộ quy tắc lập trình chuẩn dành cho
             const user = await User.findById(req.user.id);
 
             // 2. Chuyển file NHÁP thành file THẬT nếu mọi thứ OK
-            const subDir = `avatars/${today}`;
-            const finalImageUrl = fileStorageService.moveTempFile(req.file.path, subDir, req.file.originalname);
+            const finalImageUrl = await fileStorageService.moveTempFileToStorage(req.file.path, 'avatars', req.user.id, req.file.originalname);
             
             // 3. Cập nhật DB
             await User.update({ id: user.id }, { avatar: finalImageUrl });

@@ -85,12 +85,16 @@ const DeclarationModal = ({ visible, declaration, onCancel, onSuccess, onViewPro
                     pc_vehicleStatusOverridden: declaration.productCode?.vehicleStatusOverridden || false,
                 });
 
-                if (declaration.imageUrls && declaration.imageUrls.length > 0) {
-                    setFileList(declaration.imageUrls.map((url, index) => ({
+                if (declaration.images && declaration.images.length > 0) {
+                    // Dùng images[] để có imageId cho keepImageIds; imageUrls[] để có absolute URL
+                    const sorted = [...declaration.images].sort((a, b) => a.sortOrder - b.sortOrder);
+                    const urls = declaration.imageUrls || [];
+                    setFileList(sorted.map((img, index) => ({
                         uid: `-${index}`,
                         name: `image-${index}.png`,
                         status: 'done',
-                        url: url
+                        url: urls[index] || img.url,
+                        imageId: img.id,
                     })));
                 } else {
                     setFileList([]);
@@ -126,18 +130,15 @@ const DeclarationModal = ({ visible, declaration, onCancel, onSuccess, onViewPro
                     }
                 });
 
-                const existingImages = [];
+                const keepImageIds = [];
                 fileList.forEach(file => {
                     if (file.originFileObj) {
                         formData.append('images', file.originFileObj);
-                    } else if (file.url) {
-                        const relativePath = file.url.replace(/^https?:\/\/[^\/]+/, '');
-                        existingImages.push(relativePath);
+                    } else if (file.imageId) {
+                        keepImageIds.push(file.imageId);
                     }
                 });
-                if (existingImages.length > 0) {
-                    formData.append('existingImages', JSON.stringify(existingImages));
-                }
+                formData.append('keepImageIds', JSON.stringify(keepImageIds));
 
                 formData.append('totalLotValueBeforeVat', totalLotValueBeforeVat);
                 formData.append('importTaxPayable', importTaxPayable);

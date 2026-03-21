@@ -1,61 +1,57 @@
+/**
+ * @module file_storage_r2
+ * @SD_Ref 03_1_file_storage_r2_SD.md
+ * @SD_Version SD-v1.1.0
+ *
+ * Facade — chọn storage provider dựa vào FILE_STORAGE_PROVIDER env var:
+ *   - FILE_STORAGE_PROVIDER=CLOUDFLARE_R2 → dùng r2StorageProvider (Cloudflare R2)
+ *   - FILE_STORAGE_PROVIDER=LOCAL (hoặc không set) → dùng localStorageProvider (local disk, dev/test)
+ *
+ * Public API:
+ *   moveTempFileToStorage(tempFilePath, entityType, entityId, originalname) → Promise<ImageObject>
+ *   deleteFile(imageUrl)                                                    → Promise<void>
+ *   deleteTempFiles(files)                                                  → void
+ *   buildImageUrl(imageData)                                                → string|null
+ *
+ * ImageObject: { url: string, provider: string }
+ */
 const fs = require('fs');
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+const { STORAGE_PROVIDER } = require('../constants/enums');
 
-const UPLOADS_ROOT = path.join(__dirname, '../../uploads');
+// ─── Provider selection ───────────────────────────────────────────────────────
+const isR2 = STORAGE_PROVIDER.CLOUDFLARE_R2 === process.env.FILE_STORAGE_PROVIDER;
+
+const provider = isR2
+    ? require('./storage/r2StorageProvider')
+    : require('./storage/localStorageProvider');
+
+const activeProvider = isR2 ? STORAGE_PROVIDER.CLOUDFLARE_R2 : STORAGE_PROVIDER.LOCAL;
+
+// ─── Storage operations ───────────────────────────────────────────────────────
 
 /**
- * Cũ: Lưu file buffer xuống disk tại subDir.
- * Chuyển sang moveTempFile để tối ưu hiệu suất với diskStorage.
+ * Di chuyển file tạm lên storage. Trả về ImageObject { url, provider }.
+ * Caller không cần đọc process.env.FILE_STORAGE_PROVIDER thêm.
+ * @returns {Promise<{url: string, provider: string}>}
  */
-const saveFile = (buffer, subDir, originalname) => {
-    const ext = path.extname(originalname);
-    const filename = `${uuidv4()}${ext}`;
-    const fullDir = path.join(UPLOADS_ROOT, subDir);
-    fs.mkdirSync(fullDir, { recursive: true });
-    fs.writeFileSync(path.join(fullDir, filename), buffer);
-    return `/uploads/${subDir.replace(/\\/g, '/')}/${filename}`;
+const moveTempFileToStorage = async (tempFilePath, entityType, entityId, originalname) => {
+    const url = await provider.moveTempFileToStorage(tempFilePath, entityType, entityId, originalname);
+    return { url, provider: activeProvider };
 };
 
-/**
- * MỚI: Di chuyển file từ thư mục temp sang đích đến trong uploads/
- * @param {string} tempFilePath - đường dẫn file tạo bởi multer (req.file.path)
- * @param {string} subDir       - VD: 'inquiries/2025/03/42' hay 'declarations/2026/03/1'
- * @param {string} originalname - tên file gốc
- * @returns {string} imageUrl   - VD: '/uploads/inquiries/2025/03/42/uuid.jpg'
- */
-const moveTempFile = (tempFilePath, subDir, originalname) => {
-    const ext = path.extname(originalname);
-    const filename = `${uuidv4()}${ext}`;
-    const fullDir = path.join(UPLOADS_ROOT, subDir);
-    fs.mkdirSync(fullDir, { recursive: true });
+const deleteFile = (imageUrl) =>
+    provider.deleteFile(imageUrl);
 
-    const finalPath = path.join(fullDir, filename);
-    // Dùng copy và unlink thay vì fs.renameSync để tránh lỗi Cross-Device khi temp/ và uploads/ ở 2 ổ đĩa khác nhau
-    fs.copyFileSync(tempFilePath, finalPath);
-    return `/uploads/${subDir.replace(/\\/g, '/')}/${filename}`;
-};
+// ─── Shared utilities (không phụ thuộc provider) ─────────────────────────────
 
 /**
- * Xóa file trên disk theo imageUrl.
- * @param {string|null} imageUrl - VD: '/uploads/inquiries/2025/03/42/uuid.jpg'
- */
-const deleteFile = (imageUrl) => {
-    if (!imageUrl) return;
-    const fullPath = path.join(UPLOADS_ROOT, imageUrl.replace(/^\/uploads\//, ''));
-    if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath);
-    }
-};
-
-/**
- * Hỗ trợ dọn dẹp (xóa) file tạm ở block finally
- * @param {Array|Object} files - Có thể nhận vào req.files (mảng) hoặc req.file (object)
+ * Dọn dẹp file tạm ở block finally.
+ * Multer luôn ghi temp ra disk dù dùng provider nào → luôn cần xóa ở đây.
+ * @param {Array|Object} files - req.files (mảng) hoặc req.file (object)
  */
 const deleteTempFiles = (files) => {
     if (!files) return;
 
-    // Đưa về dạng mảng để xử lý chung
     const fileArray = Array.isArray(files) ? files : [files];
 
     fileArray.forEach(file => {
@@ -63,24 +59,39 @@ const deleteTempFiles = (files) => {
             try {
                 fs.unlinkSync(file.path);
             } catch (e) {
-                console.error(`[fileStorageService] block finally - Failed to delete temp file: ${e.message}`);
+                console.error(`[fileStorageService] Failed to delete temp file: ${e.message}`);
             }
         }
     });
 };
 
 /**
- * Build absolute URL từ stored path.
- * - LOCAL storage: DB lưu relative path ('/uploads/...') → prepend BE_HOST
- * - S3 storage: DB lưu full URL ('https://...') → return as-is
- * - BE_rules: Luôn dùng hàm này khi trả imageUrl trong response, không trả raw path.
- * @param {string|null} storedPath
+ * Build absolute URL từ imageData.
+ * - ImageObject { url, provider }: dùng provider để build absolute URL
+ * - string (legacy): fallback detect bằng startsWith('http')
+ * - null provider trong ImageObject: fallback về LOCAL
+ * @param {Object|string|null} imageData
  * @returns {string|null}
  */
-const buildImageUrl = (storedPath) => {
-    if (!storedPath) return null;
-    if (storedPath.startsWith('http')) return storedPath;
-    return `${process.env.BE_HOST || ''}${storedPath}`;
+const buildImageUrl = (imageData) => {
+    if (!imageData) return null;
+
+    // New format: ImageObject { url, provider }
+    if (typeof imageData === 'object' && imageData !== null) {
+        const { url, provider: imgProvider } = imageData;
+        if (!url) return null;
+        const effectiveProvider = imgProvider ?? STORAGE_PROVIDER.LOCAL;
+        if (STORAGE_PROVIDER.CLOUDFLARE_R2 === effectiveProvider) return url;
+        return `${process.env.BE_HOST || ''}${url}`;
+    }
+
+    // Legacy format: raw string (relative path hoặc full URL)
+    if (typeof imageData === 'string') {
+        if (imageData.startsWith('http')) return imageData;
+        return `${process.env.BE_HOST || ''}${imageData}`;
+    }
+
+    return null;
 };
 
-module.exports = { saveFile, moveTempFile, deleteFile, deleteTempFiles, buildImageUrl };
+module.exports = { moveTempFileToStorage, deleteFile, deleteTempFiles, buildImageUrl };

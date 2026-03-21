@@ -10,13 +10,13 @@ source/**/build/
 source/**/dist/
 source/**/out/
 
-# Environment Variables (Sensitive)
-# .env
-# .env.local
-# .env.*.local
-# source/**/.env
-# source/**/.env.local
-# source/**/.env.*.local
+# Environment Variables
+# .env được commit — chỉ chứa credentials local/throwaway, không có secret thật
+# Secret thật (dev/prod) → quản lý qua Fly.io Secrets, không bao giờ để trong file
+.env.local
+.env.*.local
+source/**/.env.local
+source/**/.env.*.local
 
 # Logs
 logs
@@ -66,3 +66,6 @@ source/backend/uploads/
 
 # Ignore Excel analysis folder
 excel/
+
+# Claude AI config
+.claude/

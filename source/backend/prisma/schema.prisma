@@ -178,7 +178,7 @@ model Declaration {
   productItem          ProductItem? @relation(fields: [productItemId], references: [id], onDelete: Cascade)
 
   // Fields
-  images               String?   @db.Text      // Ảnh hàng hóa (JSON array, tối đa 3)
+  images               Image[]                   // Ảnh hàng hóa (relation) — tối đa 3 rows
   mainStamp            String?   @db.Text      // Tem chính
   subStamp             String?   @db.Text      // Tem phụ
   productQuantity      Int?                    // Số lượng sản phẩm
@@ -433,7 +433,7 @@ model CustomerInquiry {
   specialInfo   String?       @db.Text // Thông tin đặc thù (pin, điện áp, áp suất...)
   techSpec      String?       @db.Text // Thông số kỹ thuật / catalogue / tem etiket
   demand        String?                // Nhu cầu (CSNK, giá khai...)
-  imageUrl      String?                // URL ảnh đính kèm từ khách hàng (tùy chọn)
+  images        Image[]                // Ảnh đính kèm (relation) — tối đa 1 row
   answer        String?       @db.Text // Câu trả lời của nhân viên chứng từ
   internalNote  String?       @db.Text // Ghi chú nội bộ (không gửi email)
   status        Int           @default(1) // 1=PENDING_REVIEW — xem enums.js
@@ -461,7 +461,7 @@ model DebtPeriod {
 
 model ShortDeclaration {
   id              Int       @id @default(autoincrement())
-  
+
   // 9 trường thông tin chính
   productName     String?   @db.Text
   hsCode          String?
@@ -472,10 +472,10 @@ model ShortDeclaration {
   importTaxRate   Decimal?  @db.Decimal(5, 2)
   vatTaxCode      String?
   vatTaxRate      Decimal?  @db.Decimal(5, 2)
-  
+
   // Hash field for existing check
   hash            String?   @db.VarChar(255)
-  
+
   // System fields
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -483,6 +483,42 @@ model ShortDeclaration {
 
   @@index([hash])
   @@map("short_declarations")
+}
+
+// Image — metadata từng ảnh, mỗi row thuộc Declaration hoặc CustomerInquiry (không cả hai)
+model Image {
+  id            Int              @id @default(autoincrement())
+  url           String           @db.Text  // Full URL (R2) hoặc relative path (LOCAL)
+  provider      String                     // STORAGE_PROVIDER enum: LOCAL | CLOUDFLARE_R2
+  sortOrder     Int              @default(0) // Thứ tự hiển thị (0-based)
+
+  declarationId Int?
+  declaration   Declaration?     @relation(fields: [declarationId], references: [id])
+
+  inquiryId     Int?
+  inquiry       CustomerInquiry? @relation(fields: [inquiryId], references: [id])
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([declarationId])
+  @@index([inquiryId])
+  @@map("images")
+}
+
+// ImageDeletionQueue — track R2 objects cần xóa sau khi entity bị soft-delete
+// Đảm bảo không mất track URL dù R2 call thất bại (DB và R2 là 2 hệ thống riêng biệt)
+// Status flow: PENDING → DONE (xóa R2 thành công) | FAILED (retry >= 3 lần thất bại)
+model ImageDeletionQueue {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String               // Full URL hoặc relative path cần xóa
+  provider  String   @default("LOCAL")   // STORAGE_PROVIDER enum: LOCAL | CLOUDFLARE_R2
+  status    String   @default("PENDING") // IMAGE_DELETION_STATUS enum: PENDING | DONE | FAILED
+  retries   Int      @default(0)         // Số lần retry
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("image_deletion_queue")
 }
 
 

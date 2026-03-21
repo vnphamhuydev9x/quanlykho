@@ -28,9 +28,15 @@ const CHUNG_TU_DETAIL_BLOCKED = [
 // Mask data trả về cho CHUNG_TU: ẩn email, customerName, businessType, phoneNumber (SD §3.3)
 const maskInquiryForChungTu = ({ email, customerName, businessType, phoneNumber, ...rest }) => rest;
 
-// Build absolute imageUrl trước khi trả response (SD §3.5, BE_rules §8)
-const withAbsoluteImageUrl = (item) =>
-    item && item.imageUrl ? { ...item, imageUrl: buildImageUrl(item.imageUrl) } : item;
+// Build absolute imageUrl + expose images[] trước khi trả response (SD §2.3)
+// images[] từ Prisma Image relation — imageUrl là backward compat (ảnh đầu tiên)
+const withAbsoluteImageUrl = (item) => {
+    if (!item) return item;
+    const images = item.images || [];
+    const sorted = [...images].sort((a, b) => a.sortOrder - b.sortOrder);
+    const imageUrl = sorted.length > 0 ? buildImageUrl(sorted[0]) : null;
+    return { ...item, images: sorted, imageUrl };
+};
 
 // ─── Cache — SCAN+DEL Strategy ───────────────────────────────────────────────
 // Dùng SCAN+DEL để xóa toàn bộ page cache theo prefix khi có thay đổi.
@@ -136,13 +142,18 @@ const inquiryController = {
                 }
             });
 
-            // 2. Nếu có file, di chuyển từ temp vào folder theo id rồi update imageUrl
-            let imageUrl = null;
+            // 2. Nếu có file, upload lên storage rồi INSERT Image row
+            let createdImage = null;
             if (req.file) {
-                const now = new Date();
-                const subDir = `inquiries/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${inquiry.id}`;
-                imageUrl = fileStorageService.moveTempFile(req.file.path, subDir, req.file.originalname);
-                await prisma.customerInquiry.update({ where: { id: inquiry.id }, data: { imageUrl } });
+                const imageObj = await fileStorageService.moveTempFileToStorage(req.file.path, 'inquiries', inquiry.id, req.file.originalname);
+                createdImage = await prisma.image.create({
+                    data: {
+                        url:       imageObj.url,
+                        provider:  imageObj.provider,
+                        sortOrder: 0,
+                        inquiryId: inquiry.id,
+                    }
+                });
             }
 
             await invalidateListCache();
@@ -155,7 +166,7 @@ const inquiryController = {
             );
 
             logger.info(`[Inquiry] New inquiry submitted by ${email}, id=${inquiry.id}`);
-            return res.status(201).json({ code: 201, message: 'Success', data: withAbsoluteImageUrl({ ...inquiry, imageUrl }) });
+            return res.status(201).json({ code: 201, message: 'Success', data: withAbsoluteImageUrl({ ...inquiry, images: createdImage ? [createdImage] : [] }) });
         } catch (error) {
             logger.error(`[Inquiry][submitInquiry] ${error.message}`);
             return res.status(500).json({ code: 99500, message: 'Internal Server Error' });
@@ -233,6 +244,7 @@ const inquiryController = {
                     orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
                     skip: (page - 1) * limit,
                     take: limit,
+                    include: { images: true },
                 }),
             ]);
 
@@ -270,7 +282,10 @@ const inquiryController = {
             } catch (_) { /* cache miss */ }
 
             if (!inquiry) {
-                inquiry = await prisma.customerInquiry.findFirst({ where: { id, deletedAt: null } });
+                inquiry = await prisma.customerInquiry.findFirst({
+                    where: { id, deletedAt: null },
+                    include: { images: true },
+                });
                 if (!inquiry) {
                     return res.status(404).json({ code: 404, message: 'Inquiry not found' });
                 }

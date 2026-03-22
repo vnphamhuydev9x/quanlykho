@@ -1,0 +1,29 @@
+# Dependencies — cài lại trong container
+node_modules/
+source/backend/node_modules/
+source/frontend/node_modules/
+
+# Frontend — deploy riêng, không build cùng backend image
+source/frontend/
+
+# Runtime-generated directories — không thuộc source code
+source/backend/uploads/
+source/backend/logs/
+source/backend/temp/
+
+# Test files — không đưa vào production image
+source/backend/integration_tests/
+
+# Environment files — inject qua Fly.io Secrets, KHÔNG bake vào image
+.env
+.env.*
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md

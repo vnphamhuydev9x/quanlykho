@@ -82,6 +82,7 @@ Tài liệu này tổng hợp các bộ quy tắc lập trình chuẩn dành cho
     *   Không được dùng lệnh `KEYS` gây block threads của Redis.
     *   Bắt buộc dùng `SCAN` thông qua hàm tiện ích `deleteByPrefix()` có sẵn trong Utils.
 *   **Chuẩn đặt tên Key**: Ngăn cách bằng dấu hai chấm `{domain}:{type}:{scope}:{params}` (Ví dụ: `employees:list:admin:p1:l20`).
+*   **Bắt buộc Log Cache HIT / MISS**: Mỗi lần đọc cache phải log rõ kết quả để tracing và debug hiệu quả. Log `Cache HIT` khi dữ liệu lấy từ Redis, log `Cache MISS` khi phải query DB. Format: `[HandlerName] Cache HIT key={cacheKey}` và `[HandlerName] Cache MISS key={cacheKey} - querying DB`.
 
     *Ví dụ Tương tác Cache:*
     ```javascript
@@ -92,6 +93,14 @@ Tài liệu này tổng hợp các bộ quy tắc lập trình chuẩn dành cho
     // Xóa liên hoàn dùng SCAN utility (Không dùng await redisClient.keys('*'))
     const { deleteByPrefix } = require('../utils/redisUtils');
     await deleteByPrefix('users:list');
+
+    // BẮT BUỘC log cache HIT / MISS
+    const cached = await redisClient.get(cacheKey);
+    if (cached) {
+        logger.info(`[GetUsers] Cache HIT key=${cacheKey}`);
+        return res.json(JSON.parse(cached));
+    }
+    logger.info(`[GetUsers] Cache MISS key=${cacheKey} - querying DB`);
     ```
 
 ---
@@ -123,6 +132,10 @@ Tài liệu này tổng hợp các bộ quy tắc lập trình chuẩn dành cho
     *   **Process & Exit**: Log bước xử lý và log Result (Success/Fail).
 *   **Bắt Buộc Log Lỗi (Error Logging)**:
     *   Bất cứ khi nào bắt được lỗi (trong block `catch`) hoặc trong các đoạn rẽ nhánh (if) cần ném ra một lỗi tùy chỉnh (throw Error), **TUYỆT ĐỐI BẮT BUỘC phải dùng `logger.error(...)`** để ghi lại nguyên nhân trước khi thực hiện `throw` rỗng hoặc return HTTP 500. Tránh tình trạng quăng lỗi mà server console hoặc file log im ru không có vết tích để debug.
+*   **Cấm Silent Catch (Không Được Im Lặng)**:
+    *   **TUYỆT ĐỐI CẤM** dùng `catch (_) {}`, `catch (e) {}` rỗng, hoặc `catch` chỉ có comment `/* non-critical */`, `/* cache miss */` mà không có bất kỳ log nào.
+    *   Mọi `catch` block đều phải có ít nhất `logger.warn(...)` (nếu là lỗi không nghiêm trọng, ví dụ: Redis timeout) hoặc `logger.error(...)` (nếu nghiêm trọng).
+    *   Lý do: Silent catch che giấu lỗi hạ tầng (Redis down, network timeout) khiến hệ thống chạy im lặng trong trạng thái degraded mà không ai biết.
 
     *Ví dụ Logging Information:*
     ```javascript

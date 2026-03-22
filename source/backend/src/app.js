@@ -31,22 +31,23 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 // Routes
+const featureToggle = require('./middlewares/featureToggle');
+
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/employees', employeeRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/warehouses', warehouseRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/declarations', declarationRoutes);
-app.use('/api/product-codes', productCodeRoutes);
-app.use('/api/product-codes', productCodeRoutes);
-app.use('/api/transactions', transactionRoutes);
+app.use('/api/customers', featureToggle('FEATURE_CUSTOMERS'), customerRoutes);
+app.use('/api/warehouses', featureToggle('FEATURE_SETTINGS'), warehouseRoutes);
+app.use('/api/categories', featureToggle('FEATURE_SETTINGS'), categoryRoutes);
+app.use('/api/declarations', featureToggle('FEATURE_DECLARATIONS'), declarationRoutes);
+app.use('/api/product-codes', featureToggle('FEATURE_INVENTORY'), productCodeRoutes);
+app.use('/api/transactions', featureToggle('FEATURE_TRANSACTIONS'), transactionRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/manifests', require('./routes/manifestRoutes'));
-app.use('/api/merchandise-conditions', merchandiseConditionRoutes);
-app.use('/api/short-declarations', require('./routes/shortDeclaration.routes'));
-app.use('/api/export-orders', exportOrderRoutes);
-app.use('/api/debts', debtRoutes);
+app.use('/api/manifests', featureToggle('FEATURE_INVENTORY'), require('./routes/manifestRoutes'));
+app.use('/api/merchandise-conditions', featureToggle('FEATURE_SETTINGS'), merchandiseConditionRoutes);
+app.use('/api/short-declarations', featureToggle('FEATURE_DECLARATIONS'), require('./routes/shortDeclaration.routes'));
+app.use('/api/export-orders', featureToggle('FEATURE_INVENTORY'), exportOrderRoutes);
+app.use('/api/debts', featureToggle('FEATURE_TRANSACTIONS'), debtRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 
 app.get('/', (req, res) => {

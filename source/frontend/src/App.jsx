@@ -30,6 +30,7 @@ import InquiryPage from './pages/inquiry/InquiryPage';
 import NotificationPage from './pages/notification/NotificationPage';
 import LandingPage from './pages/landing/LandingPage';
 import MainLayout from './layouts/MainLayout';
+import FeatureRoute from './components/FeatureRoute';
 
 // Set dayjs global locale to Vietnamese
 dayjs.locale('vi');
@@ -63,9 +64,7 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
+                <Navigate to="/customer-inquiry" replace />
               </ProtectedRoute>
             }
           />
@@ -94,7 +93,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <WarehousePage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_SETTINGS">
+                    <WarehousePage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -104,7 +105,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <CategoryPage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_SETTINGS">
+                    <CategoryPage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -114,7 +117,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <MerchandiseConditionPage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_SETTINGS">
+                    <MerchandiseConditionPage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -124,7 +129,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <ShortDeclarationList />
+                  <FeatureRoute featureEnv="VITE_FEATURE_DECLARATIONS">
+                    <ShortDeclarationList />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -134,7 +141,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <DeclarationPage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_DECLARATIONS">
+                    <DeclarationPage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -144,7 +153,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <ProductCodePage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_INVENTORY">
+                    <ProductCodePage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -154,7 +165,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <MerchandisePage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_INVENTORY">
+                    <MerchandisePage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -164,7 +177,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <ManifestListPage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_INVENTORY">
+                    <ManifestListPage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -174,7 +189,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <ManifestDetailPage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_INVENTORY">
+                    <ManifestDetailPage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -184,7 +201,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <TransactionPage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_TRANSACTIONS">
+                    <TransactionPage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -194,7 +213,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <ExportOrderListPage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_INVENTORY">
+                    <ExportOrderListPage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -204,7 +225,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <CustomerList />
+                  <FeatureRoute featureEnv="VITE_FEATURE_CUSTOMERS">
+                    <CustomerList />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -214,7 +237,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <DebtPage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_TRANSACTIONS">
+                    <DebtPage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -224,7 +249,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <DebtDetailPage />
+                  <FeatureRoute featureEnv="VITE_FEATURE_TRANSACTIONS">
+                    <DebtDetailPage />
+                  </FeatureRoute>
                 </MainLayout>
               </ProtectedRoute>
             }

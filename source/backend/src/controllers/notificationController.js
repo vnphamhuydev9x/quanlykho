@@ -20,12 +20,14 @@ const notificationController = {
             try {
                 const cachedData = await redisClient.get(cacheKey);
                 if (cachedData) {
+                    logger.info(`[GetNotifications] Cache HIT userId=${userId}`);
                     return res.status(200).json({ code: 200, message: "Success (Cached)", data: JSON.parse(cachedData) });
                 }
             } catch (err) {
                 logger.error(`Redis error: ${err.message}`);
             }
 
+            logger.info(`[GetNotifications] Cache MISS userId=${userId} - querying DB`);
             const notifications = await prisma.notification.findMany({
                 where: { userId, isRead: false },
                 orderBy: { createdAt: 'desc' }

@@ -181,7 +181,7 @@ const inquiryController = {
     // Cache: chỉ cho request không filter; khi có search/status → skip cache
     getInquiries: async (req, res) => {
         try {
-            const { role } = req.user;
+            const { userId, role } = req.user;
             const isChungTu = ROLES.CHUNG_TU === role;
             const roleKey = isChungTu ? 'chung_tu' : 'admin_sale';
 
@@ -192,13 +192,21 @@ const inquiryController = {
                 ? parseInt(req.query.status) : null;
             const hasFilter = search !== '' || statusFilter !== null;
 
+            logger.info(`[Inquiry][getInquiries] userId=${userId} role=${role} page=${page} limit=${limit} hasFilter=${hasFilter}`);
+
             // Cache chỉ cho request không filter
             if (!hasFilter) {
                 const cacheKey = pageListCacheKey(roleKey, page, limit);
                 try {
                     const cached = await redisClient.get(cacheKey);
-                    if (cached) return res.status(200).json({ code: 200, message: 'Success', data: JSON.parse(cached) });
-                } catch (_) { /* cache miss */ }
+                    if (cached) {
+                        logger.info(`[Inquiry][getInquiries] Cache HIT key=${cacheKey}`);
+                        return res.status(200).json({ code: 200, message: 'Success', data: JSON.parse(cached) });
+                    }
+                    logger.info(`[Inquiry][getInquiries] Cache MISS key=${cacheKey} - querying DB`);
+                } catch (err) {
+                    logger.error(`[Inquiry][getInquiries] Redis error: ${err.message}`);
+                }
             }
 
             // Build where clause
@@ -270,16 +278,26 @@ const inquiryController = {
     // GET /api/inquiries/:id
     getInquiryById: async (req, res) => {
         try {
-            const { role } = req.user;
+            const { userId, role } = req.user;
             const id = parseInt(req.params.id);
             const isChungTu = ROLES.CHUNG_TU === role;
 
+            logger.info(`[Inquiry][getInquiryById] userId=${userId} role=${role} inquiryId=${id}`);
+
             // Thử lấy từ cache (raw data)
+            const cacheKey = detailCacheKey(id);
             let inquiry = null;
             try {
-                const cached = await redisClient.get(detailCacheKey(id));
-                if (cached) inquiry = JSON.parse(cached);
-            } catch (_) { /* cache miss */ }
+                const cached = await redisClient.get(cacheKey);
+                if (cached) {
+                    logger.info(`[Inquiry][getInquiryById] Cache HIT key=${cacheKey}`);
+                    inquiry = JSON.parse(cached);
+                } else {
+                    logger.info(`[Inquiry][getInquiryById] Cache MISS key=${cacheKey} - querying DB`);
+                }
+            } catch (err) {
+                logger.error(`[Inquiry][getInquiryById] Redis error: ${err.message}`);
+            }
 
             if (!inquiry) {
                 inquiry = await prisma.customerInquiry.findFirst({
@@ -290,8 +308,10 @@ const inquiryController = {
                     return res.status(404).json({ code: 404, message: 'Inquiry not found' });
                 }
                 try {
-                    await redisClient.set(detailCacheKey(id), JSON.stringify(inquiry), { EX: DETAIL_CACHE_TTL });
-                } catch (_) { /* non-critical */ }
+                    await redisClient.set(cacheKey, JSON.stringify(inquiry), { EX: DETAIL_CACHE_TTL });
+                } catch (err) {
+                    logger.error(`[Inquiry][getInquiryById] Redis SET error: ${err.message}`);
+                }
             }
 
             if (isChungTu && CHUNG_TU_DETAIL_BLOCKED.includes(inquiry.status)) {
@@ -467,7 +487,12 @@ const inquiryController = {
 
             // Approve → gửi email
             const questionText = buildQuestionText(inquiry);
-            await sendInquiryReply({ toEmail: inquiry.email, question: questionText, answer: inquiry.answer });
+            try {
+                await sendInquiryReply({ toEmail: inquiry.email, question: questionText, answer: inquiry.answer });
+            } catch (emailError) {
+                logger.error(`[Inquiry][reviewAndSend] Email failed for id=${id}: ${emailError.message}`);
+                return res.status(500).json({ code: 99051, message: 'Email send failed' });
+            }
 
             await prisma.customerInquiry.update({ where: { id }, data: { status: INQUIRY_STATUS.EMAIL_SENT } });
 

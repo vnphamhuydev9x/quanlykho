@@ -214,37 +214,39 @@ const MainLayout = ({ children }) => {
             label: t('menu.inquiry'),
             onClick: () => navigate('/customer-inquiry'),
         },
+        /* 
         {
             key: '/',
             icon: <DashboardOutlined />,
             label: t('menu.dashboard'),
             onClick: () => navigate('/'),
         },
-        {
+        */
+        import.meta.env.VITE_FEATURE_CUSTOMERS !== 'false' && {
             key: '/customers',
             icon: <TeamOutlined />,
             label: t('menu.customers'),
             onClick: () => navigate('/customers'),
         },
-        {
+        import.meta.env.VITE_FEATURE_TRANSACTIONS !== 'false' && {
             key: '/transactions',
             icon: <CreditCardOutlined />,
             label: t('menu.transactions'),
             onClick: () => navigate('/transactions'),
         },
-        {
+        import.meta.env.VITE_FEATURE_DECLARATIONS !== 'false' && {
             key: '/short-declarations',
             icon: <FileTextOutlined />,
             label: t('menu.shortDeclarations'),
             onClick: () => navigate('/short-declarations'),
         },
-        {
+        import.meta.env.VITE_FEATURE_DECLARATIONS !== 'false' && {
             key: '/declarations',
             icon: <FileTextOutlined />,
             label: t('menu.declarations'),
             onClick: () => navigate('/declarations'),
         },
-        {
+        import.meta.env.VITE_FEATURE_INVENTORY !== 'false' && {
             key: 'product-codes',
             icon: <InboxOutlined />,
             label: t('menu.productCodes'),
@@ -329,13 +331,13 @@ const MainLayout = ({ children }) => {
                 }
             ],
         },
-        {
+        import.meta.env.VITE_FEATURE_INVENTORY !== 'false' && {
             key: '/manifests',
             icon: <CarOutlined />,
             label: t('menu.manifests'),
             onClick: () => navigate('/manifests'),
         },
-        {
+        import.meta.env.VITE_FEATURE_INVENTORY !== 'false' && {
             key: 'export-orders-parent',
             icon: <ExportOutlined />,
             label: t('menu.export') || 'Xuất kho',
@@ -367,7 +369,7 @@ const MainLayout = ({ children }) => {
                 },
             ]
         },
-        {
+        import.meta.env.VITE_FEATURE_INVENTORY !== 'false' && {
             key: 'inventory',
             icon: <HomeOutlined />,
             label: t('menu.inventory'),
@@ -384,7 +386,7 @@ const MainLayout = ({ children }) => {
                 }
             ],
         },
-        {
+        import.meta.env.VITE_FEATURE_TRANSACTIONS !== 'false' && {
             key: 'reports-parent',
             icon: <BarChartOutlined />,
             label: t('menu.reports'),
@@ -396,18 +398,18 @@ const MainLayout = ({ children }) => {
                 },
             ],
         },
-        {
+        import.meta.env.VITE_FEATURE_INVENTORY !== 'false' && {
             key: '/merchandise',
             icon: <ShoppingOutlined />,
             label: t('menu.merchandise') || 'Hàng hóa',
             onClick: () => navigate('/merchandise'),
         },
-        {
+        ROLES.ADMIN === userRole && {
             key: 'settings',
             icon: <SettingOutlined />,
             label: t('menu.settings'),
             children: [
-                {
+                import.meta.env.VITE_FEATURE_SETTINGS !== 'false' && {
                     key: '/settings/warehouses',
                     label: t('menu.warehouseVN'),
                     onClick: () => navigate('/settings/warehouses'),
@@ -417,17 +419,17 @@ const MainLayout = ({ children }) => {
                     label: t('menu.employees'),
                     onClick: () => navigate('/settings/employees'),
                 },
-                {
+                import.meta.env.VITE_FEATURE_SETTINGS !== 'false' && {
                     key: '/settings/merchandise-conditions',
                     label: t('menu.merchandiseConditions'),
                     onClick: () => navigate('/settings/merchandise-conditions'),
                 },
-                {
+                import.meta.env.VITE_FEATURE_SETTINGS !== 'false' && {
                     key: '/settings/categories',
                     label: t('menu.categories'),
                     onClick: () => navigate('/settings/categories'),
                 }
-            ],
+            ].filter(Boolean),
         },
     ].filter(Boolean);
 

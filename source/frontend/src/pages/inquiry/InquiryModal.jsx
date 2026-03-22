@@ -88,8 +88,9 @@ const InquiryModal = ({ visible, inquiry, userRole, onClose, onSuccess, onRefres
             await inquiryService.reviewAndSend(inquiry.id, approved);
             message.success(approved ? t('inquiry.emailSentSuccess') : t('inquiry.answerRejectedSuccess'));
             onSuccess();
-        } catch (_) {
-            message.error(t('common.error'));
+        } catch (error) {
+            const errorCode = error.response?.data?.code;
+            message.error(errorCode ? t(`error.${errorCode}`) : t('common.error'));
         } finally {
             setSubmitting(false);
         }

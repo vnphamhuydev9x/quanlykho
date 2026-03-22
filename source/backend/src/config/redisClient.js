@@ -26,6 +26,13 @@ const safeRedisClient = {
             return null;
         }
     },
+    set: async (key, value, options) => {
+        try {
+            await redisClient.set(key, value, options);
+        } catch (err) {
+            logger.warn(`[Redis] SET failed (key="${key}"): ${err.message}`);
+        }
+    },
     setEx: async (key, ttl, value) => {
         try {
             await redisClient.setEx(key, ttl, value);

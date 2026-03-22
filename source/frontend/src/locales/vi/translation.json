@@ -583,6 +583,7 @@
         "99008": "Bạn không có quyền thực hiện thao tác này",
         "99009": "Hành động không hợp lệ",
         "99015": "Tờ khai rút gọn này đã tồn tại",
+        "99051": "Gửi email lỗi",
         "99500": "Lỗi hệ thống (Server Error)",
         "UNKNOWN": "Lỗi không xác định"
     },

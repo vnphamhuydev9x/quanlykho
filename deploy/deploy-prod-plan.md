@@ -86,20 +86,7 @@ api.3tgroup.com       → Backend API   (Fly.io)
 
 ## Các bước triển khai
 
-### Bước 1: Tích hợp Cloudflare R2 cho ảnh
-- [ ] Tạo tài khoản Cloudflare, bật R2
-- [ ] Tạo R2 bucket
-- [ ] Sửa `fileStorageService.js`: upload ảnh lên R2 thay vì disk local
-- [ ] Sửa `buildImageUrl()`: trả về R2 URL trực tiếp
-- [ ] Cập nhật env: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`
-- [ ] Test upload + hiển thị ảnh
-
-### Bước 2: Containerize app bằng Docker
-- [ ] Viết `Dockerfile` cho backend
-- [ ] Viết `docker-compose.prod.yml` để test local trước
-- [ ] Verify app chạy đúng trong container
-
-### Bước 3: Setup Neon Launch (PostgreSQL)
+### Bước 1: Setup Neon Launch (PostgreSQL)
 - [ ] Tạo tài khoản Neon, nhập thẻ
 - [ ] Tạo project, chọn region `aws-ap-southeast-1` (Singapore)
 - [ ] **Upgrade lên Launch plan $19/month ngay**
@@ -107,13 +94,13 @@ api.3tgroup.com       → Backend API   (Fly.io)
 - [ ] Chạy `prisma migrate deploy` để migrate schema
 - [ ] Verify kết nối thành công
 
-### Bước 4: Setup Upstash (Redis)
+### Bước 2: Setup Upstash (Redis)
 - [ ] Tạo tài khoản Upstash, nhập thẻ
 - [ ] Tạo Redis database, chọn region Singapore
 - [ ] **Bật pay-as-you-go** để không bị chặn khi vượt free
 - [ ] Lấy `REDIS_URL` (format: `rediss://...`)
 
-### Bước 5: Deploy lên Fly.io
+### Bước 3: Deploy lên Fly.io
 - [ ] Cài `flyctl` CLI
 - [ ] Đăng ký tài khoản Fly.io, nhập thẻ
 - [ ] `fly launch` — chọn region `sin` (Singapore)
@@ -121,14 +108,14 @@ api.3tgroup.com       → Backend API   (Fly.io)
 - [ ] `fly deploy`
 - [ ] Verify app chạy đúng
 
-### Bước 6: Deploy Frontend lên Cloudflare Pages
+### Bước 4: Deploy Frontend lên Cloudflare Pages
 - [ ] Vào Cloudflare Dashboard → Pages → Create project
 - [ ] Connect GitHub repo, chọn branch `main`
 - [ ] Build command: `npm run build`, Output: `dist`
 - [ ] Set env: `VITE_API_URL=https://api.3tgroup.com/api`
 - [ ] Deploy → verify chạy đúng trên domain `*.pages.dev`
 
-### Bước 7: Setup domain & DNS
+### Bước 5: Setup domain & DNS
 - [ ] Mua domain tại Cloudflare Registrar (hoặc trỏ nameserver về Cloudflare nếu mua chỗ khác)
 - [ ] Vào Cloudflare DNS, thêm các records:
 
@@ -143,7 +130,7 @@ CNAME   api     your-backend.fly.dev         OFF (DNS only)
 - [ ] Vào Cloudflare Pages → Custom domains → thêm `3tgroup.com`
 - [ ] Verify HTTPS hoạt động trên cả 2 domain
 
-### Bước 8: Kiểm tra production
+### Bước 6: Kiểm tra production
 - [ ] Test đăng nhập
 - [ ] Test upload ảnh → R2
 - [ ] Test xem ảnh
@@ -157,11 +144,13 @@ CNAME   api     your-backend.fly.dev         OFF (DNS only)
 ### Nguyên tắc
 
 ```
-Local dev:   .env (không commit, có trong .gitignore)
-Dev sharing: .env.dev (được commit, chỉ chứa credentials throwaway)
-Production:  Fly.io Secrets + Cloudflare Pages env vars + GitHub Secrets
-Git repo:    .env.example (placeholder, để tham khảo)
+Local dev:   .env (commit được — chỉ chứa throwaway credentials)
+Dev cloud:   Fly.io Secrets (không có file .env trên server)
+Production:  Fly.io Secrets + Cloudflare Pages env vars
+Git repo:    .env.example (template tham khảo)
 ```
+
+> Xem chi tiết tại [env-management-guide.md](../deploy/env-management-guide.md)
 
 ### Set secrets trên Fly.io
 

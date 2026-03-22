@@ -665,6 +665,8 @@
         "DIEU_VAN": "Điều vận",
         "KHO_VN": "Nhân viên kho Việt Nam",
         "CHUNG_TU": "Nhân viên chứng từ",
+        "WAREHOUSE": "Nhân viên kho",
+        "ACCOUNTANT": "Kế toán",
         "CUSTOMER": "Khách hàng"
     }
 }

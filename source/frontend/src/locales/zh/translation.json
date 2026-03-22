@@ -668,6 +668,8 @@
         "DIEU_VAN": "调运员",
         "KHO_VN": "越南仓库员工",
         "CHUNG_TU": "单证员",
+        "WAREHOUSE": "仓库员工",
+        "ACCOUNTANT": "会计",
         "CUSTOMER": "客户"
     }
 }

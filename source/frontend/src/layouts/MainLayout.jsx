@@ -67,18 +67,29 @@ const MainLayout = ({ children }) => {
     let userType = 'USER';
     let mustChangePassword = false;
     let username = 'User';
+    let fullName = '';
 
     if (token) {
         try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
+            const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+            const payload = JSON.parse(new TextDecoder().decode(bytes));
             userRole = payload.role;
             userType = payload.type;
             mustChangePassword = payload.mustChangePassword;
             username = payload.username || 'User';
+            fullName = payload.fullName || '';
         } catch (e) {
             console.error("Invalid token");
         }
     }
+
+    const getInitials = (name) => {
+        if (!name) return 'U';
+        const words = name.trim().split(/\s+/);
+        if (words.length === 1) return words[0][0].toUpperCase();
+        return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    };
 
     const [isForcePassModalVisible, setIsForcePassModalVisible] = useState(mustChangePassword);
 
@@ -645,8 +656,10 @@ const MainLayout = ({ children }) => {
 
                         <Dropdown menu={{ items: userMenu }} placement="bottomRight">
                             <Space style={{ cursor: 'pointer' }}>
-                                <Avatar icon={<UserOutlined />} />
-                                <Text strong>{username}</Text>
+                                <Avatar style={{ backgroundColor: '#1677ff', color: '#fff', fontWeight: 600 }}>
+                                    {getInitials(fullName || username)}
+                                </Avatar>
+                                <Text strong>{fullName || username}</Text>
                             </Space>
                         </Dropdown>
                     </Space>

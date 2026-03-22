@@ -80,7 +80,17 @@ File `.env.dev` đã được commit lên git với credentials throwaway — an
 - Tạo tài khoản Neon — không cần thẻ
 - Tạo project, chọn region `aws-ap-southeast-1`
 - Lấy `DATABASE_URL`
-- Chạy `prisma migrate deploy`
+- Chạy migration và seed admin:
+
+```bash
+cd source/backend
+DATABASE_URL="..." npx prisma migrate deploy
+DATABASE_URL="..." npm run seed:admin
+```
+
+> `seed:admin` chỉ tạo 1 tài khoản admin duy nhất (không có demo data).
+> Script idempotent — chạy lại nhiều lần không bị lỗi.
+> Khác với `dev:reset` ở local (reset toàn bộ DB + full demo data).
 
 ### Bước 2: Tạo Upstash Redis (free)
 - Tạo tài khoản Upstash — không cần thẻ

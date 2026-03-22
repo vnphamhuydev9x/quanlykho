@@ -176,7 +176,7 @@ const MainLayout = ({ children }) => {
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
-        navigate('/login');
+        navigate('/admin/login');
     };
 
     const handleForceChangeSuccess = () => {
@@ -207,7 +207,7 @@ const MainLayout = ({ children }) => {
             key: 'profile',
             label: t('menu.profile'),
             icon: <UserOutlined />,
-            onClick: () => navigate('/profile'),
+            onClick: () => navigate('/admin/profile'),
         },
         {
             key: 'logout',
@@ -220,42 +220,34 @@ const MainLayout = ({ children }) => {
 
     const items = [
         {
-            key: '/customer-inquiry',
+            key: '/admin/customer-inquiry',
             icon: <CustomerServiceOutlined />,
             label: t('menu.inquiry'),
-            onClick: () => navigate('/customer-inquiry'),
+            onClick: () => navigate('/admin/customer-inquiry'),
         },
-        /* 
-        {
-            key: '/',
-            icon: <DashboardOutlined />,
-            label: t('menu.dashboard'),
-            onClick: () => navigate('/'),
-        },
-        */
         import.meta.env.VITE_FEATURE_CUSTOMERS !== 'false' && {
-            key: '/customers',
+            key: '/admin/customers',
             icon: <TeamOutlined />,
             label: t('menu.customers'),
-            onClick: () => navigate('/customers'),
+            onClick: () => navigate('/admin/customers'),
         },
         import.meta.env.VITE_FEATURE_TRANSACTIONS !== 'false' && {
-            key: '/transactions',
+            key: '/admin/transactions',
             icon: <CreditCardOutlined />,
             label: t('menu.transactions'),
-            onClick: () => navigate('/transactions'),
+            onClick: () => navigate('/admin/transactions'),
         },
         import.meta.env.VITE_FEATURE_DECLARATIONS !== 'false' && {
-            key: '/short-declarations',
+            key: '/admin/short-declarations',
             icon: <FileTextOutlined />,
             label: t('menu.shortDeclarations'),
-            onClick: () => navigate('/short-declarations'),
+            onClick: () => navigate('/admin/short-declarations'),
         },
         import.meta.env.VITE_FEATURE_DECLARATIONS !== 'false' && {
-            key: '/declarations',
+            key: '/admin/declarations',
             icon: <FileTextOutlined />,
             label: t('menu.declarations'),
-            onClick: () => navigate('/declarations'),
+            onClick: () => navigate('/admin/declarations'),
         },
         import.meta.env.VITE_FEATURE_INVENTORY !== 'false' && {
             key: 'product-codes',
@@ -263,20 +255,18 @@ const MainLayout = ({ children }) => {
             label: t('menu.productCodes'),
             children: [
                 {
-                    key: '/product-codes',
+                    key: '/admin/product-codes',
                     label: (
                         <div
                             style={{ display: 'flex', alignItems: 'center', width: '100%' }}
                             onMouseEnter={() => {
                                 if (userType === 'CUSTOMER' && notifications.length > 0) {
-                                    // Start a timer when hovering
                                     window.notiTimer = setTimeout(() => {
                                         window.shouldMarkRead = true;
-                                    }, 1000); // Must hover for at least 1s
+                                    }, 1000);
                                 }
                             }}
                             onMouseLeave={() => {
-                                // Clear timer and mark as read if it was hovered long enough
                                 clearTimeout(window.notiTimer);
                                 if (window.shouldMarkRead) {
                                     markNotificationsAsRead();
@@ -293,7 +283,7 @@ const MainLayout = ({ children }) => {
                                         </div>
                                     }
                                     placement="right"
-                                    mouseLeaveDelay={1.5} // Keep tooltip visible for 1.5s after leaving
+                                    mouseLeaveDelay={1.5}
                                 >
                                     <Badge count={notifications.length} size="small" style={{ marginLeft: '8px' }} title="" />
                                 </Tooltip>
@@ -302,51 +292,51 @@ const MainLayout = ({ children }) => {
                     ),
                     onClick: () => {
                         if (userType === 'CUSTOMER') markNotificationsAsRead();
-                        navigate('/product-codes');
+                        navigate('/admin/product-codes');
                     },
                 },
                 {
-                    key: '/product-codes?status=NHAP_KHO',
+                    key: '/admin/product-codes?status=NHAP_KHO',
                     label: t('productCode.statusNhapKho') || 'Nhập kho',
-                    onClick: () => navigate('/product-codes?status=NHAP_KHO'),
+                    onClick: () => navigate('/admin/product-codes?status=NHAP_KHO'),
                 },
                 {
-                    key: '/product-codes?status=CHO_XEP_XE',
+                    key: '/admin/product-codes?status=CHO_XEP_XE',
                     label: t('productCode.statusChoXepXe') || 'Chờ xếp xe',
-                    onClick: () => navigate('/product-codes?status=CHO_XEP_XE'),
+                    onClick: () => navigate('/admin/product-codes?status=CHO_XEP_XE'),
                 },
                 {
-                    key: '/product-codes?status=DA_XEP_XE',
+                    key: '/admin/product-codes?status=DA_XEP_XE',
                     label: t('productCode.statusDaXepXe') || 'Đã xếp xe',
-                    onClick: () => navigate('/product-codes?status=DA_XEP_XE'),
+                    onClick: () => navigate('/admin/product-codes?status=DA_XEP_XE'),
                 },
                 {
-                    key: '/product-codes?status=DANG_KIEM_HOA',
+                    key: '/admin/product-codes?status=DANG_KIEM_HOA',
                     label: t('productCode.statusDangKiemHoa') || 'Đang kiểm hóa',
-                    onClick: () => navigate('/product-codes?status=DANG_KIEM_HOA'),
+                    onClick: () => navigate('/admin/product-codes?status=DANG_KIEM_HOA'),
                 },
                 {
-                    key: '/product-codes?status=CHO_THONG_QUAN',
+                    key: '/admin/product-codes?status=CHO_THONG_QUAN',
                     label: t('productCode.statusChoThongQuan') || 'Chờ thông quan',
-                    onClick: () => navigate('/product-codes?status=CHO_THONG_QUAN'),
+                    onClick: () => navigate('/admin/product-codes?status=CHO_THONG_QUAN'),
                 },
                 {
-                    key: '/product-codes?status=DA_THONG_QUAN',
+                    key: '/admin/product-codes?status=DA_THONG_QUAN',
                     label: t('productCode.statusDaThongQuan') || 'Đã thông quan',
-                    onClick: () => navigate('/product-codes?status=DA_THONG_QUAN'),
+                    onClick: () => navigate('/admin/product-codes?status=DA_THONG_QUAN'),
                 },
                 {
-                    key: '/product-codes?status=DA_NHAP_KHO_VN',
+                    key: '/admin/product-codes?status=DA_NHAP_KHO_VN',
                     label: t('productCode.statusDaNhapKhoVN') || 'Đã nhập kho VN',
-                    onClick: () => navigate('/product-codes?status=DA_NHAP_KHO_VN'),
+                    onClick: () => navigate('/admin/product-codes?status=DA_NHAP_KHO_VN'),
                 }
             ],
         },
         import.meta.env.VITE_FEATURE_INVENTORY !== 'false' && {
-            key: '/manifests',
+            key: '/admin/manifests',
             icon: <CarOutlined />,
             label: t('menu.manifests'),
-            onClick: () => navigate('/manifests'),
+            onClick: () => navigate('/admin/manifests'),
         },
         import.meta.env.VITE_FEATURE_INVENTORY !== 'false' && {
             key: 'export-orders-parent',
@@ -354,29 +344,29 @@ const MainLayout = ({ children }) => {
             label: t('menu.export') || 'Xuất kho',
             children: [
                 {
-                    key: '/export-orders',
+                    key: '/admin/export-orders',
                     label: t('exportOrder.statusAll') || 'Tất cả',
-                    onClick: () => navigate('/export-orders'),
+                    onClick: () => navigate('/admin/export-orders'),
                 },
                 {
-                    key: '/export-orders?status=DA_TAO_LENH',
+                    key: '/admin/export-orders?status=DA_TAO_LENH',
                     label: t('exportOrder.statusDaTaoLenh') || 'Đã tạo lệnh',
-                    onClick: () => navigate('/export-orders?status=DA_TAO_LENH'),
+                    onClick: () => navigate('/admin/export-orders?status=DA_TAO_LENH'),
                 },
                 {
-                    key: '/export-orders?status=DANG_XAC_NHAN_CAN',
+                    key: '/admin/export-orders?status=DANG_XAC_NHAN_CAN',
                     label: t('exportOrder.statusDangXacNhanCan') || 'Đang xác nhận cân',
-                    onClick: () => navigate('/export-orders?status=DANG_XAC_NHAN_CAN'),
+                    onClick: () => navigate('/admin/export-orders?status=DANG_XAC_NHAN_CAN'),
                 },
                 {
-                    key: '/export-orders?status=DA_XAC_NHAN_CAN',
+                    key: '/admin/export-orders?status=DA_XAC_NHAN_CAN',
                     label: t('exportOrder.statusDaXacNhanCan') || 'Đã xác nhận cân',
-                    onClick: () => navigate('/export-orders?status=DA_XAC_NHAN_CAN'),
+                    onClick: () => navigate('/admin/export-orders?status=DA_XAC_NHAN_CAN'),
                 },
                 {
-                    key: '/export-orders?status=DA_XUAT_KHO',
+                    key: '/admin/export-orders?status=DA_XUAT_KHO',
                     label: t('exportOrder.statusDaXuatKho') || 'Đã xuất kho',
-                    onClick: () => navigate('/export-orders?status=DA_XUAT_KHO'),
+                    onClick: () => navigate('/admin/export-orders?status=DA_XUAT_KHO'),
                 },
             ]
         },
@@ -386,14 +376,14 @@ const MainLayout = ({ children }) => {
             label: t('menu.inventory'),
             children: [
                 {
-                    key: '/product-codes?inventory=TQ',
+                    key: '/admin/product-codes?inventory=TQ',
                     label: t('menu.inventoryTQ') || 'Tồn kho TQ',
-                    onClick: () => navigate('/product-codes?inventory=TQ'),
+                    onClick: () => navigate('/admin/product-codes?inventory=TQ'),
                 },
                 {
-                    key: '/product-codes?inventory=VN',
+                    key: '/admin/product-codes?inventory=VN',
                     label: t('menu.inventoryVN') || 'Tồn kho VN',
-                    onClick: () => navigate('/product-codes?inventory=VN'),
+                    onClick: () => navigate('/admin/product-codes?inventory=VN'),
                 }
             ],
         },
@@ -403,17 +393,17 @@ const MainLayout = ({ children }) => {
             label: t('menu.reports'),
             children: [
                 {
-                    key: '/bao-cao/cong-no',
+                    key: '/admin/bao-cao/cong-no',
                     label: t('menu.debt'),
-                    onClick: () => navigate('/bao-cao/cong-no'),
+                    onClick: () => navigate('/admin/bao-cao/cong-no'),
                 },
             ],
         },
         import.meta.env.VITE_FEATURE_INVENTORY !== 'false' && {
-            key: '/merchandise',
+            key: '/admin/merchandise',
             icon: <ShoppingOutlined />,
             label: t('menu.merchandise') || 'Hàng hóa',
-            onClick: () => navigate('/merchandise'),
+            onClick: () => navigate('/admin/merchandise'),
         },
         ROLES.ADMIN === userRole && {
             key: 'settings',
@@ -421,24 +411,24 @@ const MainLayout = ({ children }) => {
             label: t('menu.settings'),
             children: [
                 import.meta.env.VITE_FEATURE_SETTINGS !== 'false' && {
-                    key: '/settings/warehouses',
+                    key: '/admin/settings/warehouses',
                     label: t('menu.warehouseVN'),
-                    onClick: () => navigate('/settings/warehouses'),
+                    onClick: () => navigate('/admin/settings/warehouses'),
                 },
                 {
-                    key: '/settings/employees',
+                    key: '/admin/settings/employees',
                     label: t('menu.employees'),
-                    onClick: () => navigate('/settings/employees'),
+                    onClick: () => navigate('/admin/settings/employees'),
                 },
                 import.meta.env.VITE_FEATURE_SETTINGS !== 'false' && {
-                    key: '/settings/merchandise-conditions',
+                    key: '/admin/settings/merchandise-conditions',
                     label: t('menu.merchandiseConditions'),
-                    onClick: () => navigate('/settings/merchandise-conditions'),
+                    onClick: () => navigate('/admin/settings/merchandise-conditions'),
                 },
                 import.meta.env.VITE_FEATURE_SETTINGS !== 'false' && {
-                    key: '/settings/categories',
+                    key: '/admin/settings/categories',
                     label: t('menu.categories'),
-                    onClick: () => navigate('/settings/categories'),
+                    onClick: () => navigate('/admin/settings/categories'),
                 }
             ].filter(Boolean),
         },
@@ -446,9 +436,9 @@ const MainLayout = ({ children }) => {
 
     let menuItems = items;
     if (userType === 'CUSTOMER') {
-        menuItems = items.filter(item => item.key === '/' || item.key === 'product-codes');
+        menuItems = items.filter(item => item.key === '/admin' || item.key === 'product-codes');
     } else if (ROLES.CHUNG_TU === userRole) {
-        menuItems = items.filter(item => item.key === '/customer-inquiry');
+        menuItems = items.filter(item => item.key === '/admin/customer-inquiry');
     }
 
     const currentKey = location.pathname + location.search;
@@ -615,9 +605,9 @@ const MainLayout = ({ children }) => {
                                                                         }
                                                                         setStaffBellOpen(false);
                                                                         if (item.refId) {
-                                                                            navigate(`/customer-inquiry?inquiryId=${item.refId}`);
+                                                                            navigate(`/admin/customer-inquiry?inquiryId=${item.refId}`);
                                                                         } else {
-                                                                            navigate('/customer-inquiry');
+                                                                            navigate('/admin/customer-inquiry');
                                                                         }
                                                                     }}
                                                                 >
@@ -640,7 +630,7 @@ const MainLayout = ({ children }) => {
                                             <Button
                                                 type="link"
                                                 size="small"
-                                                onClick={() => { setStaffBellOpen(false); navigate('/notification-history'); }}
+                                                onClick={() => { setStaffBellOpen(false); navigate('/admin/notification-history'); }}
                                             >
                                                 {t('notification.viewAll')}
                                             </Button>

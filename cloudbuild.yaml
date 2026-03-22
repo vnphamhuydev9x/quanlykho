@@ -1,0 +1,23 @@
+steps:
+  # Bước 1: Đọc version từ package.json, lưu vào /workspace/version.txt
+  - name: 'node:24-alpine'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - 'node -p "require(\"./source/backend/package.json\").version" > /workspace/version.txt && echo "Version: $(cat /workspace/version.txt)"'
+
+  # Bước 2: Build Docker image với APP_VERSION, tag cả version cụ thể lẫn latest
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        VERSION=$(cat /workspace/version.txt)
+        docker build \
+          --build-arg APP_VERSION=$$VERSION \
+          -t asia-southeast1-docker.pkg.dev/$PROJECT_ID/quanlykho/backend:$$VERSION \
+          -t asia-southeast1-docker.pkg.dev/$PROJECT_ID/quanlykho/backend:latest \
+          .
+
+images:
+  - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/quanlykho/backend'

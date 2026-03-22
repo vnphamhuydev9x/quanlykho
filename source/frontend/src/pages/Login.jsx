@@ -3,7 +3,7 @@ import { Form, Input, Button, Card, Typography, message, Dropdown } from 'antd';
 import { UserOutlined, LockOutlined, GlobalOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import axios from '../utils/axios';
 
 const { Title } = Typography;
 
@@ -33,7 +33,7 @@ const Login = () => {
         setLoading(true);
         try {
             // Call API
-            const response = await axios.post('http://localhost:3000/api/auth/login', {
+            const response = await axios.post('/auth/login', {
                 username: values.username,
                 password: values.password,
             });
@@ -47,9 +47,9 @@ const Login = () => {
             localStorage.setItem('user_info', JSON.stringify(user));
 
             if (user && user.type === 'CUSTOMER') {
-                navigate('/product-codes');
+                navigate('/admin/product-codes');
             } else {
-                navigate('/'); // Redirect to Dashboard
+                navigate('/admin/customer-inquiry');
             }
         } catch (error) {
             console.error('Login error:', error);

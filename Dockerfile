@@ -29,6 +29,7 @@ LABEL org.opencontainers.image.version=$APP_VERSION
 LABEL org.opencontainers.image.title="quanlykho-backend"
 
 ENV NODE_ENV=production
+ENV PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-linux-musl-openssl-3.0.x.so.node
 
 # Copy node_modules đã build từ stage deps (bao gồm Prisma Client đã generate)
 COPY --from=deps /app/node_modules ./node_modules
@@ -39,6 +40,9 @@ COPY source/backend/prisma.config.ts ./
 
 # Copy source code (thay đổi thường xuyên nhất — để cuối)
 COPY source/backend/src/ ./src/
+
+# Tạo thư mục logs và cấp quyền cho user node
+RUN mkdir -p /app/logs /app/temp && chown -R node:node /app/logs /app/temp
 
 # Chạy với user non-root để tăng bảo mật
 USER node

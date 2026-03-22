@@ -69,3 +69,9 @@ excel/
 
 # Claude AI config
 .claude/
+
+dev-secret-info.md
+deploy/set-env-dev.ps1
+deploy/set-env-prod.ps1
+
+

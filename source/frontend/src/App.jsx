@@ -47,7 +47,7 @@ const LocaleProvider = ({ children }) => {
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('access_token');
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
   return children;
 };
@@ -57,19 +57,22 @@ function App() {
     <Router>
       <LocaleProvider>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          {/* Public landing page — không cần auth */}
+          {/* Public landing pages */}
+          <Route path="/" element={<Navigate to="/consulting" replace />} />
           <Route path="/consulting" element={<LandingPage />} />
+
+          {/* Admin routes */}
+          <Route path="/admin/login" element={<Login />} />
           <Route
-            path="/"
+            path="/admin"
             element={
               <ProtectedRoute>
-                <Navigate to="/customer-inquiry" replace />
+                <Navigate to="/admin/customer-inquiry" replace />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/profile"
+            path="/admin/profile"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -79,7 +82,7 @@ function App() {
             }
           />
           <Route
-            path="/settings/employees"
+            path="/admin/settings/employees"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -89,7 +92,7 @@ function App() {
             }
           />
           <Route
-            path="/settings/warehouses"
+            path="/admin/settings/warehouses"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -101,7 +104,7 @@ function App() {
             }
           />
           <Route
-            path="/settings/categories"
+            path="/admin/settings/categories"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -113,7 +116,7 @@ function App() {
             }
           />
           <Route
-            path="/settings/merchandise-conditions"
+            path="/admin/settings/merchandise-conditions"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -125,7 +128,7 @@ function App() {
             }
           />
           <Route
-            path="/short-declarations"
+            path="/admin/short-declarations"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -137,7 +140,7 @@ function App() {
             }
           />
           <Route
-            path="/declarations"
+            path="/admin/declarations"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -149,7 +152,7 @@ function App() {
             }
           />
           <Route
-            path="/product-codes"
+            path="/admin/product-codes"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -161,7 +164,7 @@ function App() {
             }
           />
           <Route
-            path="/merchandise"
+            path="/admin/merchandise"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -173,7 +176,7 @@ function App() {
             }
           />
           <Route
-            path="/manifests"
+            path="/admin/manifests"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -185,7 +188,7 @@ function App() {
             }
           />
           <Route
-            path="/manifests/:id"
+            path="/admin/manifests/:id"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -197,7 +200,7 @@ function App() {
             }
           />
           <Route
-            path="/transactions"
+            path="/admin/transactions"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -209,7 +212,7 @@ function App() {
             }
           />
           <Route
-            path="/export-orders"
+            path="/admin/export-orders"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -221,7 +224,7 @@ function App() {
             }
           />
           <Route
-            path="/customers"
+            path="/admin/customers"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -233,7 +236,7 @@ function App() {
             }
           />
           <Route
-            path="/bao-cao/cong-no"
+            path="/admin/bao-cao/cong-no"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -245,7 +248,7 @@ function App() {
             }
           />
           <Route
-            path="/bao-cao/cong-no/:customerId"
+            path="/admin/bao-cao/cong-no/:customerId"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -257,7 +260,7 @@ function App() {
             }
           />
           <Route
-            path="/customer-inquiry"
+            path="/admin/customer-inquiry"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -267,7 +270,7 @@ function App() {
             }
           />
           <Route
-            path="/notification-history"
+            path="/admin/notification-history"
             element={
               <ProtectedRoute>
                 <MainLayout>
@@ -276,8 +279,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Redirect unknown routes to Dashboard */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Redirect unknown routes to landing page */}
+          <Route path="*" element={<Navigate to="/consulting" replace />} />
         </Routes>
       </LocaleProvider>
     </Router>

@@ -52,6 +52,18 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Admin entry-point: redirect theo type sau khi login
+const AdminRedirect = () => {
+  const userInfo = JSON.parse(localStorage.getItem('user_info') || 'null');
+  if (!userInfo) {
+    return <Navigate to="/admin/login" replace />;
+  }
+  if ('CUSTOMER' === userInfo.type) {
+    return <Navigate to="/admin/product-codes" replace />;
+  }
+  return <Navigate to="/admin/customer-inquiry" replace />;
+};
+
 function App() {
   return (
     <Router>
@@ -67,7 +79,7 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute>
-                <Navigate to="/admin/customer-inquiry" replace />
+                <AdminRedirect />
               </ProtectedRoute>
             }
           />

@@ -599,7 +599,8 @@
         "newInquiry": "Câu hỏi tư vấn mới từ {{email}}",
         "inquiryNeedsAnswer": "Câu hỏi từ {{email}} đã được duyệt, cần trả lời",
         "inquiryAnswered": "Câu hỏi từ {{email}} đã có câu trả lời, cần duyệt",
-        "answerRejected": "Câu trả lời cho câu hỏi #{{id}} bị từ chối, cần sửa lại"
+        "answerRejected": "Câu trả lời cho câu hỏi #{{id}} bị từ chối, cần sửa lại",
+        "productCodeUpdated": "Hàng hóa của bạn vừa được cập nhật (ID: {{ids}})"
     },
     "inquiry": {
         "title": "Tư vấn khách hàng",

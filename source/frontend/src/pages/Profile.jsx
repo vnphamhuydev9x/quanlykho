@@ -3,6 +3,7 @@ import { Card, Descriptions, Button, Modal, Form, Input, message, Spin, Typograp
 import { UserOutlined, EditOutlined, KeyOutlined, SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../utils/axios';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 
 const { Title } = Typography;
 
@@ -13,7 +14,6 @@ const Profile = () => {
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
     const [form] = Form.useForm();
-    const [passwordForm] = Form.useForm();
 
     const fetchProfile = async () => {
         try {
@@ -41,23 +41,7 @@ const Profile = () => {
             // Error handling logic...
             if (error.response && error.response.data && error.response.data.code) {
                 const errorCode = error.response.data.code;
-                message.error(t(`error.${errorCode} `));
-            } else {
-                message.error(t('error.UNKNOWN'));
-            }
-        }
-    };
-
-    const handleChangePassword = async (values) => {
-        try {
-            await axiosInstance.post('/profile/change-password', values);
-            setIsPasswordModalVisible(false);
-            passwordForm.resetFields();
-            message.success(t('profile.changePasswordSuccess'));
-        } catch (error) {
-            if (error.response && error.response.data && error.response.data.code) {
-                const errorCode = error.response.data.code;
-                message.error(t(`error.${errorCode} `));
+                message.error(t(`error.${errorCode}`));
             } else {
                 message.error(t('error.UNKNOWN'));
             }
@@ -156,58 +140,11 @@ const Profile = () => {
                 </Form>
             </Modal>
 
-            {/* Change Password Modal */}
-            <Modal
-                title={t('profile.changePassword')}
-                open={isPasswordModalVisible}
+            <ChangePasswordModal
+                visible={isPasswordModalVisible}
                 onCancel={() => setIsPasswordModalVisible(false)}
-                footer={null}
-            >
-                <Form
-                    form={passwordForm}
-                    layout="vertical"
-                    onFinish={handleChangePassword}
-                >
-                    <Form.Item
-                        name="currentPassword"
-                        label={t('profile.currentPassword')}
-                        rules={[{ required: true, message: t('validation.required') }]}
-                    >
-                        <Input.Password />
-                    </Form.Item>
-                    <Form.Item
-                        name="newPassword"
-                        label={t('profile.newPassword')}
-                        rules={[{ required: true, message: t('validation.required') }]}
-                    >
-                        <Input.Password />
-                    </Form.Item>
-                    <Form.Item
-                        name="confirmPassword"
-                        label={t('profile.confirmPassword')}
-                        dependencies={['newPassword']}
-                        hasFeedback
-                        rules={[
-                            { required: true, message: t('validation.required') },
-                            ({ getFieldValue }) => ({
-                                validator(_, value) {
-                                    if (!value || getFieldValue('newPassword') === value) {
-                                        return Promise.resolve();
-                                    }
-                                    return Promise.reject(new Error(t('validation.passwordMismatch')));
-                                },
-                            }),
-                        ]}
-                    >
-                        <Input.Password />
-                    </Form.Item>
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit" icon={<SaveOutlined />} block>
-                            {t('common.save')}
-                        </Button>
-                    </Form.Item>
-                </Form>
-            </Modal>
+                onSuccess={() => setIsPasswordModalVisible(false)}
+            />
         </div>
     );
 };

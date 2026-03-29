@@ -83,7 +83,7 @@ const NotificationPage = () => {
             setItems(prev => prev.map(n => n.id === item.id ? { ...n, isRead: true } : n));
         }
         if (NOTIFICATION_TYPE.INQUIRY === item.type && item.refId) {
-            navigate(`/customer-inquiry?inquiryId=${item.refId}`);
+            navigate(`/admin/customer-inquiry?inquiryId=${item.refId}`);
         }
     };
 

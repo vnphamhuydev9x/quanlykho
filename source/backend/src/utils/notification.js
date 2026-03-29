@@ -14,7 +14,7 @@ const createNotification = async (userId, productCodeIds) => {
     try {
         if (!userId || !productCodeIds || productCodeIds.length === 0) return;
 
-        const content = `Hàng hóa của bạn vừa được cập nhật (ID: ${productCodeIds.join(' ')})`;
+        const content = JSON.stringify({ key: 'notification.productCodeUpdated', params: { ids: productCodeIds.join(' ') } });
 
         await prisma.notification.create({
             data: {

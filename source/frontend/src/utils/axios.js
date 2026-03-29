@@ -31,13 +31,17 @@ axiosInstance.interceptors.response.use(
             const errorCode = error.response.data?.code;
 
             // Token invalid or expired (401 or 403 with code 99004)
-            if (status === 401 || (status === 403 && errorCode === 99004)) {
+            // Không redirect nếu đang ở trang login (tránh vòng lặp redirect khi sai credentials)
+            if (
+                (status === 401 || (status === 403 && errorCode === 99004)) &&
+                !window.location.pathname.includes('/admin/login')
+            ) {
                 // Clear auth data
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('user_info');
 
                 // Redirect to login
-                window.location.href = '/login';
+                window.location.href = '/admin/login';
             }
         }
         return Promise.reject(error);

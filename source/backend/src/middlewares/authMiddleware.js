@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../prisma');
 const redisClient = require('../config/redisClient');
-const prisma = new PrismaClient();
+const logger = require('../config/logger');
 
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -10,7 +10,7 @@ const authenticateToken = (req, res, next) => {
     if (!token) {
         return res.status(401).json({
             code: 99003, // Token Missing
-            message: 'Không tìm thấy Token'
+            message: 'No token provided'
         });
     }
 
@@ -18,7 +18,7 @@ const authenticateToken = (req, res, next) => {
         if (err) {
             return res.status(403).json({
                 code: 99004, // Token Invalid
-                message: 'Token không hợp lệ hoặc hết hạn'
+                message: 'Invalid or expired token'
             });
         }
 
@@ -31,7 +31,7 @@ const authenticateToken = (req, res, next) => {
                 if (cachedStatus === 'INACTIVE') {
                     return res.status(403).json({
                         code: 99007,
-                        message: 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.'
+                        message: 'Account is disabled'
                     });
                 }
                 // ACTIVE -> Proceed
@@ -48,7 +48,7 @@ const authenticateToken = (req, res, next) => {
             if (!dbUser) {
                 return res.status(401).json({
                     code: 99002,
-                    message: 'Người dùng không tồn tại'
+                    message: 'User not found'
                 });
             }
 
@@ -56,7 +56,7 @@ const authenticateToken = (req, res, next) => {
                 await redisClient.setEx(redisKey, 3600, 'INACTIVE');
                 return res.status(403).json({
                     code: 99007,
-                    message: 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.'
+                    message: 'Account is disabled'
                 });
             }
 
@@ -66,10 +66,10 @@ const authenticateToken = (req, res, next) => {
             next();
 
         } catch (error) {
-            console.error('Auth Middleware Error:', error);
+            logger.error('Auth Middleware Error:', error);
             return res.status(500).json({
                 code: 99500,
-                message: 'Lỗi server (Auth)'
+                message: 'Internal server error'
             });
         }
     });

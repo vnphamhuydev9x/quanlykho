@@ -46,11 +46,7 @@ const Login = () => {
             localStorage.setItem('access_token', token);
             localStorage.setItem('user_info', JSON.stringify(user));
 
-            if (user && user.type === 'CUSTOMER') {
-                navigate('/admin/product-codes');
-            } else {
-                navigate('/admin/customer-inquiry');
-            }
+            navigate('/admin');
         } catch (error) {
             console.error('Login error:', error);
             if (error.response && error.response.data && error.response.data.code) {

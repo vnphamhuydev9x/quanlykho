@@ -602,7 +602,8 @@
         "newInquiry": "{{email}} 发来新咨询",
         "inquiryNeedsAnswer": "{{email}} 的咨询已审核通过，待回复",
         "inquiryAnswered": "{{email}} 的咨询已有答复，待审核",
-        "answerRejected": "咨询 #{{id}} 的答复被拒绝，请修改"
+        "answerRejected": "咨询 #{{id}} 的答复被拒绝，请修改",
+        "productCodeUpdated": "您的商品已更新 (ID: {{ids}})"
     },
     "inquiry": {
         "title": "客户咨询",

@@ -1,9 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../prisma');
 const logger = require('../config/logger');
-
-const prisma = new PrismaClient();
 
 const login = async (req, res) => {
     try {
@@ -13,7 +11,7 @@ const login = async (req, res) => {
         if (!username || !password) {
             return res.status(400).json({
                 code: 99001,
-                message: 'Vui lòng nhập tên đăng nhập và mật khẩu'
+                message: 'Username and password are required'
             });
         }
 
@@ -25,7 +23,7 @@ const login = async (req, res) => {
         if (!user) {
             return res.status(401).json({
                 code: 99002,
-                message: 'Sai tài khoản hoặc mật khẩu'
+                message: 'Invalid username or password'
             });
         }
 
@@ -34,7 +32,7 @@ const login = async (req, res) => {
             logger.warn(`Login failed: Account ${username} is inactive`);
             return res.status(403).json({
                 code: 99007,
-                message: 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.'
+                message: 'Account is disabled'
             });
         }
 
@@ -43,7 +41,7 @@ const login = async (req, res) => {
         if (!isPasswordValid) {
             return res.status(401).json({
                 code: 99002,
-                message: 'Sai tài khoản hoặc mật khẩu'
+                message: 'Invalid username or password'
             });
         }
 
@@ -66,7 +64,7 @@ const login = async (req, res) => {
 
         res.json({
             code: 200,
-            message: 'Đăng nhập thành công',
+            message: 'Login successful',
             token,
             user: {
                 id: user.id,
@@ -81,7 +79,7 @@ const login = async (req, res) => {
         logger.error('Login Error:', error);
         res.status(500).json({
             code: 99500,
-            message: 'Lỗi server'
+            message: 'Internal server error'
         });
     }
 };

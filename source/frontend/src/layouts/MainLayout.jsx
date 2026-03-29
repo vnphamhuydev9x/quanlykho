@@ -163,9 +163,6 @@ const MainLayout = ({ children }) => {
         }
     };
 
-    // Giữ lại alias cũ để không break code CUSTOMER bên dưới
-    const markNotificationsAsRead = markAllAsRead;
-
     useEffect(() => {
         if (userType === 'CUSTOMER' || isStaffWithNotif) {
             fetchNotifications();
@@ -269,7 +266,7 @@ const MainLayout = ({ children }) => {
                             onMouseLeave={() => {
                                 clearTimeout(window.notiTimer);
                                 if (window.shouldMarkRead) {
-                                    markNotificationsAsRead();
+                                    markAllAsRead();
                                     window.shouldMarkRead = false;
                                 }
                             }}
@@ -291,7 +288,7 @@ const MainLayout = ({ children }) => {
                         </div>
                     ),
                     onClick: () => {
-                        if (userType === 'CUSTOMER') markNotificationsAsRead();
+                        if (userType === 'CUSTOMER') markAllAsRead();
                         navigate('/admin/product-codes');
                     },
                 },

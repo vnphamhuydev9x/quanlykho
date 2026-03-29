@@ -1,4 +1,6 @@
-Version: v1.0.7
+# Requirement Rephrase: landing_page
+> Version: 1.0.7 | Ngày: 2026-03-29
+> Nguồn: Nguồn chân lý nghiệp vụ (Chỉ chứa FR và NFR)
 
 # Functional Requirements
 

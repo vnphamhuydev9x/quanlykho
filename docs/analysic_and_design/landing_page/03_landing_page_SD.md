@@ -1,5 +1,6 @@
-Version: SD-v1.0.9
-Base on Requirement Version: v1.0.7
+# System Design: landing_page
+> Version: SD-v1.0.0 | Ngày: 2026-03-29
+> Base on Requirement: 1.0.7
 
 ---
 
